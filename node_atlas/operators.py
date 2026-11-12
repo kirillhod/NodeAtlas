@@ -368,7 +368,9 @@ def _register_cancel_keymap() -> None:
     keyconfig = bpy.context.window_manager.keyconfigs.addon
     if keyconfig is None:
         return
-    keymap = keyconfig.keymaps.new(name="Node Editor", space_type="NODE_EDITOR")
+    keymap = keyconfig.keymaps.get("Node Editor")
+    if keymap is None:
+        keymap = keyconfig.keymaps.new(name="Node Editor", space_type="NODE_EDITOR")
     item = keymap.keymap_items.new("node_atlas.cancel_export", "ESC", "PRESS")
     _cancel_keymaps.append((keymap, item))
 
