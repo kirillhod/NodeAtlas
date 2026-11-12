@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Tile stitching, final crop and PNG writing."""
 
 from __future__ import annotations

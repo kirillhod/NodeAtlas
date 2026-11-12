@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Extreme-density GUI test: D near D_max at view.ui_scale 6."""
 
 from __future__ import annotations

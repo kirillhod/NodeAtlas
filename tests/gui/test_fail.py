@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Failure GUI test: inject a capture error and verify the UI is restored."""
 
 from __future__ import annotations

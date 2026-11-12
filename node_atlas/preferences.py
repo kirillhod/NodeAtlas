@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Global NodeAtlas preferences."""
 
 from __future__ import annotations

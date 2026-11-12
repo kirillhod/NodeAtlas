@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Editor state, view control, tiled capture and restoration."""
 
 from __future__ import annotations

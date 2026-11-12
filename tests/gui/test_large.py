@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Large-graph GUI test: 120 nodes, low density, state restoration."""
 
 from __future__ import annotations

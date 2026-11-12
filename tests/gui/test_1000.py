@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """1000-node GUI test: exercises the memmap stitching path."""
 
 from __future__ import annotations

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Disk-full GUI test: the writer boundary raises ENOSPC.
 
 The per-run save function fails after writing a partial temporary file, so the

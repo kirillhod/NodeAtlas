@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """NodeAtlas — export any Blender node tree as one high-resolution PNG."""
 
 from __future__ import annotations

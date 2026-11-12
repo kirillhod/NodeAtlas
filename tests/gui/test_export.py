@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Live GUI smoke test for the NodeAtlas MVP.
 
 Run from the repository root in a visible Blender window:

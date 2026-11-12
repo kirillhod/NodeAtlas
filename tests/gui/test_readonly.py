@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Read-only output directory GUI test.
 
 The destination is locked with a real ACL deny entry (``icacls``) so the

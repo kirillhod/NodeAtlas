@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Export operators and the timer-driven export job."""
 
 from __future__ import annotations

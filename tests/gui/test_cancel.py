@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Cancel GUI test: start a large export, cancel during capture, verify restore."""
 
 from __future__ import annotations

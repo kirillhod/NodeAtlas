@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Megapixel-limit GUI test: the guard aborts before capture and restores the UI."""
 
 from __future__ import annotations

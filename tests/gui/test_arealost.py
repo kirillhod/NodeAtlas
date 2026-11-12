@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Lost-area GUI test: maximize fails after the snapshot, restore must run."""
 
 from __future__ import annotations

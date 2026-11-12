@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Geometry Nodes + Compositor GUI test using scene_graphs.blend."""
 
 from __future__ import annotations

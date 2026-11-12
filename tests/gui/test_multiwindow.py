@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Multi-window GUI test: export from one window, leave the other untouched."""
 
 from __future__ import annotations

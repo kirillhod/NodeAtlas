@@ -9,7 +9,8 @@ param(
 # kill the process tree on timeout. The tests themselves do not depend on it.
 $scriptPath = (Resolve-Path $Script).Path
 $name = [IO.Path]::GetFileNameWithoutExtension($scriptPath)
-$log = Join-Path $env:TEMP "nodeatlas-$name.log"
+$blenderTag = Split-Path (Split-Path $Blender -Parent) -Leaf
+$log = Join-Path $env:TEMP "nodeatlas-$blenderTag-$name.log"
 $errLog = "$log.err"
 $arguments = @("--factory-startup", "--python", $scriptPath)
 if ($Background) { $arguments = @("--background") + $arguments }

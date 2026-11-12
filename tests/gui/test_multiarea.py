@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Multi-area GUI test: two Node Editors, export from one, restore both."""
 
 from __future__ import annotations

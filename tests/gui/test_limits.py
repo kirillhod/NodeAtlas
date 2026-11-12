@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Limit GUI test: minimum density with the largest allowed padding."""
 
 from __future__ import annotations

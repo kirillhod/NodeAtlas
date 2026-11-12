@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Run the shader GUI smoke test through the Blender 4.2–5.1 adapter path.
 
 The adapter is forced on Blender 5.3 so its temporary-file/crop logic can be

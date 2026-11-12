@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Geometry, layout and selection helpers for NodeAtlas.
 
 Pure functions operate on objects exposing the Blender Node/View2D attributes;

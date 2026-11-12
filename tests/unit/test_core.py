@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Headless core tests. Run with:
 
 blender --background --factory-startup --python tests/unit/test_core.py

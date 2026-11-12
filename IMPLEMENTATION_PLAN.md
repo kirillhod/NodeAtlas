@@ -429,19 +429,23 @@ unrestored-state failures; undo-neutral on every tested version.
 
 Tasks:
 
-- [ ] Validate and build the extension
+- [x] Validate and build the extension
       ([`extension validate/build`](https://docs.blender.org/manual/en/dev/advanced/extensions/getting_started.html));
       install from the zip on a clean profile; also test classic add-on installation.
-- [ ] README: install (both methods), usage, settings, supported versions, limitations
+- [x] README: install (both methods), usage, settings, supported versions, limitations
       (GUI-only, link LOD, view restore to nearest pixel), troubleshooting, license.
 - [ ] Add 2–3 small screenshots and one example output; keep them compressed and
       committed intentionally.
 - [ ] CHANGELOG, version bump, SPDX/license headers, remove debug code.
+      Changelog, SPDX headers and debug cleanup are done; the 0.8.0 bump happens at
+      release.
 - [ ] QA matrix runs: 4.2 LTS / 4.5 LTS / 5.1 / 5.2 / 5.3; Windows full; Linux/macOS
       where available; scaling 100/125/150/200 %; one and two monitors.
+      Windows 4.2–5.3 and effective scales 1.0–2.0 pass; Linux/macOS and a second
+      monitor are open.
 - [ ] Optional CI: headless unit tests + manifest validation + `ruff`/`compileall`;
       GUI capture remains a manual/virtual-display job.
-- [ ] Commit a QA report with environment, measurements, known issues.
+- [x] Commit a QA report with environment, measurements, known issues.
 
 **Exit:** release candidate installs from the artifact, README instructions work
 verbatim, QA report committed, no open blocker.

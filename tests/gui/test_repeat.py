@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Repeatability GUI test: two deterministic exports must match pixel-for-pixel."""
 
 from __future__ import annotations

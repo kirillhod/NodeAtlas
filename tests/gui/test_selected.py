@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Selected-only GUI test: export two selected nodes from scene_selected.blend."""
 
 from __future__ import annotations

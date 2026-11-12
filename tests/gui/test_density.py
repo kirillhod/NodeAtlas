@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """High-density GUI test: D=2, zero padding, non-default view.ui_scale."""
 
 from __future__ import annotations

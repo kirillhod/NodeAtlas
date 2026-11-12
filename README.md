@@ -27,7 +27,7 @@ current zoom.
 - Output density independent of monitor DPI and zoom (`output_dpi`, 96 = 1:1)
 - Real background padding captured from the editor, not painted
 - Selected-nodes-only export using a temporary filtered tree copy
-- Shader, Geometry Nodes and Compositor trees
+- Shader, Geometry Nodes, Compositor and Texture trees
 - Clean frame: UI panels, gizmos, selection and context path hidden during export
 - Full editor state restoration, including after an error or cancel
 - Undo-neutral: the capture pipeline never pushes an undo step
@@ -38,6 +38,9 @@ current zoom.
 - [Blender 4.2](https://www.blender.org/download/) or newer; 5.2+ uses the faster
   raw-buffer capture, 4.2–5.1 uses the `screenshot_area` adapter
 - A GUI session ([Blender cannot capture UI in `--background`](https://docs.blender.org/manual/en/latest/advanced/command_line/arguments.html))
+
+Validated on Windows with Blender 4.2.23 LTS, 4.5.9 LTS, 5.1.2, 5.2.4 LTS and 5.3.0.
+Linux and macOS are untested. The Compositor requires Blender 5.2+.
 
 ## Install
 
@@ -64,6 +67,41 @@ Install the resulting zip through *Edit → Preferences → Extensions*.
 Settings live in the sidebar and in *Edit → Preferences → Add-ons → Node Atlas*. The
 quick action uses the `.blend` folder and the `{blend}_{tree}_{date}.png` pattern by
 default.
+
+## Settings
+
+| Setting | Default | Meaning |
+|---|---|---|
+| Output DPI | 96 | Output density; 96 = 1:1 node pixels. Clamped to the achievable range |
+| Padding (px) | 20 | Real editor background around the graph, in final-image pixels |
+| Max Megapixels | 200 | Abort before capture when the output would exceed this size |
+| Scope | Current Tree | Export the displayed tree or only selected nodes |
+| Background | Theme | Editor theme background (solid color is planned) |
+| Default Directory | empty | Quick-export folder; empty uses the `.blend` folder |
+| Filename Pattern | `{blend}_{tree}_{date}.png` | Fields: `{blend}`, `{tree}`, `{date}` |
+| Hide UI During Export | on | Hide header, toolbar, sidebar, gizmos and context path |
+| Restore UI | on | Restore the editor state after success, error or cancel |
+| Deterministic View | on | Prime with View All so repeated exports match |
+| Header Button | on | Show the quick export button in the Node Editor header |
+| Ctrl+Shift+E | on | Enable the quick export shortcut |
+
+## Troubleshooting
+
+- **"NodeAtlas requires a GUI Blender session"** — start Blender normally; UI capture
+  is unavailable under `--background`.
+- **"Compositor export on Blender 4.2–5.1 is not supported yet"** — those builds crash
+  natively during compositor capture. Use Blender 5.2 or newer.
+- **"Output directory … is not writable"** — choose a writable folder; the check runs
+  before any capture starts.
+- **"Not enough free disk space"** — free space on the destination volume; the temporary
+  PNG is removed.
+- **"DPI clamped from X to Y"** — `D_max = effective_ui_scale / 0.43311`; lower Output
+  DPI or increase the UI scale.
+- **"Output would be … above the N MP limit"** — raise Max Megapixels if RAM allows, or
+  lower Output DPI.
+- **"Node Editor is too small for export"** — enlarge the editor area.
+- **Blank or overlapped tiles** — keep the Blender window visible and unobstructed
+  during export; a minimized or occluded window can break screenshots.
 
 ## Known limitations
 
@@ -108,6 +146,7 @@ blender --factory-startup --python tests/gui/test_fail.py
 blender --factory-startup --python tests/gui/test_large.py
 blender --factory-startup --python tests/gui/test_maxmp.py
 blender --factory-startup --python tests/gui/test_density.py
+blender --factory-startup --python tests/gui/test_scaling.py
 blender --factory-startup --python tests/gui/test_extreme.py
 blender --factory-startup --python tests/gui/test_multiarea.py
 blender --factory-startup --python tests/gui/test_multiwindow.py
