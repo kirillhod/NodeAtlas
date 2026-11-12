@@ -19,6 +19,7 @@
 - Validate Unicode filename sanitization and a classic clean-profile install.
 - Validate a clean extension install from the built zip.
 - Validate high-density export (D=2, zero padding) and extension installs across 4.2–5.3.
+- Add memmap spill for large stitch canvases and clean up temporary PNGs on failed saves.
 - Update the implementation plan, README and QA report.
 
 ## 0.5.0

@@ -32,12 +32,14 @@ blender --background --factory-startup --python tests/unit/test_core.py
 | Rect/layout math | PASS | PASS | PASS | PASS | PASS |
 | Density limits | PASS | PASS | PASS | PASS | PASS |
 | Single-tile stitching | PASS | PASS | PASS | PASS | PASS |
+| Memmap spill path | PASS | PASS | PASS | PASS | PASS |
 | NumPy PNG writer round-trip | PASS | PASS | PASS | PASS | PASS |
+| Failed-save temp cleanup | PASS | PASS | PASS | PASS | PASS |
 | Filename sanitization / Unicode | PASS | PASS | PASS | PASS | PASS |
 | Registration/preferences | PASS | PASS | PASS | PASS | PASS |
 | Manifest/`__version__` consistency | PASS | PASS | PASS | PASS | PASS |
 
-Result: **8/8 PASS on all five versions.**
+Result: **10/10 PASS on all five versions.**
 
 ## GUI tests
 

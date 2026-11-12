@@ -103,13 +103,20 @@ def test_stitch_single_tile():
     tile[:, :, 1] = 20
     tile[:, :, 2] = 30
     tile[:, :, 3] = 255
+    tiles = {(0, 0): tile}
     image, holes = stitch.stitch_tiles(
-        {(0, 0): tile}, layout, region_w, region_h, padding
+        tiles, layout, region_w, region_h, padding
     )
     check(holes == 0, "holes")
     check(image.shape == (layout.final_h, layout.final_w, 4), "shape")
     check(image[0, 0, 0] == 10 and image[0, 0, 1] == 20 and image[0, 0, 2] == 30, "pixels")
     check((image[:, :, 3] == 255).all(), "alpha")
+
+    spilled, spilled_holes = stitch.stitch_tiles(
+        tiles, layout, region_w, region_h, padding, memory_limit=0
+    )
+    check(spilled_holes == 0, "memmap holes")
+    check((spilled == image).all(), "memmap output")
 
 
 def test_png_writer():
@@ -181,6 +188,33 @@ def test_version_consistency():
     )
 
 
+def test_save_cleanup():
+    import os
+    import tempfile
+
+    image = np.zeros((4, 4, 4), dtype=np.uint8)
+    image[:, :, 3] = 255
+    descriptor, path = tempfile.mkstemp(suffix=".png")
+    os.close(descriptor)
+    original_replace = stitch.os.replace
+    try:
+        def locked(*_args, **_kwargs):
+            raise OSError("target is locked")
+
+        stitch.os.replace = locked
+        try:
+            stitch.save_png(image, path)
+        except OSError:
+            pass
+        else:
+            check(False, "save_png should fail when the target is locked")
+    finally:
+        stitch.os.replace = original_replace
+        check(not os.path.exists(path + ".tmp.png"), "temporary PNG was not cleaned up")
+        if os.path.exists(path):
+            os.remove(path)
+
+
 def test_filename_sanitization():
     from node_atlas import operators
 
@@ -197,6 +231,7 @@ def main():
         test_density,
         test_stitch_single_tile,
         test_png_writer,
+        test_save_cleanup,
         test_filename_sanitization,
         test_registration,
         test_version_consistency,

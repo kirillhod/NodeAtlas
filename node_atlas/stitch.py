@@ -2,29 +2,67 @@
 
 from __future__ import annotations
 
-import math
 import os
+import tempfile
 
 import numpy as np
+
+MEMORY_LIMIT = 512 * 1024 * 1024
 
 
 class StitchError(RuntimeError):
     pass
 
 
-def _ramp(length: int, overlap: int, lower: bool, upper: bool) -> np.ndarray:
-    weights = np.ones(length, dtype=np.float32)
-    if overlap > 0:
-        ramp = (np.arange(overlap, dtype=np.float32) + 0.5) / overlap
-        if lower:
-            weights[:overlap] = ramp
-        if upper:
-            weights[length - overlap:] = ramp[::-1]
-    return weights
+def _allocate_canvas(canvas_h: int, canvas_w: int, memory_limit: int):
+    needed = canvas_h * canvas_w * (3 + 1) * 4
+    if needed <= memory_limit:
+        return (
+            np.zeros((canvas_h, canvas_w, 3), dtype=np.float32),
+            np.zeros((canvas_h, canvas_w), dtype=np.float32),
+            (),
+        )
+
+    paths = []
+    try:
+        for suffix in (".acc.f32", ".weights.f32"):
+            descriptor, path = tempfile.mkstemp(prefix="nodeatlas_stitch_", suffix=suffix)
+            os.close(descriptor)
+            paths.append(path)
+        acc = np.memmap(paths[0], dtype=np.float32, mode="w+", shape=(canvas_h, canvas_w, 3))
+        weights = np.memmap(paths[1], dtype=np.float32, mode="w+", shape=(canvas_h, canvas_w))
+        acc[:] = 0
+        weights[:] = 0
+        return acc, weights, tuple(paths)
+    except Exception:
+        _release_canvas(None, None, tuple(paths))
+        raise
 
 
-def stitch_tiles(tiles, layout, region_w: int, region_h: int, padding: int):
-    """Stitch cropped bottom-up tiles into final RGBA, returning (image, holes)."""
+def _release_canvas(acc, weights, paths) -> None:
+    for array in (acc, weights):
+        memory_map = getattr(array, "_mmap", None)
+        if memory_map is not None:
+            try:
+                memory_map.close()
+            except Exception:
+                pass
+    for path in paths:
+        try:
+            os.remove(path)
+        except OSError:
+            pass
+
+
+def stitch_tiles(
+    tiles, layout, region_w: int, region_h: int, padding: int,
+    memory_limit: int | None = None,
+):
+    """Stitch cropped bottom-up tiles into final RGBA, returning (image, holes).
+
+    Large canvases spill the float32 accumulator and weights to temporary
+    memmaps instead of holding them in RAM.
+    """
     pad = layout.pad
     overlap = layout.overlap
     tile_w = region_w - 2 * pad
@@ -36,42 +74,57 @@ def stitch_tiles(tiles, layout, region_w: int, region_h: int, padding: int):
 
     canvas_w = layout.canvas_w
     canvas_h = layout.canvas_h
-    acc = np.zeros((canvas_h, canvas_w, 3), dtype=np.float32)
-    weights = np.zeros((canvas_h, canvas_w), dtype=np.float32)
+    if memory_limit is None:
+        memory_limit = MEMORY_LIMIT
+    acc, weights, paths = _allocate_canvas(canvas_h, canvas_w, memory_limit)
 
-    for (i, j), tile in tiles.items():
-        if tile.shape[0] != tile_h or tile.shape[1] != tile_w:
-            raise StitchError(
-                f"Tile {i},{j} has shape {tile.shape}, expected {(tile_h, tile_w, 4)}"
-            )
-        rgb = tile[:, :, :3].astype(np.float32)
-        wx = _ramp(tile_w, overlap_x, i > 0, i < layout.grid_x - 1)
-        wy = _ramp(tile_h, overlap_y, j > 0, j < layout.grid_y - 1)
-        weight = np.outer(wy, wx)
-        x = i * layout.step_x + pad
-        y = canvas_h - region_h - j * layout.step_y + pad
-        acc[y:y + tile_h, x:x + tile_w] += rgb * weight[:, :, None]
-        weights[y:y + tile_h, x:x + tile_w] += weight
+    try:
+        for (i, j), tile in tiles.items():
+            if tile.shape[0] != tile_h or tile.shape[1] != tile_w:
+                raise StitchError(
+                    f"Tile {i},{j} has shape {tile.shape}, expected {(tile_h, tile_w, 4)}"
+                )
+            rgb = tile[:, :, :3].astype(np.float32)
+            wx = _ramp(tile_w, overlap_x, i > 0, i < layout.grid_x - 1)
+            wy = _ramp(tile_h, overlap_y, j > 0, j < layout.grid_y - 1)
+            weight = np.outer(wy, wx)
+            x = i * layout.step_x + pad
+            y = canvas_h - region_h - j * layout.step_y + pad
+            acc[y:y + tile_h, x:x + tile_w] += rgb * weight[:, :, None]
+            weights[y:y + tile_h, x:x + tile_w] += weight
 
-    final_w = layout.final_w
-    final_h = layout.final_h
-    c0 = canvas_h - final_h - pad
-    if c0 < 0:
-        raise StitchError("Final crop starts outside the canvas")
+        final_w = layout.final_w
+        final_h = layout.final_h
+        c0 = canvas_h - final_h - pad
+        if c0 < 0:
+            raise StitchError("Final crop starts outside the canvas")
 
-    cropped_weights = weights[c0:c0 + final_h, pad:pad + final_w]
-    holes = int((cropped_weights <= 0).sum())
-    if holes:
-        raise StitchError(f"Final crop has {holes} uncovered pixels")
+        cropped_weights = weights[c0:c0 + final_h, pad:pad + final_w]
+        holes = int((cropped_weights <= 0).sum())
+        if holes:
+            raise StitchError(f"Final crop has {holes} uncovered pixels")
 
-    image = acc[c0:c0 + final_h, pad:pad + final_w] / np.maximum(
-        cropped_weights[:, :, None], 1e-6
-    )
-    rgb8 = np.clip(image + 0.5, 0, 255).astype(np.uint8)
-    rgba = np.empty((final_h, final_w, 4), dtype=np.uint8)
-    rgba[:, :, :3] = rgb8
-    rgba[:, :, 3] = 255
-    return rgba, holes
+        image = acc[c0:c0 + final_h, pad:pad + final_w] / np.maximum(
+            cropped_weights[:, :, None], 1e-6
+        )
+        rgb8 = np.clip(image + 0.5, 0, 255).astype(np.uint8)
+        rgba = np.empty((final_h, final_w, 4), dtype=np.uint8)
+        rgba[:, :, :3] = rgb8
+        rgba[:, :, 3] = 255
+        return rgba, holes
+    finally:
+        _release_canvas(acc, weights, paths)
+
+
+def _ramp(length: int, overlap: int, lower: bool, upper: bool) -> np.ndarray:
+    weights = np.ones(length, dtype=np.float32)
+    if overlap > 0:
+        ramp = (np.arange(overlap, dtype=np.float32) + 0.5) / overlap
+        if lower:
+            weights[:overlap] = ramp
+        if upper:
+            weights[length - overlap:] = ramp[::-1]
+    return weights
 
 
 def _write_png_numpy(image: np.ndarray, filepath: str) -> None:
@@ -111,24 +164,31 @@ def save_png(image: np.ndarray, filepath: str) -> None:
     os.makedirs(os.path.dirname(path), exist_ok=True)
     temp_path = path + ".tmp.png"
 
-    if bpy.app.version >= (5, 2, 0):
-        try:
-            import imbuf
-
-            img = imbuf.new((image.shape[1], image.shape[0]), planes=32, buffer_type="BYTE")
+    try:
+        if bpy.app.version >= (5, 2, 0):
             try:
-                with img.with_buffer(write=True) as buffer:
-                    np.frombuffer(buffer, dtype=np.uint8).reshape(image.shape)[:] = image
-                imbuf.write(img, filepath=temp_path)
-            finally:
-                img.free()
-            os.replace(temp_path, path)
-            return
-        except Exception:
+                import imbuf
+
+                img = imbuf.new(
+                    (image.shape[1], image.shape[0]), planes=32, buffer_type="BYTE"
+                )
+                try:
+                    with img.with_buffer(write=True) as buffer:
+                        np.frombuffer(buffer, dtype=np.uint8).reshape(image.shape)[:] = image
+                    imbuf.write(img, filepath=temp_path)
+                finally:
+                    img.free()
+                os.replace(temp_path, path)
+                return
+            except Exception:
+                # Fall through to the dependency-free writer.
+                pass
+
+        _write_png_numpy(image, temp_path)
+        os.replace(temp_path, path)
+    finally:
+        if os.path.exists(temp_path):
             try:
                 os.remove(temp_path)
             except OSError:
                 pass
-
-    _write_png_numpy(image, temp_path)
-    os.replace(temp_path, path)
