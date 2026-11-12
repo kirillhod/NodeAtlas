@@ -31,6 +31,7 @@
 - Validate 0.6.1 clean classic and extension installs on 4.2.23–5.3.0.
 - Add a multi-area GUI test: a second Node Editor remains untouched by export/restore.
 - Add a multi-window GUI test: export from one window leaves the other unchanged.
+- Add a 1000-node GUI test; it exercises the memmap path at ~75.8 MP.
 - Update the implementation plan, README and QA report.
 
 ## 0.5.0

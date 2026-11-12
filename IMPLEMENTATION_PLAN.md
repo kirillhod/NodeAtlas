@@ -11,11 +11,11 @@ or the selected nodes, as one PNG.
 Compositor and Texture. The legacy `screenshot_area` path is validated on Blender
 4.2.23, 4.5.9 and 5.1.2 for Shader/GN/Texture (including a NumPy PNG writer for
 saving); Compositor on 4.2–5.1 hits a native Blender crash and is rejected with a
-clear error instead. Cancel/error/undo, high density, a 120-node graph, the max-MP
+clear error instead. Cancel/error/undo, high density, a 1000-node graph, the max-MP
 guard, memmap spill, failed-save cleanup, a second Node Editor area and a second window
 are tested on 4.2, 4.5, 5.1, 5.2 and 5.3. M8 has clean classic and extension installs
 across 4.2–5.3, the Windows QA matrix, manifest/build, README, CHANGELOG and QA report;
-Linux/macOS and the 1000-node/disk-full M7 limits are open.
+Linux/macOS and the remaining M7 limit cases are open.
 
 | Milestone | Version | Status |
 |---|---|---|
@@ -26,7 +26,7 @@ Linux/macOS and the 1000-node/disk-full M7 limits are open.
 | M4 Operator/UI MVP | 0.5.0 | Done; per-run overrides and popups deferred |
 | M5 Tree types | 0.6.0 | Done for Shader/GN/Compositor/Texture; 6.0 adapter open |
 | M6 Legacy adapter | 0.7.0 | Done for Shader/GN/Texture on 4.2.23/4.5.9/5.1.2; Compositor 4.2–5.1 is guarded |
-| M7 Hardening | 0.8.0 | Partial: 120-node, max-MP, high-density, memmap, failed-save, multi-area and multi-window pass; 1000-node/disk-full open |
+| M7 Hardening | 0.8.0 | Partial: 1000-node/memmap, multi-window/area, density, max-MP and failure paths pass; extreme Dmax/read-only/disk-full open |
 | M8 Packaging/QA | 0.9.0 | Partial: Windows 4.2–5.3 matrix and clean classic/extension installs done; Linux/macOS open |
 | M9 Release | 1.0.0 | Pending |
 
