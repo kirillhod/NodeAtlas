@@ -11,10 +11,10 @@ or the selected nodes, as one PNG.
 Compositor and Texture. The legacy `screenshot_area` path is validated on Blender
 4.2.23, 4.5.9 and 5.1.2 for Shader/GN/Texture (including a NumPy PNG writer for
 saving); Compositor on 4.2–5.1 hits a native Blender crash and is rejected with a
-clear error instead. Cancel/error/undo, a 120-node graph and the max-MP guard are
-tested on 4.2, 4.5, 5.1, 5.2 and 5.3. M8 has clean classic installs across 4.2–5.3, a
-5.3 extension install, the Windows QA matrix, manifest/build, README, CHANGELOG and QA
-report; Linux/macOS and the remaining M7 limits are open.
+clear error instead. Cancel/error/undo, high density, a 120-node graph and the max-MP
+guard are tested on 4.2, 4.5, 5.1, 5.2 and 5.3. M8 has clean classic and extension
+installs across 4.2–5.3, the Windows QA matrix, manifest/build, README, CHANGELOG and
+QA report; Linux/macOS and the remaining M7 limits are open.
 
 | Milestone | Version | Status |
 |---|---|---|
@@ -25,8 +25,8 @@ report; Linux/macOS and the remaining M7 limits are open.
 | M4 Operator/UI MVP | 0.5.0 | Done; per-run overrides and popups deferred |
 | M5 Tree types | 0.6.0 | Done for Shader/GN/Compositor/Texture; 6.0 adapter open |
 | M6 Legacy adapter | 0.7.0 | Done for Shader/GN/Texture on 4.2.23/4.5.9/5.1.2; Compositor 4.2–5.1 is guarded |
-| M7 Hardening | 0.8.0 | Partial: 120-node graph and max-MP guard pass across 4.2–5.3; multi-window/limits/memmap open |
-| M8 Packaging/QA | 0.9.0 | Partial: Windows 4.2–5.3 matrix, clean classic installs, 5.3 extension install, docs; Linux/macOS and per-build extension installs open |
+| M7 Hardening | 0.8.0 | Partial: 120-node graph, max-MP and high-density pass across 4.2–5.3; multi-window/limits/memmap open |
+| M8 Packaging/QA | 0.9.0 | Partial: Windows 4.2–5.3 matrix, clean classic + extension installs, docs; Linux/macOS open |
 | M9 Release | 1.0.0 | Pending |
 
 This plan is a dependency-ordered roadmap, not a promise of dates. Estimates are focused

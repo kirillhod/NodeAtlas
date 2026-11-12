@@ -56,10 +56,11 @@ window, exports a fixture, validates the PNG and editor restoration, then exits.
 | `test_fail.py` | PASS | PASS | PASS | PASS | PASS |
 | `test_large.py` | PASS, 6017×3131, 1.87 s | PASS, 6013×3132, 1.69 s | PASS, 6013×3132, 2.71 s | PASS, 6016×3133, 3.18 s | PASS, 6016×3133, 3.25 s |
 | `test_maxmp.py` | PASS | PASS | PASS | PASS | PASS |
+| `test_density.py` | PASS, 4240×935 | PASS, 4240×937 | PASS, 4241×937 | PASS, 4239×937 | PASS, 4243×938 |
 
 All GUI tests validate that the editor state is restored and that failed/cancelled
-exports leave no PNG. The large test uses 120 nodes and ~18.8 MP; the max-MP test uses a
-1 MP limit.
+exports leave no PNG. The large test uses 120 nodes and ~18.8 MP; the density test uses
+D=2, zero padding and `view.ui_scale = 2.0`; the max-MP test uses a 1 MP limit.
 
 ## Packaging
 
@@ -68,10 +69,10 @@ exports leave no PNG. The large test uses 120 nodes and ~18.8 MP; the max-MP tes
   produces `node_atlas-0.6.0.zip` with the manifest and package modules.
 - Classic add-on clean-profile install: PASS on Blender 4.2.23, 4.5.9, 5.1.2, 5.2.4
   and 5.3.0, each in an isolated `BLENDER_USER_SCRIPTS/scripts/addons` profile.
-- Extension clean-profile install: PASS on 5.3.0; `node_atlas-0.6.0.zip` installed into
-  an isolated user repository with `extension install-file --enable`, loading
+- Extension clean-profile install: PASS on Blender 4.2.23, 4.5.9, 5.1.2, 5.2.4 and
+  5.3.0. Each used an isolated user repository with `install-file --enable` and loaded
   `bl_ext.nodeatlas_test.node_atlas` version 0.6.0.
-- Linux/macOS QA and extension install on each legacy build are still pending.
+- Linux/macOS QA is still pending.
 
 ## Known issues
 
