@@ -19,7 +19,7 @@ New-Item -ItemType Directory -Force -Path $logDir | Out-Null
 $log = Join-Path $logDir "nodeatlas-$blenderTag-$name.log"
 $errLog = "$log.err"
 
-$runTemp = Join-Path $originalTemp ("nodeatlas_run_" + [guid]::NewGuid().ToString("N"))
+$runTemp = Join-Path $originalTemp ("na_" + [guid]::NewGuid().ToString("N").Substring(0, 8))
 New-Item -ItemType Directory -Force -Path $runTemp | Out-Null
 $env:TEMP = $runTemp
 $env:TMP = $runTemp

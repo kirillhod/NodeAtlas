@@ -7,13 +7,13 @@ import bpy
 
 from . import bounds, capture, operators, preferences
 
-__version__ = "1.2.0"
+__version__ = "1.2.1"
 __author__ = "kirillhod"
 
 bl_info = {
     "name": "Node Atlas",
     "author": "kirillhod",
-    "version": (1, 2, 0),
+    "version": (1, 2, 1),
     "blender": (4, 2, 0),
     "location": "Node Editor > Sidebar > Node Atlas",
     "description": "Export any node tree as one high-resolution PNG",
@@ -42,7 +42,11 @@ def _estimate(context, prefs):
         metrics = bounds.ViewMetrics(
             upp=target, k=1.0 / target, s=system / target, ox=0.0, oy=0.0
         )
-        rects = bounds.collect_rects(tree.nodes, metrics)
+        nodes = tree.nodes
+        if prefs.scope == "SELECTED":
+            keep = bounds.selected_node_names(tree)
+            nodes = [node for node in tree.nodes if node.name in keep]
+        rects = bounds.collect_rects(nodes, metrics)
         content = bounds.union_rects(rects)
         return bounds.compute_layout(
             content, region.width, height, prefs.padding,

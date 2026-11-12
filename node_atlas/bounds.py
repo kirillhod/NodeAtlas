@@ -191,6 +191,22 @@ def compute_layout(
     )
 
 
+def selected_node_names(tree) -> set[str]:
+    """Names kept by selected-only export: selection plus selected-frame children."""
+    keep = {node.name for node in tree.nodes if node.select and not node.hide}
+    for node in tree.nodes:
+        if node.name not in keep or node.type != "FRAME":
+            continue
+        for child in tree.nodes:
+            parent = child.parent
+            while parent is not None:
+                if parent.name in keep:
+                    keep.add(child.name)
+                    break
+                parent = parent.parent
+    return keep
+
+
 def build_selected_copy(tree):
     """Return a filtered orphan/group copy of *tree* and kept node count.
 
@@ -201,19 +217,7 @@ def build_selected_copy(tree):
     import bpy  # local import keeps the rest of this module testable
 
     tmp = tree.copy()
-    keep = {node.name for node in tmp.nodes if node.select and not node.hide}
-
-    # A selected frame keeps every descendant.
-    for node in list(tmp.nodes):
-        if node.name not in keep or node.type != "FRAME":
-            continue
-        for child in tmp.nodes:
-            parent = child.parent
-            while parent is not None:
-                if parent.name in keep:
-                    keep.add(child.name)
-                    break
-                parent = parent.parent
+    keep = selected_node_names(tmp)
 
     # Preserve absolute placement when the parent frame is not kept.
     for node in tmp.nodes:

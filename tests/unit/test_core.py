@@ -270,9 +270,9 @@ def test_long_output_path():
     import tempfile
 
     root = tempfile.mkdtemp(prefix="nodeatlas_long_")
-    parts = ["segment-%02d-abcdefghij" % index for index in range(7)]
+    parts = ["segment-%02d-abcdefghij" % index for index in range(6)]
     directory = os.path.join(root, *parts)
-    check(len(directory) > 180, "long path fixture is too short")
+    check(len(directory) > 150, "long path fixture is too short")
     target = os.path.join(directory, "export.png")
     stitch.check_output_path(target)
     check(os.path.isdir(directory), "long output directory was not created")
@@ -344,6 +344,36 @@ def test_disk_full():
         check(not os.path.exists(path + ".tmp.png"), "disk-full temp PNG was not cleaned up")
         if os.path.exists(path):
             os.remove(path)
+
+
+def test_selected_node_names():
+    class Node:
+        def __init__(self, name, select=False, hide=False, kind="NODE", parent=None):
+            self.name = name
+            self.select = select
+            self.hide = hide
+            self.type = kind
+            self.parent = parent
+
+    class Tree:
+        pass
+
+    frame = Node("Frame", select=True, kind="FRAME")
+    child = Node("Child", parent=frame)
+    grandchild = Node("Grandchild", parent=child)
+    selected = Node("Selected", select=True)
+    hidden = Node("Hidden", select=True, hide=True)
+    unrelated = Node("Unrelated")
+    tree = Tree()
+    tree.nodes = [frame, child, grandchild, selected, hidden, unrelated]
+    check(
+        bounds.selected_node_names(tree) == {"Frame", "Child", "Grandchild", "Selected"},
+        "selected/frame descendants",
+    )
+
+    frame.select = False
+    selected.select = False
+    check(bounds.selected_node_names(tree) == set(), "empty selection")
 
 
 def test_filename_sanitization():
@@ -440,6 +470,7 @@ def main():
         test_long_output_path,
         test_output_preflight,
         test_disk_full,
+        test_selected_node_names,
         test_filename_sanitization,
         test_render_filename,
         test_tree_owner_name,

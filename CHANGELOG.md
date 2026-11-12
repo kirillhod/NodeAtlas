@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.1
+
+- Fix the panel estimate in **Selected Nodes** mode: it now measures the filtered
+  selection instead of the whole tree, and matches the selected-only export.
+
 ## 1.2.0
 
 - Replace the **Copy to Clipboard** preference with a dedicated panel/menu button that
