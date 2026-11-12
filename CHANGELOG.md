@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.7.0
+
+- Validate the output directory before capture: missing parents are created, denied
+  directories and full disks fail with a clear message and start no job.
+- Map write failures to a readable `OutputError`; disk-full saves report "Not enough
+  free disk space" instead of a traceback and still remove the temporary PNG.
+- Probe writability with a private file instead of `tempfile.mkstemp`, which can loop
+  forever on Windows when an ACL denies writes.
+- Add unit tests for the preflight, long paths, locked targets and disk-full mapping.
+- Add GUI tests for a real ACL read-only directory, injected disk-full, a lost editor
+  area after the snapshot, and minimum density with 120 px padding.
+- Validate a 118 MP export with 1000 nodes and the memmap path on Blender 4.2–5.3.
+- Add `tests/run_blender.ps1`, a hang-safe runner that kills a stuck Blender and reports
+  timeout or stall instead of blocking the test loop.
+
 ## 0.6.2
 
 - Fix DPI normalization when Resolution Scale is not 1: Blender exposes the effective

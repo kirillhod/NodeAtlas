@@ -6,13 +6,13 @@ import bpy
 
 from . import bounds, capture, operators, preferences
 
-__version__ = "0.6.2"
+__version__ = "0.7.0"
 __author__ = "kirillhod"
 
 bl_info = {
     "name": "Node Atlas",
     "author": "kirillhod",
-    "version": (0, 6, 2),
+    "version": (0, 7, 0),
     "blender": (4, 2, 0),
     "location": "Node Editor > Sidebar > Node Atlas",
     "description": "Export any node tree as one high-resolution PNG",

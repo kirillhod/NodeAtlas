@@ -7,15 +7,16 @@ and [`AGENTS.md`](AGENTS.md) (non-negotiable rules).
 [Blender 4.2+](https://www.blender.org/download/) that exports the current node tree,
 or the selected nodes, as one PNG.
 
-**Progress (0.6.2):** M0–M5 are implemented, covering Shader, Geometry Nodes,
+**Progress (0.7.0):** M0–M5 are implemented, covering Shader, Geometry Nodes,
 Compositor and Texture. The legacy `screenshot_area` path is validated on Blender
 4.2.23, 4.5.9 and 5.1.2 for Shader/GN/Texture (including a NumPy PNG writer for
 saving); Compositor on 4.2–5.1 hits a native Blender crash and is rejected with a
-clear error instead. Cancel/error/undo, high density, extreme Dmax, a 1000-node graph,
-the max-MP guard, memmap spill, failed-save cleanup, a second Node Editor area and a
-second window are tested on 4.2, 4.5, 5.1, 5.2 and 5.3. M8 has clean classic and
-extension installs across 4.2–5.3, the Windows QA matrix, manifest/build, README,
-CHANGELOG and QA report; Linux/macOS and the disk-full/read-only limit cases are open.
+clear error instead. M7 hardening is validated on 4.2, 4.5, 5.1, 5.2 and 5.3:
+cancel/error/undo, 1000 nodes at 118 MP, extreme Dmax and D_min, padding 0/120, two
+Node Editor areas, two windows, real read-only output, injected disk-full, a lost area
+after the snapshot, locked targets and long paths. M8 has clean classic and extension
+installs across 4.2–5.3, the Windows QA matrix, manifest/build, README, CHANGELOG and
+QA report; Linux/macOS QA and the release package remain.
 
 | Milestone | Version | Status |
 |---|---|---|
@@ -25,9 +26,9 @@ CHANGELOG and QA report; Linux/macOS and the disk-full/read-only limit cases are
 | M3 Stitch/save | 0.4.0 | Done |
 | M4 Operator/UI MVP | 0.5.0 | Done; per-run overrides and popups deferred |
 | M5 Tree types | 0.6.0 | Done for Shader/GN/Compositor/Texture; 6.0 adapter open |
-| M6 Legacy adapter | 0.7.0 | Done for Shader/GN/Texture on 4.2.23/4.5.9/5.1.2; Compositor 4.2–5.1 is guarded |
-| M7 Hardening | 0.8.0 | Partial: 1000-node/memmap, extreme Dmax, multi-window/area and failure paths pass; disk-full/read-only open |
-| M8 Packaging/QA | 0.9.0 | Partial: Windows 4.2–5.3 matrix and clean classic/extension installs done; Linux/macOS open |
+| M6 Legacy adapter | 0.6.0 | Done for Shader/GN/Texture on 4.2.23/4.5.9/5.1.2; Compositor 4.2–5.1 is guarded |
+| M7 Hardening | 0.7.0 | Done: limits, fault injection and output-path guards pass on Windows 4.2–5.3 |
+| M8 Packaging/QA | 0.8.0 | Partial: Windows 4.2–5.3 matrix and clean classic/extension installs done; Linux/macOS open |
 | M9 Release | 1.0.0 | Pending |
 
 This plan is a dependency-ordered roadmap, not a promise of dates. Estimates are focused
@@ -364,24 +365,24 @@ identical pixels.
 
 ---
 
-### M6 — Blender 4.2–5.1 adapter (`0.7.0`)
+### M6 — Blender 4.2–5.1 adapter (`0.6.0`)
 
 **Goal:** meet the 4.2+ support promise.
 
 Tasks:
 
-- [ ] [`screenshot_area`](https://docs.blender.org/api/current/bpy.ops.screen.html#bpy.ops.screen.screenshot_area)
+- [x] [`screenshot_area`](https://docs.blender.org/api/current/bpy.ops.screen.html#bpy.ops.screen.screenshot_area)
       adapter: temporary PNG/TIFF, force PNG/Image settings, restore
       `scene.render.image_settings`, crop the header; determine actual region size per
       version instead of assuming.
-- [ ] Loading/saving fallback: [`bpy.data.images`](https://docs.blender.org/api/current/bpy.types.BlendData.html#bpy.types.BlendData.images)
+- [x] Loading/saving fallback: [`bpy.data.images`](https://docs.blender.org/api/current/bpy.types.BlendData.html#bpy.types.BlendData.images)
       with `Non-Color` + `pixels.foreach_get` for reading a legacy screenshot;
       NumPy PNG writer for saving.
-- [ ] Capability detection module (`hasattr`, `bpy.app.version`) used only at the adapter
+- [x] Capability detection module (`hasattr`, `bpy.app.version`) used only at the adapter
       boundary.
-- [ ] Re-run geometry, selected-only, state-restore and undo suites on 4.2 LTS, 4.5 LTS
+- [x] Re-run geometry, selected-only, state-restore and undo suites on 4.2 LTS, 4.5 LTS
       and 5.1.
-- [ ] Document version-specific limitations and anything not reproducible.
+- [x] Document version-specific limitations and anything not reproducible.
 
 **Exit:** at least 4.2/4.5 and 5.1 pass the geometry/state/undo suites on Windows; if a
 build is unavailable, 1.0.0 either waits or the release notes downgrade that version to
@@ -391,24 +392,29 @@ build is unavailable, 1.0.0 either waits or the release notes downgrade that ver
 
 ---
 
-### M7 — Hardening and limits (`0.8.0`)
+### M7 — Hardening and limits (`0.7.0`)
 
 **Goal:** no known crash, silent corruption or state loss in realistic edge cases.
 
 Tasks:
 
-- [ ] Fault injection at every state: missing region/window, area closed mid-export,
+- [x] Fault injection at every state: missing region/window, area closed mid-export,
       stale references, failed screenshot, locked output file, disk full (simulated).
-- [ ] Large graphs: 100 and 1000 nodes; 100+ MP; memmap path; performance report.
-- [ ] Extreme density: `D_min`, `D_max` at `view.ui_scale` 1/2/6; padding 0 and 120;
+      A lost area after the snapshot, an injected capture failure, a locked target and
+      an injected ENOSPC save are covered by GUI/unit tests; missing contexts are
+      guarded by `poll` and by re-acquiring `area`/`region` every stage.
+- [x] Large graphs: 100 and 1000 nodes; 100+ MP; memmap path; performance report.
+      1000 nodes produce 75.8 MP at 96 dpi and 118.1 MP at 120 dpi (10.9–19.3 s).
+- [x] Extreme density: `D_min`, `D_max` at `view.ui_scale` 1/2/6; padding 0 and 120;
       `view.ui_scale` restore after forced high-D export.
-- [ ] Multiple windows and multiple Node Editor areas: pick one deterministically and
+- [x] Multiple windows and multiple Node Editor areas: pick one deterministically and
       guard against the others changing.
-- [ ] Unicode/odd tree and file names; long paths; read-only directories.
-- [ ] Full state/undo suite across variants: fullscreen, hidden UI, temp tree, induced
+- [x] Unicode/odd tree and file names; long paths; read-only directories.
+- [x] Full state/undo suite across variants: fullscreen, hidden UI, temp tree, induced
       exception, theme override, `ui_scale` change, selection change.
-- [ ] Verify no preference save anywhere; document the crash-recovery caveat for
-      `view.ui_scale`.
+- [x] Verify no preference save anywhere; document the crash-recovery caveat for
+      `view.ui_scale` (Blender saves preferences only on a normal quit; a hard crash
+      can leave the export-time scale unsaved or persisted from an earlier save).
 
 **Exit:** all fault/limits tests pass or have a documented, user-visible guard; no
 unrestored-state failures; undo-neutral on every tested version.
@@ -417,7 +423,7 @@ unrestored-state failures; undo-neutral on every tested version.
 
 ---
 
-### M8 — Packaging, docs and QA matrix (`0.9.0`)
+### M8 — Packaging, docs and QA matrix (`0.8.0`)
 
 **Goal:** a release candidate that can be installed by someone who has never seen the repo.
 
@@ -566,9 +572,9 @@ M0 ──► M1 ──► M2 ──► M3 ──► M4 ──► M5 ──► M7
 | M3 | 0.4.0 | Stitch and save | 2–3 |
 | M4 | 0.5.0 | Operator/UI, end-to-end MVP | 3–4 |
 | M5 | 0.6.0 | Tree types + Compositor | 2–3 |
-| M6 | 0.7.0 | Legacy 4.2–5.1 | 3–4 |
-| M7 | 0.8.0 | Hardening, limits, fault injection | 3–4 |
-| M8 | 0.9.0 | Packaging, docs, QA matrix | 3–5 |
+| M6 | 0.6.0 | Legacy 4.2–5.1 | 3–4 |
+| M7 | 0.7.0 | Hardening, limits, fault injection | 3–4 |
+| M8 | 0.8.0 | Packaging, docs, QA matrix | 3–5 |
 | M9 | 1.0.0 | Release | 1–2 |
 | **Total** | | | **23–35** |
 

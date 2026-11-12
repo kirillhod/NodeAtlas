@@ -13,11 +13,12 @@ in overlapping tiles, stitches them into one seamless image, and saves it withou
 external dependencies. Output density is controlled independently of the monitor and
 current zoom.
 
-> **Status: 0.6.2.** Current-tree and selected-nodes export work for Shader,
+> **Status: 0.7.0.** Current-tree and selected-nodes export work for Shader,
 > Geometry Nodes, Compositor and Texture. Blender 5.2+ uses the raw screenshot path;
 > Blender 4.2–5.1 uses the legacy path for Shader/GN/Texture (validated on 4.2.23,
 > 4.5.9 and 5.1.2; Compositor is guarded because of a native 4.2–5.1 crash). The
-> Windows 4.2–5.3 matrix and clean installs pass. M7–M9 hardening and packaging remain.
+> Windows 4.2–5.3 matrix, 118 MP exports, read-only/full-disk handling and clean
+> installs pass. M8 packaging and Linux/macOS QA remain.
 > See [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md).
 
 ## Features
@@ -67,12 +68,14 @@ default.
 ## Known limitations
 
 - GUI only; `--background` cannot capture the editor.
-- Blender 4.2–5.1 uses the legacy `screenshot_area` adapter (validated on 4.2.23 for
-  Shader/GN/Texture); 5.2+ uses the raw screenshot path.
+- Blender 4.2–5.1 uses the legacy `screenshot_area` adapter (validated on 4.2.23,
+  4.5.9 and 5.1.2 for Shader/GN/Texture); 5.2+ uses the raw screenshot path.
 - Compositor export on Blender 4.2–5.1 is blocked by a native Blender crash and shows
-  a clear error; use 5.2+ for the Compositor. Blender 4.5/5.1 QA is still pending.
+  a clear error; use 5.2+ for the Compositor.
 - Very long links may fade; Blender has no public setting to disable link LOD.
 - The view is restored to the nearest pixel (`View2D.cur` is not exposed).
+- Linux and macOS were not tested; the code path is platform-neutral, but only Windows
+  has a QA record.
 - Transparent background and batch export are planned after 1.0.
 
 ## Development
@@ -109,7 +112,21 @@ blender --factory-startup --python tests/gui/test_extreme.py
 blender --factory-startup --python tests/gui/test_multiarea.py
 blender --factory-startup --python tests/gui/test_multiwindow.py
 blender --factory-startup --python tests/gui/test_1000.py
+blender --factory-startup --python tests/gui/test_limits.py
+blender --factory-startup --python tests/gui/test_readonly.py
+blender --factory-startup --python tests/gui/test_diskfull.py
+blender --factory-startup --python tests/gui/test_arealost.py
 ```
+
+`tests/run_blender.ps1` wraps a GUI test with a wall-clock and idle timeout, kills a
+stuck Blender, and prints the tail of its log:
+
+```powershell
+powershell -File tests/run_blender.ps1 -Blender <blender.exe> `
+  -Script tests/gui/test_export.py -TimeoutSec 120 -IdleSec 40
+```
+
+Set `NODEATLAS_TEST_DPI=120` for the 118 MP variant of `test_1000.py`.
 
 Source layout:
 

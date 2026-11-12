@@ -16,6 +16,7 @@ if ROOT not in sys.path:
 
 OUT = tempfile.mkdtemp(prefix="nodeatlas_1000_")
 FIXTURE = os.path.join(ROOT, "tests", "fixtures", "scene_both.blend")
+DPI = int(os.environ.get("NODEATLAS_TEST_DPI", "96"))
 OUTPUT = os.path.join(OUT, "thousand.png")
 state = {"ticks": 0, "found": None}
 
@@ -78,9 +79,9 @@ def setup():
     prefs = bpy.context.preferences.addons["node_atlas"].preferences
     prefs.default_dir = OUT + os.sep
     prefs.filename_pattern = "thousand.png"
-    prefs.output_dpi = 96
+    prefs.output_dpi = DPI
     prefs.padding = 20
-    prefs.max_mp = 150.0
+    prefs.max_mp = 200.0 if DPI > 96 else 150.0
     prefs.scope = "CURRENT"
     prefs.hide_ui = True
     prefs.restore_ui = True
@@ -100,6 +101,8 @@ def tick():
                     size = tuple(image.size)
                 finally:
                     bpy.data.images.remove(image)
+                if DPI > 96 and size[0] * size[1] < 100_000_000:
+                    fail(f"expected a 100+ MP output at {DPI} dpi: {size}")
                 after = snapshot()
                 if after != state["before"]:
                     fail(f"state mismatch: {state['before']} != {after}")
@@ -107,6 +110,7 @@ def tick():
                     "result": "PASS",
                     "size": size,
                     "nodes": after["node_count"],
+                    "dpi": DPI,
                 }, indent=2))
                 sys.stdout.flush()
                 os._exit(0)

@@ -440,6 +440,14 @@ def start_job(context, filepath: str, operator=None) -> bool:
             operator.report({"ERROR"}, "NodeAtlas preferences are unavailable")
         return False
 
+    try:
+        stitch.check_output_path(filepath)
+    except stitch.OutputError as exc:
+        log.error("Output path rejected: %s", exc)
+        if operator is not None:
+            operator.report({"ERROR"}, f"NodeAtlas: {exc}")
+        return False
+
     job = ExportJob(context, settings_from_prefs(prefs, filepath))
     _current_job = job
     last_result = None

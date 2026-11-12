@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import errno
 import os
 import tempfile
 
@@ -12,6 +13,74 @@ MEMORY_LIMIT = 512 * 1024 * 1024
 
 class StitchError(RuntimeError):
     pass
+
+
+class OutputError(StitchError):
+    """The output path cannot be created or the image cannot be written."""
+
+
+def _disk_full(exc: OSError) -> bool:
+    if getattr(exc, "errno", None) == errno.ENOSPC:
+        return True
+    # Windows reports a full volume as ERROR_DISK_FULL / ERROR_HANDLE_DISK_FULL.
+    return getattr(exc, "winerror", None) in (39, 112)
+
+
+def _detail(exc: OSError) -> str:
+    if _disk_full(exc):
+        return "the disk is full"
+    return getattr(exc, "strerror", None) or str(exc) or type(exc).__name__
+
+
+def _output_message(path: str, exc: OSError) -> str:
+    if _disk_full(exc):
+        return f"Not enough free disk space to save {path}"
+    return f"Cannot write {path}: {_detail(exc)}"
+
+
+def _probe_writable(directory: str) -> None:
+    """Create and remove one probe file, raising the real OS error on failure.
+
+    ``tempfile.mkstemp`` is not used here: on Windows it retries forever when
+    the directory denies writes but ``os.access`` still reports it writable.
+    """
+    import uuid
+
+    for _ in range(16):
+        probe = os.path.join(
+            directory, f".nodeatlas_probe_{os.getpid()}_{uuid.uuid4().hex}"
+        )
+        try:
+            descriptor = os.open(probe, os.O_RDWR | os.O_CREAT | os.O_EXCL, 0o600)
+        except FileExistsError:
+            continue
+        else:
+            os.close(descriptor)
+            try:
+                os.remove(probe)
+            except OSError:
+                pass
+            return
+    raise OSError(errno.EEXIST, "Could not create a probe file", directory)
+
+
+def check_output_path(filepath: str) -> None:
+    """Fail early when the destination directory is missing or read-only."""
+    path = os.path.abspath(filepath)
+    directory = os.path.dirname(path)
+    try:
+        os.makedirs(directory, exist_ok=True)
+    except OSError as exc:
+        raise OutputError(
+            f"Cannot create output directory {directory}: {_detail(exc)}"
+        ) from exc
+
+    try:
+        _probe_writable(directory)
+    except OSError as exc:
+        raise OutputError(
+            f"Output directory {directory} is not writable: {_detail(exc)}"
+        ) from exc
 
 
 def _allocate_canvas(canvas_h: int, canvas_w: int, memory_limit: int):
@@ -180,12 +249,18 @@ def save_png(image: np.ndarray, filepath: str) -> None:
                     img.free()
                 os.replace(temp_path, path)
                 return
+            except OSError as exc:
+                if _disk_full(exc):
+                    raise OutputError(_output_message(path, exc)) from exc
             except Exception:
                 # Fall through to the dependency-free writer.
                 pass
 
-        _write_png_numpy(image, temp_path)
-        os.replace(temp_path, path)
+        try:
+            _write_png_numpy(image, temp_path)
+            os.replace(temp_path, path)
+        except OSError as exc:
+            raise OutputError(_output_message(path, exc)) from exc
     finally:
         if os.path.exists(temp_path):
             try:

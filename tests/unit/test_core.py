@@ -204,13 +204,116 @@ def test_save_cleanup():
         stitch.os.replace = locked
         try:
             stitch.save_png(image, path)
-        except OSError:
-            pass
+        except stitch.OutputError as exc:
+            check("target is locked" in str(exc), "save error message")
         else:
             check(False, "save_png should fail when the target is locked")
     finally:
         stitch.os.replace = original_replace
         check(not os.path.exists(path + ".tmp.png"), "temporary PNG was not cleaned up")
+        if os.path.exists(path):
+            os.remove(path)
+
+
+def test_locked_target():
+    import tempfile
+
+    image = np.zeros((4, 4, 4), dtype=np.uint8)
+    image[:, :, 3] = 255
+    descriptor, path = tempfile.mkstemp(suffix=".png")
+    os.close(descriptor)
+    with open(path, "wb") as handle:
+        handle.write(b"not a png")
+    holder = open(path, "rb")
+    try:
+        try:
+            stitch.save_png(image, path)
+        except stitch.OutputError as exc:
+            check("Cannot write" in str(exc), "locked target message")
+        else:
+            check(False, "save_png should fail when the target is locked")
+    finally:
+        holder.close()
+        check(not os.path.exists(path + ".tmp.png"), "locked target temp PNG was not cleaned up")
+        os.remove(path)
+
+
+def test_long_output_path():
+    import tempfile
+
+    root = tempfile.mkdtemp(prefix="nodeatlas_long_")
+    parts = ["segment-%02d-abcdefghij" % index for index in range(7)]
+    directory = os.path.join(root, *parts)
+    check(len(directory) > 180, "long path fixture is too short")
+    target = os.path.join(directory, "export.png")
+    stitch.check_output_path(target)
+    check(os.path.isdir(directory), "long output directory was not created")
+
+
+def test_output_preflight():
+    import errno
+    import tempfile
+
+    root = tempfile.mkdtemp(prefix="nodeatlas_preflight_")
+    target = os.path.join(root, "nested", "export.png")
+    stitch.check_output_path(target)
+    check(os.path.isdir(os.path.dirname(target)), "preflight creates the directory")
+    check(
+        not any(name.startswith(".nodeatlas_probe_") for name in os.listdir(os.path.dirname(target))),
+        "preflight probe was removed",
+    )
+
+    original_open = stitch.os.open
+    try:
+        def denied(*_args, **_kwargs):
+            raise OSError(errno.EACCES, "Permission denied")
+
+        stitch.os.open = denied
+        try:
+            stitch.check_output_path(target)
+        except stitch.OutputError as exc:
+            check("not writable" in str(exc), "read-only directory message")
+        else:
+            check(False, "read-only directory was not rejected")
+    finally:
+        stitch.os.open = original_open
+
+    blocker = os.path.join(root, "blocked")
+    with open(blocker, "w", encoding="utf-8") as handle:
+        handle.write("file")
+    try:
+        stitch.check_output_path(os.path.join(blocker, "export.png"))
+    except stitch.OutputError as exc:
+        check("Cannot create output directory" in str(exc), "blocked directory message")
+    else:
+        check(False, "a file in the directory path was not rejected")
+
+
+def test_disk_full():
+    import errno
+    import tempfile
+
+    image = np.zeros((4, 4, 4), dtype=np.uint8)
+    image[:, :, 3] = 255
+    descriptor, path = tempfile.mkstemp(suffix=".png")
+    os.close(descriptor)
+    original_replace = stitch.os.replace
+    try:
+        def full(*_args, **_kwargs):
+            error = OSError(errno.ENOSPC, "No space left on device")
+            error.winerror = 112
+            raise error
+
+        stitch.os.replace = full
+        try:
+            stitch.save_png(image, path)
+        except stitch.OutputError as exc:
+            check("Not enough free disk space" in str(exc), "disk-full message")
+        else:
+            check(False, "save_png should fail on a full disk")
+    finally:
+        stitch.os.replace = original_replace
+        check(not os.path.exists(path + ".tmp.png"), "disk-full temp PNG was not cleaned up")
         if os.path.exists(path):
             os.remove(path)
 
@@ -232,6 +335,10 @@ def main():
         test_stitch_single_tile,
         test_png_writer,
         test_save_cleanup,
+        test_locked_target,
+        test_long_output_path,
+        test_output_preflight,
+        test_disk_full,
         test_filename_sanitization,
         test_registration,
         test_version_consistency,
