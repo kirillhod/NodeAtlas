@@ -78,7 +78,8 @@ default.
 
 The validated research prototypes are in [`reference/prototypes/`](reference/prototypes/);
 fixture generators are in [`tests/fixtures/`](tests/fixtures/). Design notes, measured
-constraints and conventions are in [`AGENTS.md`](AGENTS.md).
+constraints and conventions are in [`AGENTS.md`](AGENTS.md). Release history and tested
+environments are in [`CHANGELOG.md`](CHANGELOG.md) and [`QA_REPORT.md`](QA_REPORT.md).
 
 Run the headless core tests:
 

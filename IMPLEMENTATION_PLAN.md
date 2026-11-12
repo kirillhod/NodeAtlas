@@ -11,8 +11,8 @@ or the selected nodes, as one PNG.
 Compositor and Texture. The legacy `screenshot_area` path is validated on Blender
 4.2.23 for Shader/GN/Texture (including a NumPy PNG writer for saving); Compositor on
 4.2–5.1 hits a native Blender crash and is rejected with a clear error instead. The
-cancel/error/undo paths are tested on 4.2 and 5.3. Still open: real 4.5/5.1 QA, the
-Blender 6.0 compositor adapter, large-graph/limit hardening, and M8–M9 packaging.
+cancel/error/undo paths are tested on 4.2 and 5.3. M8 has the manifest/build, README,
+CHANGELOG and QA report; clean-profile install, the 4.5/5.1 matrix and M7 limits remain.
 
 | Milestone | Version | Status |
 |---|---|---|
@@ -24,7 +24,7 @@ Blender 6.0 compositor adapter, large-graph/limit hardening, and M8–M9 packagi
 | M5 Tree types | 0.6.0 | Done for Shader/GN/Compositor/Texture; 6.0 adapter open |
 | M6 Legacy adapter | 0.7.0 | Validated on 4.2.23 for Shader/GN/Texture; Compositor 4.2 is guarded; 4.5/5.1 pending |
 | M7 Hardening | 0.8.0 | Cancel/failure/undo tested on 4.2 + 5.3; limits open |
-| M8 Packaging/QA | 0.9.0 | Partial |
+| M8 Packaging/QA | 0.9.0 | Partial (manifest/build, README, CHANGELOG, QA report; clean install/matrix open) |
 | M9 Release | 1.0.0 | Pending |
 
 This plan is a dependency-ordered roadmap, not a promise of dates. Estimates are focused
