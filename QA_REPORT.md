@@ -74,12 +74,13 @@ the other editor/window untouched; the max-MP test uses a 1 MP limit.
 
 - `blender --command extension validate node_atlas`: PASS.
 - `blender --command extension build --source-dir node_atlas --output-dir dist`:
-  produces `node_atlas-0.6.1.zip` with the manifest and package modules.
+  produces `node_atlas-0.6.2.zip` with the manifest and package modules.
 - Classic add-on clean-profile install: PASS on Blender 4.2.23, 4.5.9, 5.1.2, 5.2.4
-  and 5.3.0, each in an isolated `BLENDER_USER_SCRIPTS/scripts/addons` profile.
-- Extension clean-profile install: PASS on Blender 4.2.23, 4.5.9, 5.1.2, 5.2.4 and
-  5.3.0. Each used an isolated user repository with `install-file --enable` and loaded
-  `bl_ext.nodeatlas_test.node_atlas` version 0.6.1.
+  and 5.3.0 in isolated `BLENDER_USER_SCRIPTS/scripts/addons` profiles (0.6.1); the
+  0.6.2 package was re-validated on 5.3.0.
+- Extension clean-profile install: PASS across the same five versions with 0.6.1; the
+  0.6.2 zip was installed into an isolated 5.3.0 repository with
+  `install-file --enable`, loading `bl_ext.nodeatlas_test.node_atlas` version 0.6.2.
 - Linux/macOS QA is still pending.
 
 ## Known issues
