@@ -1,11 +1,15 @@
 # NodeAtlas — Implementation Plan to 1.0.0
 
-**Status:** proposed; no add-on code written yet.  
+**Status:** in progress; 0.5.0 MVP implemented (see below).
 **Based on:** [`NodeGraph_Export_Report.md`](NodeGraph_Export_Report.md) (validated on Blender 5.3.0)
 and [`AGENTS.md`](AGENTS.md) (non-negotiable rules).  
 **Target:** `node_atlas` 1.0.0 — a stable, documented extension for
 [Blender 4.2+](https://www.blender.org/download/) that exports the current node tree,
 or the selected nodes, as one PNG.
+
+**Progress (0.5.0 MVP):** M0–M4 are implemented, plus the verified tree-type path
+from M5 (Shader, Geometry Nodes, Compositor) and the timer/cancel parts of M7. The
+4.2–5.1 adapter (M6), full hardening and packaging (M7–M9) remain.
 
 This plan is a dependency-ordered roadmap, not a promise of dates. Estimates are focused
 development days and exclude waiting for Blender builds, OS/hardware access and review.

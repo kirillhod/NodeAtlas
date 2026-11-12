@@ -1,0 +1,9 @@
+schema_version = "1.0.0"
+id = "node_atlas"
+name = "Node Atlas"
+tagline = "Export any node tree as one high-resolution PNG"
+version = "0.5.0"
+maintainer = "kirillhod"
+type = "add-on"
+blender_version_min = "5.2.0"
+license = ["SPDX:GPL-3.0-or-later"]

@@ -15,10 +15,11 @@ as one high-resolution PNG. It captures the
 [NumPy](https://numpy.org/doc/stable/), and saves through
 [`imbuf`](https://docs.blender.org/api/current/imbuf.html). No re-rendering.
 
-**Status:** research and validation are complete on
-[Blender 5.3.0](https://developer.blender.org/docs/release_notes/5.3/); the add-on code
-has not been written yet. Follow the milestone order in
-[`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md).
+**Status:** research and live validation are complete on
+[Blender 5.3.0](https://developer.blender.org/docs/release_notes/5.3/). The 0.5.0 MVP
+is implemented (current tree, selected nodes, Shader/Geometry Nodes/Compositor, PNG,
+state restore, undo-neutral); the 4.2–5.1 adapter and 1.0 hardening remain. Follow the
+milestone order in [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md).
 
 **Agreed identifiers** (do not rename without approval):
 
@@ -59,8 +60,9 @@ and as an extension. Do not commit generated artifacts.
 
 ## 4. Environment
 
-- **Blender 4.2+**, primary development on **5.3.0 / Windows**; test 4.2 LTS, 4.5 LTS,
-  5.1, 5.2, 5.3 on Windows/macOS/Linux.
+- **Blender 4.2+ target**, primary development on **5.3.0 / Windows**; the 0.5.0 MVP
+  requires **5.2+** (raw screenshot path); the 4.2–5.1 adapter is M6. Test 4.2 LTS,
+  4.5 LTS, 5.1, 5.2, 5.3 on Windows/macOS/Linux.
 - **[Python 3.11](https://www.python.org/)** is bundled with 4.2+; NumPy is available
   inside Blender. No third-party dependencies (no [Pillow](https://python-pillow.org/),
   no wheels).

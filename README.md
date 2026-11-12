@@ -13,42 +13,98 @@ in overlapping tiles, stitches them into one seamless image, and saves it withou
 external dependencies. Output density is controlled independently of the monitor and
 current zoom.
 
-> **Status:** research and validation are complete
-> ([Blender 5.3.0](https://developer.blender.org/docs/release_notes/5.3/)); the add-on
-> is not implemented yet. The full design, measurements and pitfalls are in
-> [`NodeGraph_Export_Report.md`](NodeGraph_Export_Report.md).
+> **Status: 0.5.0 MVP.** Current-tree and selected-nodes export work for Shader,
+> Geometry Nodes and Compositor trees on Blender 5.2+. The 4.2–5.1 adapter and the
+> 1.0 hardening/packaging milestones are still in progress. See
+> [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md).
 
-## Planned features
+## Features
 
 - One PNG for the whole graph, including nodes outside the visible area
 - Output density independent of monitor DPI and zoom (`output_dpi`, 96 = 1:1)
 - Real background padding captured from the editor, not painted
-- Selected-nodes-only export
+- Selected-nodes-only export using a temporary filtered tree copy
 - Shader, Geometry Nodes and Compositor trees
 - Clean frame: UI panels, gizmos, selection and context path hidden during export
-- Full editor state restoration, including on failure
+- Full editor state restoration, including after an error or cancel
 - Undo-neutral: the capture pipeline never pushes an undo step
-- [Blender 4.2+](https://www.blender.org/download/) (fast raw-buffer path on 5.2+)
+- Timer-driven progress and `Esc` cancellation
 
 ## Requirements
 
-- [Blender 4.2](https://www.blender.org/download/) or newer
+- [Blender 5.2](https://www.blender.org/download/) or newer for this MVP
+  (the 4.2–5.1 `screenshot_area` adapter is the next milestone)
 - A GUI session ([Blender cannot capture UI in `--background`](https://docs.blender.org/manual/en/latest/advanced/command_line/arguments.html))
+
+## Install
+
+Classic add-on (development):
+
+1. Copy or junction the `node_atlas/` folder into Blender's `scripts/addons/`.
+2. Enable **Node Atlas** in *Edit → Preferences → Add-ons*.
+
+Extension build:
+
+```powershell
+blender --command extension build --source-dir node_atlas
+```
+
+Install the resulting zip through *Edit → Preferences → Extensions*.
+
+## Usage
+
+1. Open any Node Editor (Material, Geometry Nodes, Compositor, Texture).
+2. Press `N` and open the **Node Atlas** sidebar tab.
+3. Use **Export Current Tree**, **Export As…**, or `Ctrl+Shift+E`.
+4. Press `Esc` to cancel a running export; the editor is restored afterwards.
+
+Settings live in the sidebar and in *Edit → Preferences → Add-ons → Node Atlas*. The
+quick action uses the `.blend` folder and the `{blend}_{tree}_{date}.png` pattern by
+default.
+
+## Known limitations
+
+- GUI only; `--background` cannot capture the editor.
+- Blender 4.2–5.1 currently raises a clear "5.2+ required" error.
+- Very long links may fade; Blender has no public setting to disable link LOD.
+- The view is restored to the nearest pixel (`View2D.cur` is not exposed).
+- Transparent background and batch export are planned after 1.0.
 
 ## Development
 
-The repository currently contains the specification and the implementation roadmap
-([`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md)). Implementation notes, conventions
-and verified constraints are in [`AGENTS.md`](AGENTS.md). Planned source layout:
+The validated research prototypes are in [`reference/prototypes/`](reference/prototypes/);
+fixture generators are in [`tests/fixtures/`](tests/fixtures/). Design notes, measured
+constraints and conventions are in [`AGENTS.md`](AGENTS.md).
+
+Run the headless core tests:
+
+```powershell
+blender --background --factory-startup --python tests/unit/test_core.py
+```
+
+Generate fixtures and run the live GUI tests:
+
+```powershell
+blender --background --factory-startup --python tests/fixtures/make_scene_uniq.py
+blender --background --factory-startup --python tests/fixtures/make_scene_small.py
+blender --background --factory-startup --python tests/fixtures/make_scene_both.py
+blender --factory-startup --python tests/gui/test_export.py
+blender --factory-startup --python tests/gui/test_selected.py
+blender --factory-startup --python tests/gui/test_trees.py
+blender --factory-startup --python tests/gui/test_repeat.py
+```
+
+Source layout:
 
 ```text
 node_atlas/
-├─ __init__.py
-├─ operators.py
-├─ capture.py
-├─ bounds.py
-├─ stitch.py
-├─ preferences.py
+├─ __init__.py          # registration, menus, panel, keymap
+├─ operators.py         # export operators and timer job
+├─ capture.py           # snapshot/restore, view control, tiled capture
+├─ bounds.py            # view metrics, bounds, layout, selected-only copy
+├─ stitch.py            # canvas, feathering, top crop, PNG save
+├─ preferences.py       # global defaults
+├─ log.py               # namespaced logger
 └─ blender_manifest.toml
 ```
 
