@@ -233,7 +233,7 @@ s    = S * k                             # px per unit — positions
   ```
 
   `buf[:] = arr` does **not** work (`NotImplementedError: ... ndim = 1`); use `np.frombuffer(buf, ...)[:] = arr`. `img.filepath`/`file_type` are not required — `imbuf.write(..., filepath=...)` is enough. `imbuf.write` can fail if the target file is locked (`OpenImageIO write failed`); write to `.tmp.png` and `os.replace`.
-- Fallback: [`bpy.data.images.new`](https://docs.blender.org/api/current/bpy.types.BlendData.html#bpy.types.BlendData.images) + [`pixels.foreach_set`](https://docs.blender.org/api/current/bpy.types.Image.html#bpy.types.Image.pixels) (slower, float memory), or [Pillow](https://python-pillow.org/) (not a required dependency).
+- Fallback: [`bpy.data.images.new`](https://docs.blender.org/api/current/bpy.types.BlendData.html#bpy.types.BlendData.images) + [`pixels.foreach_set`](https://docs.blender.org/api/current/bpy.types.Image.html#bpy.types.Image.pixels) (slower, float memory), or [Pillow](https://python-pillow.org/) (not a required dependency). The add-on uses a small NumPy PNG writer for the 4.2–5.1 save path to avoid color-management round-trips.
 - **Stitching:** tiles are placed by exact pan offsets (`view2d.pan` moves content exactly the requested integer pixels, with an inverted sign). Overlap 120 px + linear feathering. **Crop `PAD` on every tile edge** — otherwise scrollbar/frame pixels enter the overlap and create bright joint lines. Verified on a 24-node graph:
   - without cropping: mean abs diff in overlap 0.6–0.9, visible joint lines;
   - with cropping: mean abs diff = **0.0000** (one pair 0.014, sub-pixel text rendering); on the final image, the difference between adjacent columns/rows at a seam is no different from neighboring ones (0.88 vs 0.80/0.14, 1.79 vs 1.92/1.61) — there is no seam at all, not “almost none”.
@@ -351,7 +351,7 @@ The algorithm is not a sketch: it describes the **validated** prototype ([`tilin
    assert (wsum[c0:c0+fh, PAD_eff:PAD_eff+fw] > 0).all()
    ```
 
-   **Do not fill anything:** the `padding` band is the real graph background (theme color, grid dots) captured from the screen. Save via `imbuf.new/with_buffer/imbuf.write` (§4.6); fallback `bpy.data.images`.
+   **Do not fill anything:** the `padding` band is the real graph background (theme color, grid dots) captured from the screen. Save via `imbuf.new/with_buffer/imbuf.write` (§4.6); the 4.2–5.1 fallback uses a NumPy PNG writer.
 8. **Restore.** In `finally`: restore the original tree/selection/active; restore region visibility/gizmo/context path while still maximized; leave maximization (`screen_full_area`; if it returns but the area is still maximized, retry with a fresh `win.screen.areas[0]`); re-acquire `area`/`region`/`space`; restore `preferences.view.ui_scale`/`smooth_view`; restore the view (`zoom_border` to saved `upp`, pan to the saved center); restore `area.type` if it was changed. Remove temp trees with `bpy.data.batch_remove`. **Never** use undoable operators (`node.delete`/`duplicate`/`select_all`) or `undo_push`; the whole pipeline is verified undo-neutral (§11.16).
 
 **Validated result (6 distinct chains, 24 nodes, reference run):** `k = 0.99952`, `s = 1.24941`, bounds 5378×4545 px, grid 3×5, step 1980×1050, `PAD = 16`. Overlap after cropping: **mean abs diff 0.0000** (one pair 0.0142) — pixel-identical. Output PNG **5346×4513**; all checked nodes matched the model within 2 px; margins ≈20 px; seam-line gradients match neighboring rows/columns. Time: 15 tiles in 0.50 s (33 ms/tile), stitching 1.51 s.
@@ -376,7 +376,7 @@ The algorithm is not a sketch: it describes the **validated** prototype ([`tilin
 
 | Blender version | Capture | Stitch/save |
 |---|---|---|
-| 4.2–5.1 | `bpy.ops.screen.screenshot_area` → temporary PNG | NumPy + `imbuf.load` / `bpy.data.images` |
+| 4.2–5.1 | `bpy.ops.screen.screenshot_area` → temporary PNG | NumPy + Python PNG writer |
 | 5.2–5.3 | `Window.screenshot(region=...)` → memoryview | NumPy + `imbuf.new` + `with_buffer` + `imbuf.write` |
 
 Target `blender_version_min` — **4.2.0**; on 5.2+ the fast path is enabled automatically.

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import math
+import os
+import tempfile
 from dataclasses import dataclass, field
 
 import bpy
@@ -297,8 +299,18 @@ def anchor_first_tile(
     return measure_view(region.view2d, system_ui_scale, view_ui_scale)
 
 
+def can_capture_raw(window) -> bool:
+    """True on Blender 5.2+, unless the legacy path is forced for testing."""
+    return hasattr(window, "screenshot") and os.environ.get(
+        "NODEATLAS_FORCE_LEGACY"
+    ) != "1"
+
+
 def capture_tile(window, area, region, width: int, height: int, bottom_ui: int, pad: int):
     redraw(window, area, region)
+    if not can_capture_raw(window):
+        return _capture_tile_legacy(window, area, region, width, height, bottom_ui, pad)
+
     full_height = region.height
     bottom = region.y + bottom_ui
     top = region.y + full_height
@@ -313,6 +325,61 @@ def capture_tile(window, area, region, width: int, height: int, bottom_ui: int, 
             f"({width}x{height}); is the window visible?"
         )
     tile = array.reshape(height, width, 4)
+    cropped = tile[pad:height - pad, pad:width - pad, :].copy()
+    if cropped.shape[0] <= 0 or cropped.shape[1] <= 0:
+        raise RuntimeError("PAD is larger than the captured tile")
+    return cropped
+
+
+def _capture_tile_legacy(
+    window, area, region, width: int, height: int, bottom_ui: int, pad: int,
+):
+    """Blender 4.2–5.1: screenshot_area into a temporary PNG and crop it."""
+    settings = bpy.context.scene.render.image_settings
+    old_format = settings.file_format
+    old_mode = settings.color_mode
+    descriptor, path = tempfile.mkstemp(prefix="nodeatlas_", suffix=".png")
+    os.close(descriptor)
+    try:
+        settings.file_format = "PNG"
+        settings.color_mode = "RGBA"
+        with bpy.context.temp_override(window=window, area=area, region=region):
+            bpy.ops.screen.screenshot_area(filepath=path)
+
+        image = bpy.data.images.load(path, check_existing=False)
+        try:
+            image.colorspace_settings.name = "Non-Color"
+            image_width, image_height = image.size
+            if image_width != width:
+                raise RuntimeError(
+                    f"screenshot_area width {image_width} != WINDOW width {width}"
+                )
+            if image_height < region.height:
+                raise RuntimeError(
+                    f"screenshot_area height {image_height} < WINDOW height {region.height}"
+                )
+            pixels = np.empty(image_width * image_height * 4, dtype=np.float32)
+            image.pixels.foreach_get(pixels)
+            array = np.clip(
+                pixels.reshape(image_height, image_width, 4) * 255.0 + 0.5, 0, 255
+            ).astype(np.uint8)
+        finally:
+            bpy.data.images.remove(image)
+    finally:
+        settings.file_format = old_format
+        settings.color_mode = old_mode
+        try:
+            os.remove(path)
+        except OSError:
+            pass
+
+    # imbuf rows are bottom-up. The WINDOW region is at the bottom of the area;
+    # the header sits above it, and the asset shelf overlays the bottom rows.
+    start = bottom_ui
+    end = start + height
+    if end > image_height:
+        raise RuntimeError("screenshot_area does not contain the whole WINDOW region")
+    tile = array[start:end, 0:width, :]
     cropped = tile[pad:height - pad, pad:width - pad, :].copy()
     if cropped.shape[0] <= 0 or cropped.shape[1] <= 0:
         raise RuntimeError("PAD is larger than the captured tile")

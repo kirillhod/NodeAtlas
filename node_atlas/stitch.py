@@ -74,38 +74,61 @@ def stitch_tiles(tiles, layout, region_w: int, region_h: int, padding: int):
     return rgba, holes
 
 
-def save_png(image: np.ndarray, filepath: str) -> None:
-    """Write bottom-up RGBA via imbuf, using an atomic rename."""
-    import bpy
-    import imbuf
+def _write_png_numpy(image: np.ndarray, filepath: str) -> None:
+    """Write RGBA bottom-up bytes as PNG without Blender's color management."""
+    import struct
+    import zlib
 
-    path = os.path.abspath(filepath)
-    os.makedirs(os.path.dirname(path), exist_ok=True)
     height, width, channels = image.shape
     if channels != 4:
         raise ValueError("Expected an RGBA image")
+    rows = np.empty((height, width * 4 + 1), dtype=np.uint8)
+    rows[:, 0] = 0  # filter type: none
+    rows[:, 1:] = image[::-1].reshape(height, width * 4)
+    compressed = zlib.compress(rows.tobytes(), 6)
 
-    try:
-        img = imbuf.new((width, height), planes=32, buffer_type="BYTE")
-        with img.with_buffer(write=True) as buffer:
-            np.frombuffer(buffer, dtype=np.uint8).reshape(height, width, 4)[:] = image
-        temp_path = path + ".tmp.png"
-        imbuf.write(img, filepath=temp_path)
-        img.free()
-        os.replace(temp_path, path)
-        return
-    except Exception:
-        # Blender 4.2 fallback: float image through bpy.data.images.
-        if bpy.app.version >= (5, 2, 0):
-            raise
-        temp_path = path + ".tmp.png"
-        pixels = image[::-1].astype(np.float32) / 255.0
-        bpy_image = bpy.data.images.new("NodeAtlasTemp", width=width, height=height, alpha=True)
+    def chunk(tag: bytes, data: bytes) -> bytes:
+        return (
+            struct.pack(">I", len(data))
+            + tag
+            + data
+            + struct.pack(">I", zlib.crc32(tag + data) & 0xFFFFFFFF)
+        )
+
+    header = struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0)
+    with open(filepath, "wb") as handle:
+        handle.write(b"\x89PNG\r\n\x1a\n")
+        handle.write(chunk(b"IHDR", header))
+        handle.write(chunk(b"IDAT", compressed))
+        handle.write(chunk(b"IEND", b""))
+
+
+def save_png(image: np.ndarray, filepath: str) -> None:
+    """Write bottom-up RGBA, using imbuf when available and a NumPy PNG fallback."""
+    import bpy
+
+    path = os.path.abspath(filepath)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    temp_path = path + ".tmp.png"
+
+    if bpy.app.version >= (5, 2, 0):
         try:
-            bpy_image.pixels.foreach_set(pixels.ravel())
-            bpy_image.filepath_raw = temp_path
-            bpy_image.file_format = "PNG"
-            bpy_image.save()
-        finally:
-            bpy.data.images.remove(bpy_image)
-        os.replace(temp_path, path)
+            import imbuf
+
+            img = imbuf.new((image.shape[1], image.shape[0]), planes=32, buffer_type="BYTE")
+            try:
+                with img.with_buffer(write=True) as buffer:
+                    np.frombuffer(buffer, dtype=np.uint8).reshape(image.shape)[:] = image
+                imbuf.write(img, filepath=temp_path)
+            finally:
+                img.free()
+            os.replace(temp_path, path)
+            return
+        except Exception:
+            try:
+                os.remove(temp_path)
+            except OSError:
+                pass
+
+    _write_png_numpy(image, temp_path)
+    os.replace(temp_path, path)

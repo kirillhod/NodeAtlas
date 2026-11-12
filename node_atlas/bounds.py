@@ -79,11 +79,26 @@ def measure_view(v2d, system_ui_scale: float, view_ui_scale: float) -> ViewMetri
     return ViewMetrics(upp=upp, k=k, s=s, ox=ox, oy=oy)
 
 
+def absolute_location(node):
+    """Return frame-aware node position across Blender versions."""
+    location = getattr(node, "location_absolute", None)
+    if location is not None:
+        return location.x, location.y
+    x, y = node.location
+    parent = node.parent
+    while parent is not None:
+        x += parent.location.x
+        y += parent.location.y
+        parent = parent.parent
+    return x, y
+
+
 def node_rect(node, metrics: ViewMetrics) -> Rect:
     width = node.dimensions.x
     height = node.dimensions.y
-    left = metrics.ox + metrics.s * node.location_absolute.x
-    top = metrics.oy + metrics.s * node.location_absolute.y
+    absolute_x, absolute_y = absolute_location(node)
+    left = metrics.ox + metrics.s * absolute_x
+    top = metrics.oy + metrics.s * absolute_y
     return Rect(
         left=left,
         top=top,
@@ -198,7 +213,7 @@ def build_selected_copy(tree):
     # Preserve absolute placement when the parent frame is not kept.
     for node in tmp.nodes:
         if node.name in keep and node.parent is not None and node.parent.name not in keep:
-            absolute = node.location_absolute.copy()
+            absolute = absolute_location(node)
             node.parent = None
             node.location = absolute
 
