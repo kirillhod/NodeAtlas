@@ -6,13 +6,13 @@ import bpy
 
 from . import bounds, capture, operators, preferences
 
-__version__ = "0.6.1"
+__version__ = "0.6.2"
 __author__ = "kirillhod"
 
 bl_info = {
     "name": "Node Atlas",
     "author": "kirillhod",
-    "version": (0, 6, 1),
+    "version": (0, 6, 2),
     "blender": (4, 2, 0),
     "location": "Node Editor > Sidebar > Node Atlas",
     "description": "Export any node tree as one high-resolution PNG",
@@ -37,8 +37,7 @@ def _estimate(context, prefs):
         return None
     try:
         metrics = bounds.measure_view(
-            region.view2d, context.preferences.system.ui_scale,
-            context.preferences.view.ui_scale,
+            region.view2d, context.preferences.system.ui_scale
         )
         rects = bounds.collect_rects(tree.nodes, metrics)
         content = bounds.union_rects(rects)
@@ -102,8 +101,7 @@ class NODE_PT_node_atlas(bpy.types.Panel):
                          f"({estimated.megapixels:.1f} MP)"
                 )
             system = context.preferences.system.ui_scale
-            view = context.preferences.view.ui_scale
-            dpi_max = (system * view) / bounds.UPP_MIN * 96.0
+            dpi_max = system / bounds.UPP_MIN * 96.0
             if prefs.output_dpi > dpi_max:
                 box.label(
                     text=f"Max DPI at this UI scale: {dpi_max:.0f}",

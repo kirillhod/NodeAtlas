@@ -184,16 +184,18 @@ class ExportJob:
             raise RuntimeError("Node Editor disappeared during export")
         self.window, self.area, self.space, self.region = parts
         window, area, space, region = parts
+        capture.redraw(window, area, region)
         self.bottom_ui = capture.bottom_ui_height(area)
         height = capture.effective_height(region, self.bottom_ui)
         if height < 64 or region.width < 64:
             raise RuntimeError("Node Editor is too small for export")
 
         prefs = bpy.context.preferences
-        system_scale = prefs.system.ui_scale
+        # After a redraw, system.ui_scale already includes view.ui_scale.
+        effective_scale = prefs.system.ui_scale
         view_scale = prefs.view.ui_scale
         target, used_dpi, dpi_max = bounds.target_upp(
-            self.settings.output_dpi, system_scale, view_scale
+            self.settings.output_dpi, effective_scale
         )
         if abs(used_dpi - self.settings.output_dpi) > 0.5:
             self.warnings.append(
@@ -212,7 +214,7 @@ class ExportJob:
         if abs(achieved / target - 1.0) > 0.01:
             self.warnings.append(f"Zoom error {abs(achieved / target - 1.0) * 100:.2f}%")
 
-        metrics = bounds.measure_view(region.view2d, system_scale, view_scale)
+        metrics = bounds.measure_view(region.view2d, effective_scale)
         rects = bounds.collect_rects(self.tree.nodes, metrics)
         content = bounds.union_rects(rects)
         layout = bounds.compute_layout(
@@ -225,7 +227,7 @@ class ExportJob:
             )
 
         capture.anchor_first_tile(
-            window, area, region, space, self.tree, layout, system_scale, view_scale
+            window, area, region, space, self.tree, layout, effective_scale
         )
         self.layout = layout
         self.region_width = region.width

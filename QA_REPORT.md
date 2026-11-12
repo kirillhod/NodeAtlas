@@ -1,6 +1,6 @@
 # NodeAtlas QA report
 
-**Version:** 0.6.1
+**Version:** 0.6.2
 **Date:** 12 November 2026  
 **Platforms:** Windows, GUI sessions only
 
@@ -58,15 +58,17 @@ window, exports a fixture, validates the PNG and editor restoration, then exits.
 | `test_fail.py` | PASS | PASS | PASS | PASS | PASS |
 | `test_large.py` | PASS, 6017×3131, 1.87 s | PASS, 6013×3132, 1.69 s | PASS, 6013×3132, 2.71 s | PASS, 6016×3133, 3.18 s | PASS, 6016×3133, 3.25 s |
 | `test_maxmp.py` | PASS | PASS | PASS | PASS | PASS |
-| `test_density.py` | PASS, 4240×935 | PASS, 4240×937 | PASS, 4241×937 | PASS, 4239×937 | PASS, 4243×938 |
+| `test_density.py` | PASS, 4382×1198 | PASS, 4382×1198 | PASS, 4384×1156 | PASS, 4378×1154 | PASS, 4383×1129 |
+| `test_extreme.py` | PASS, 2465×4825, 11.9 MP | PASS, 2465×4943, 12.2 MP | PASS, 2465×4943, 12.2 MP | PASS, 2465×4943, 12.2 MP | PASS, 1657×3294, 5.5 MP |
 | `test_multiarea.py` | PASS, 2230×643 | PASS, 2230×643 | PASS, 2231×622 | PASS, 2229×621 | PASS, 2229×610 |
 | `test_multiwindow.py` | PASS, 2230×643 | PASS, 2230×643 | PASS, 2231×622 | PASS, 2229×621 | PASS, 2229×610 |
 | `test_1000.py` | PASS, 12579×6013, 8.29 s | PASS, 12591×6026, 7.51 s | PASS, 12591×6026, 11.56 s | PASS, 12581×6021, 12.52 s | PASS, 12581×6021, 13.95 s |
 
 All GUI tests validate that the editor state is restored and that failed/cancelled
 exports leave no PNG. The 1000-node test forces the memmap path and ~75.8 MP; the
-density test uses D=2, zero padding and `view.ui_scale = 2.0`; the multi-area/multi-
-window tests keep the other editor/window untouched; the max-MP test uses a 1 MP limit.
+density test uses D=2, zero padding and `view.ui_scale = 2.0`; the extreme test runs at
+D_max with `view.ui_scale = 6` (4.0 max on 4.2); the multi-area/multi-window tests keep
+the other editor/window untouched; the max-MP test uses a 1 MP limit.
 
 ## Packaging
 

@@ -71,10 +71,11 @@ def measure_upp(v2d) -> float:
     return delta / 100.0
 
 
-def measure_view(v2d, system_ui_scale: float, view_ui_scale: float) -> ViewMetrics:
+def measure_view(v2d, ui_scale: float) -> ViewMetrics:
+    """Measure the view; *ui_scale* is the effective (system × resolution) scale."""
     upp = measure_upp(v2d)
     k = 1.0 / upp
-    s = system_ui_scale * view_ui_scale * k
+    s = ui_scale * k
     ox, oy = v2d.view_to_region(0.0, 0.0, clip=False)
     return ViewMetrics(upp=upp, k=k, s=s, ox=ox, oy=oy)
 
@@ -128,14 +129,17 @@ def union_rects(rects) -> Rect:
     )
 
 
-def target_upp(output_dpi: float, system_ui_scale: float, view_ui_scale: float):
-    """Return (upp, clamped_dpi, dpi_max) for the requested density."""
-    effective = system_ui_scale * view_ui_scale
+def target_upp(output_dpi: float, ui_scale: float):
+    """Return (upp, clamped_dpi, dpi_max) for the requested density.
+
+    *ui_scale* is the effective UI scale (``system.ui_scale`` after the UI has
+    refreshed; it already includes the Resolution Scale).
+    """
     density = max(float(output_dpi), 0.001) / 96.0
-    dpi_max = effective / UPP_MIN
-    dpi_min = effective / UPP_MAX
+    dpi_max = ui_scale / UPP_MIN
+    dpi_min = ui_scale / UPP_MAX
     clamped = min(max(density, dpi_min), dpi_max)
-    return effective / clamped, clamped * 96.0, dpi_max * 96.0
+    return ui_scale / clamped, clamped * 96.0, dpi_max * 96.0
 
 
 def compute_layout(

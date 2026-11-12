@@ -101,7 +101,7 @@ def tick():
                     size = tuple(image.size)
                 finally:
                     bpy.data.images.remove(image)
-                if size[0] < 3000:
+                if size[0] < 4000:
                     fail(f"high-density output is too small: {size}")
                 after = snapshot()
                 if after != state["before"]:

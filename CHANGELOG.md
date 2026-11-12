@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.2
+
+- Fix DPI normalization when Resolution Scale is not 1: Blender exposes the effective
+  scale in `system.ui_scale` after a UI refresh, so the previous code multiplied the
+  resolution scale twice.
+- Add an extreme-density GUI test at D_max with `view.ui_scale` 6/4.
+- Re-validate high-density and extreme-density output on Blender 4.2–5.3.
+
 ## 0.6.1
 
 - Spill the stitching accumulator and weights to memmaps when the canvas is large.

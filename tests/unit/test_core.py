@@ -50,7 +50,7 @@ def check(condition, message):
 
 def test_view_metrics():
     v2d = FakeV2D(upp=0.8, ox=50, oy=70)
-    vm = bounds.measure_view(v2d, 1.25, 2.0)
+    vm = bounds.measure_view(v2d, 2.5)
     check(abs(vm.upp - 0.8) < 1e-9, "upp")
     check(abs(vm.k - 1.25) < 1e-9, "k")
     check(abs(vm.s - 1.25 * 2.0 * 1.25) < 1e-9, "s")
@@ -76,11 +76,11 @@ def test_rect_and_layout():
 
 
 def test_density():
-    upp, used, dpi_max = bounds.target_upp(96, 1.25, 1.0)
+    upp, used, dpi_max = bounds.target_upp(96, 1.25)
     check(abs(upp - 1.25) < 1e-9, "D=1 upp")
     check(abs(used - 96) < 1e-9, "D=1 dpi")
     check(abs(dpi_max - (1.25 / 0.43311) * 96) < 1e-6, "Dmax")
-    upp, used, _ = bounds.target_upp(10000, 1.25, 1.0)
+    upp, used, _ = bounds.target_upp(10000, 1.25)
     check(abs(upp - bounds.UPP_MIN) < 1e-9, "clamp max density")
     check(used < 10000, "clamped dpi")
 

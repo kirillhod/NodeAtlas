@@ -281,10 +281,10 @@ def leave_maximize(window, snapshot: EditorSnapshot):
 
 def anchor_first_tile(
     window, area, region, space, tree, layout: Layout,
-    system_ui_scale: float, view_ui_scale: float,
+    ui_scale: float,
 ) -> ViewMetrics:
     for _ in range(12):
-        metrics = measure_view(region.view2d, system_ui_scale, view_ui_scale)
+        metrics = measure_view(region.view2d, ui_scale)
         rects = [node_rect(node, metrics) for node in tree.nodes
                  if node.dimensions.x > 0 and node.dimensions.y > 0]
         if not rects:
@@ -296,7 +296,7 @@ def anchor_first_tile(
         if dx == 0 and dy == 0:
             break
         pan(window, area, region, dx, dy)
-    return measure_view(region.view2d, system_ui_scale, view_ui_scale)
+    return measure_view(region.view2d, ui_scale)
 
 
 def can_capture_raw(window) -> bool:

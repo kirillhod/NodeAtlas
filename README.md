@@ -13,7 +13,7 @@ in overlapping tiles, stitches them into one seamless image, and saves it withou
 external dependencies. Output density is controlled independently of the monitor and
 current zoom.
 
-> **Status: 0.6.1.** Current-tree and selected-nodes export work for Shader,
+> **Status: 0.6.2.** Current-tree and selected-nodes export work for Shader,
 > Geometry Nodes, Compositor and Texture. Blender 5.2+ uses the raw screenshot path;
 > Blender 4.2–5.1 uses the legacy path for Shader/GN/Texture (validated on 4.2.23,
 > 4.5.9 and 5.1.2; Compositor is guarded because of a native 4.2–5.1 crash). The
@@ -105,6 +105,7 @@ blender --factory-startup --python tests/gui/test_fail.py
 blender --factory-startup --python tests/gui/test_large.py
 blender --factory-startup --python tests/gui/test_maxmp.py
 blender --factory-startup --python tests/gui/test_density.py
+blender --factory-startup --python tests/gui/test_extreme.py
 blender --factory-startup --python tests/gui/test_multiarea.py
 blender --factory-startup --python tests/gui/test_multiwindow.py
 blender --factory-startup --python tests/gui/test_1000.py
