@@ -19,6 +19,14 @@ from .preferences import get_prefs
 
 log = get_logger()
 _INVALID_FILENAME = re.compile(r'[<>:"/\\|?*]+')
+_WHITESPACE = re.compile(r"\s+")
+_MULTI_UNDERSCORE = re.compile(r"_{2,}")
+_TREE_TYPE_LABELS = {
+    "ShaderNodeTree": "Shader",
+    "GeometryNodeTree": "Geometry Nodes",
+    "CompositorNodeTree": "Compositor",
+    "TextureNodeTree": "Texture",
+}
 _current_job = None
 last_result = None
 
@@ -33,11 +41,67 @@ class ExportSettings:
     hide_ui: bool
     restore_ui: bool
     deterministic: bool
+    copy_to_clipboard: bool = False
 
 
 def _safe_name(value: str) -> str:
-    value = _INVALID_FILENAME.sub("_", value).strip(" .")
-    return value or "export"
+    value = _INVALID_FILENAME.sub("_", str(value))
+    value = _WHITESPACE.sub("_", value)
+    value = _MULTI_UNDERSCORE.sub("_", value)
+    return value.strip(" ._") or "export"
+
+
+def _tree_owner_name(tree):
+    """Return the material/world/object/scene/texture that owns *tree*."""
+    if tree is None:
+        return None
+    for material in bpy.data.materials:
+        if material.node_tree is tree:
+            return material.name
+    for world in bpy.data.worlds:
+        if getattr(world, "node_tree", None) is tree:
+            return world.name
+    for light in bpy.data.lights:
+        if getattr(light, "node_tree", None) is tree:
+            return light.name
+    for obj in bpy.data.objects:
+        for modifier in obj.modifiers:
+            if getattr(modifier, "node_group", None) is tree:
+                return obj.name
+    for scene in bpy.data.scenes:
+        if getattr(scene, "compositing_node_group", None) is tree:
+            return scene.name
+        if getattr(scene, "node_tree", None) is tree:
+            return scene.name
+    for texture in bpy.data.textures:
+        if getattr(texture, "node_tree", None) is tree:
+            return texture.name
+    return None
+
+
+def _filename_fields(context) -> dict:
+    blend = os.path.splitext(os.path.basename(bpy.data.filepath))[0] or "untitled"
+    parts = capture.get_node_context(context)
+    tree = parts[2].edit_tree if parts else None
+    tree_type = parts[2].tree_type if parts else ""
+    owner = _tree_owner_name(tree)
+    return {
+        "blend": _safe_name(blend),
+        "tree": _safe_name(owner or (tree.name if tree else "tree")),
+        "datablock": _safe_name(tree.name if tree else "tree"),
+        "type": _safe_name(_TREE_TYPE_LABELS.get(tree_type, tree_type or "Tree")),
+        "date": datetime.now().strftime("%Y%m%d-%H%M%S"),
+    }
+
+
+def render_filename(pattern: str, fields: dict) -> str:
+    try:
+        name = pattern.format(**fields)
+    except (KeyError, ValueError):
+        name = "{blend}_{tree}_{date}.png".format(**fields)
+    if not name.lower().endswith(".png"):
+        name += ".png"
+    return _safe_name(name)
 
 
 def _unique_path(path: str) -> str:
@@ -52,25 +116,15 @@ def _unique_path(path: str) -> str:
         index += 1
 
 
-def quick_filepath(context, prefs) -> str:
-    base = bpy.path.abspath(prefs.default_dir) if prefs.default_dir else bpy.path.abspath("//")
-    if not base:
-        base = bpy.app.tempdir
-    blend = os.path.splitext(os.path.basename(bpy.data.filepath))[0] or "untitled"
-    parts = capture.get_node_context(context)
-    tree_name = parts[2].edit_tree.name if parts and parts[2].edit_tree else "tree"
+def quick_filepath(context, prefs) -> str | None:
+    """Return an automatic path, or None when the user must choose one."""
+    default_dir = prefs.default_dir.strip() if prefs.default_dir else ""
+    if not default_dir:
+        return None
+    base = bpy.path.abspath(default_dir)
     pattern = prefs.filename_pattern or "{blend}_{tree}_{date}.png"
-    try:
-        name = pattern.format(
-            blend=_safe_name(blend),
-            tree=_safe_name(tree_name),
-            date=datetime.now().strftime("%Y%m%d-%H%M%S"),
-        )
-    except (KeyError, ValueError):
-        name = f"{_safe_name(blend)}_{_safe_name(tree_name)}_{datetime.now():%Y%m%d-%H%M%S}.png"
-    if not name.lower().endswith(".png"):
-        name += ".png"
-    return _unique_path(os.path.join(base, _safe_name(name)))
+    name = render_filename(pattern, _filename_fields(context))
+    return _unique_path(os.path.join(base, name))
 
 
 def settings_from_prefs(prefs, filepath: str) -> ExportSettings:
@@ -83,7 +137,22 @@ def settings_from_prefs(prefs, filepath: str) -> ExportSettings:
         hide_ui=bool(prefs.hide_ui),
         restore_ui=bool(prefs.restore_ui),
         deterministic=bool(prefs.deterministic),
+        copy_to_clipboard=bool(getattr(prefs, "copy_to_clipboard", False)),
     )
+
+
+def _copy_to_clipboard(filepath: str) -> None:
+    """Copy a saved PNG to the OS clipboard through Blender's image operator."""
+    if not hasattr(bpy.ops.image, "clipboard_copy"):
+        raise RuntimeError("this Blender build has no image clipboard support")
+    image = bpy.data.images.load(filepath, check_existing=False)
+    try:
+        with bpy.context.temp_override(edit_image=image):
+            result = bpy.ops.image.clipboard_copy()
+        if "FINISHED" not in result:
+            raise RuntimeError(f"clipboard copy returned {result}")
+    finally:
+        bpy.data.images.remove(image)
 
 
 class ExportJob:
@@ -110,6 +179,7 @@ class ExportJob:
         self.final = None
         self.output_size = (0, 0)
         self.saved_path = None
+        self.used_dpi = float(settings.output_dpi)
         self.error = None
         self.warnings = []
         self.cancelled = False
@@ -198,6 +268,7 @@ class ExportJob:
         target, used_dpi, dpi_max = bounds.target_upp(
             self.settings.output_dpi, effective_scale
         )
+        self.used_dpi = used_dpi
         if abs(used_dpi - self.settings.output_dpi) > 0.5:
             self.warnings.append(
                 f"DPI clamped from {self.settings.output_dpi:g} to {used_dpi:.0f} "
@@ -269,9 +340,15 @@ class ExportJob:
 
     def _save(self) -> None:
         self._status("NodeAtlas: saving…")
-        stitch.save_png(self.final, self.settings.filepath)
+        stitch.save_png(self.final, self.settings.filepath, dpi=self.used_dpi)
         self.saved_path = self.settings.filepath
         self.elapsed = time.perf_counter() - self.started
+        if self.settings.copy_to_clipboard:
+            try:
+                _copy_to_clipboard(self.settings.filepath)
+            except Exception as exc:
+                log.warning("Clipboard copy failed", exc_info=True)
+                self.warnings.append(f"PNG saved, but clipboard copy failed: {exc}")
         self.stage = "restore"
 
     def _restore(self) -> None:
@@ -440,6 +517,10 @@ def start_job(context, filepath: str, operator=None) -> bool:
         if operator is not None:
             operator.report({"ERROR"}, "NodeAtlas preferences are unavailable")
         return False
+    if not filepath:
+        if operator is not None:
+            operator.report({"ERROR"}, "NodeAtlas: no output path was chosen")
+        return False
 
     try:
         stitch.check_output_path(filepath)
@@ -476,14 +557,26 @@ class NODE_ATLAS_OT_export_png(bpy.types.Operator):
         if prefs is None:
             self.report({"ERROR"}, "NodeAtlas preferences are unavailable")
             return {"CANCELLED"}
-        return {"FINISHED"} if start_job(context, quick_filepath(context, prefs), self) else {"CANCELLED"}
+        if not prefs.default_dir.strip():
+            return bpy.ops.node_atlas.export_as("INVOKE_DEFAULT")
+        path = quick_filepath(context, prefs)
+        if path is None:
+            return bpy.ops.node_atlas.export_as("INVOKE_DEFAULT")
+        return {"FINISHED"} if start_job(context, path, self) else {"CANCELLED"}
 
     def execute(self, context):
         prefs = get_prefs(context)
         if prefs is None:
             self.report({"ERROR"}, "NodeAtlas preferences are unavailable")
             return {"CANCELLED"}
-        return {"FINISHED"} if start_job(context, quick_filepath(context, prefs), self) else {"CANCELLED"}
+        path = quick_filepath(context, prefs)
+        if path is None:
+            self.report(
+                {"ERROR"},
+                "NodeAtlas: set a Default Directory or use Export As…",
+            )
+            return {"CANCELLED"}
+        return {"FINISHED"} if start_job(context, path, self) else {"CANCELLED"}
 
 
 class NODE_ATLAS_OT_export_as(bpy.types.Operator, ExportHelper):
@@ -502,10 +595,13 @@ class NODE_ATLAS_OT_export_as(bpy.types.Operator, ExportHelper):
     def invoke(self, context, event):
         prefs = get_prefs(context)
         if prefs is not None:
-            self.filepath = quick_filepath(context, prefs)
+            self.filepath = quick_filepath(context, prefs) or ""
         return ExportHelper.invoke(self, context, event)
 
     def execute(self, context):
+        if not self.filepath.strip():
+            self.report({"ERROR"}, "NodeAtlas: choose an output file")
+            return {"CANCELLED"}
         path = bpy.path.abspath(self.filepath)
         return {"FINISHED"} if start_job(context, path, self) else {"CANCELLED"}
 

@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.1.0
+
+- Write PNG `pHYs` metadata with the effective DPI and drop imbuf's fixed 72-dpi
+  `pHYs`/EXIF so saved files report the requested density.
+- Fix the panel size estimate: it now uses the target DPI instead of the current zoom,
+  so it is zoom-invariant and matches the exported PNG.
+- Resolve filename `{tree}` to the owning material/world/light/object/scene/texture, add
+  `{datablock}` and `{type}` tokens, and replace whitespace with `_`.
+- Add an optional **Copy to Clipboard** step after a successful export.
+- An empty Default Directory now opens the file dialog instead of writing to a temporary
+  folder.
+- Add estimate, naming, clipboard and path GUI tests; the headless suite is 16/16.
+
 ## 1.0.0
 
 - First stable release: current-tree and selected-nodes export for Shader, Geometry

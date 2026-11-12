@@ -120,6 +120,27 @@ def test_stitch_single_tile():
     check((spilled == image).all(), "memmap output")
 
 
+def png_phys_dpi(path):
+    import struct
+
+    with open(path, "rb") as handle:
+        check(handle.read(8) == b"\x89PNG\r\n\x1a\n", "png signature")
+        while True:
+            header = handle.read(8)
+            if len(header) < 8:
+                return None
+            length = struct.unpack(">I", header[:4])[0]
+            tag = header[4:8]
+            data = handle.read(length)
+            handle.read(4)
+            if tag == b"pHYs":
+                ppu_x, ppu_y, unit = struct.unpack(">IIB", data)
+                check(ppu_x == ppu_y, "pHYs axes differ")
+                return ppu_x * 0.0254, unit
+            if tag == b"IEND":
+                return None
+
+
 def test_png_writer():
     import os
     import tempfile
@@ -135,7 +156,7 @@ def test_png_writer():
     fd, path = tempfile.mkstemp(suffix=".png")
     os.close(fd)
     try:
-        stitch._write_png_numpy(image, path)
+        stitch._write_png_numpy(image, path, dpi=96)
         loaded = bpy.data.images.load(path, check_existing=False)
         try:
             loaded.colorspace_settings.name = "Non-Color"
@@ -148,6 +169,12 @@ def test_png_writer():
             check((result == image).all(), "png pixels")
         finally:
             bpy.data.images.remove(loaded)
+        dpi, unit = png_phys_dpi(path)
+        check(abs(dpi - 96.0) < 0.1 and unit == 1, "96 dpi pHYs")
+
+        stitch.save_png(image, path, dpi=300)
+        dpi, unit = png_phys_dpi(path)
+        check(abs(dpi - 300.0) < 0.5 and unit == 1, "300 dpi pHYs")
     finally:
         os.remove(path)
 
@@ -322,10 +349,83 @@ def test_disk_full():
 def test_filename_sanitization():
     from node_atlas import operators
 
-    check(operators._safe_name("Дерево 儀") == "Дерево 儀", "unicode filename")
+    check(operators._safe_name("Дерево 儀") == "Дерево_儀", "unicode filename")
+    check(
+        operators._safe_name("Shader  Nodetree") == "Shader_Nodetree",
+        "whitespace to underscore",
+    )
+    check(
+        operators._safe_name("  Material (copy)  ") == "Material_(copy)",
+        "trim and collapse",
+    )
     sanitized = operators._safe_name('a/b:c*?"<>|')
     check(not any(char in sanitized for char in '/\\:*?"<>|'), "invalid characters")
     check(operators._safe_name("...") == "export", "empty filename fallback")
+
+
+def test_render_filename():
+    from node_atlas import operators
+
+    fields = {
+        "blend": "scene",
+        "tree": "Material",
+        "datablock": "Shader Nodetree",
+        "type": "Shader",
+        "date": "20260101-000000",
+    }
+    check(
+        operators.render_filename("{blend}_{tree}_{type}.png", fields)
+        == "scene_Material_Shader.png",
+        "owner and type tokens",
+    )
+    check(
+        operators.render_filename("{datablock}_{date}", fields)
+        == "Shader_Nodetree_20260101-000000.png",
+        "datablock token and suffix",
+    )
+    check(
+        operators.render_filename("{unknown}.png", fields)
+        == "scene_Material_20260101-000000.png",
+        "unknown token falls back",
+    )
+
+
+def test_tree_owner_name():
+    import bpy
+
+    from node_atlas import operators
+
+    material = bpy.data.materials.new("Owner Material")
+    material.use_nodes = True
+    try:
+        check(
+            operators._tree_owner_name(material.node_tree) == "Owner Material",
+            "material owner",
+        )
+    finally:
+        bpy.data.materials.remove(material)
+    check(operators._tree_owner_name(None) is None, "no tree")
+
+
+def test_quick_filepath():
+    import os
+    import tempfile
+    import types
+
+    import bpy
+
+    from node_atlas import operators
+
+    empty = types.SimpleNamespace(default_dir="", filename_pattern="{tree}.png")
+    check(operators.quick_filepath(bpy.context, empty) is None, "empty dir asks")
+
+    folder = tempfile.mkdtemp(prefix="nodeatlas_path_")
+    prefs = types.SimpleNamespace(
+        default_dir=folder, filename_pattern="{tree}_{date}.png"
+    )
+    path = operators.quick_filepath(bpy.context, prefs)
+    check(path is not None and os.path.dirname(path) == folder, "quick path")
+    check(os.path.basename(path).endswith(".png"), "png suffix")
 
 
 def main():
@@ -341,6 +441,9 @@ def main():
         test_output_preflight,
         test_disk_full,
         test_filename_sanitization,
+        test_render_filename,
+        test_tree_owner_name,
+        test_quick_filepath,
         test_registration,
         test_version_consistency,
     ]

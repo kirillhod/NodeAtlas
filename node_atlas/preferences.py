@@ -53,14 +53,22 @@ class NodeAtlasPreferences(bpy.types.AddonPreferences):
     )
     default_dir: bpy.props.StringProperty(
         name="Default Directory",
-        description="Directory for quick exports; empty uses the .blend folder",
+        description="Directory for quick exports; empty asks for a path on every export",
         subtype="DIR_PATH",
         default="",
     )
     filename_pattern: bpy.props.StringProperty(
         name="Filename Pattern",
-        description="Available fields: {blend}, {tree}, {date}",
+        description=(
+            "Fields: {blend}, {tree} (owner name), {datablock} (tree name), "
+            "{type}, {date}"
+        ),
         default="{blend}_{tree}_{date}.png",
+    )
+    copy_to_clipboard: bpy.props.BoolProperty(
+        name="Copy to Clipboard",
+        description="After a successful export, put the PNG on the system clipboard",
+        default=False,
     )
     hide_ui: bpy.props.BoolProperty(
         name="Hide UI During Export",

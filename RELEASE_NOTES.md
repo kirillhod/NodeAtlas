@@ -1,13 +1,25 @@
-# NodeAtlas 1.0.0 release notes
+# NodeAtlas 1.1.0 release notes
 
 **Release date:** 12 November 2026
-**Artifact:** `node_atlas-1.0.0.zip` (Blender extension) and the same package as a
+**Artifact:** `node_atlas-1.1.0.zip` (Blender extension) and the same package as a
 classic add-on.
 
 NodeAtlas exports any Blender node tree as one high-resolution PNG with real editor
 background padding, selected-nodes support, `Esc` cancellation and full UI restoration.
 It captures the Node Editor in overlapping tiles and stitches them with
 [NumPy](https://numpy.org/doc/stable/); no re-rendering and no external dependencies.
+
+## Changes since 1.0.0
+
+- Saved PNGs now carry `pHYs` metadata with the effective DPI (96 dpi reports 96, not
+  imbuf's 72), and the fixed 72-dpi EXIF block is removed.
+- The panel **Estimated** size no longer depends on the current zoom and matches the
+  exported PNG.
+- `{tree}` in the filename pattern now uses the owning material/world/light/object/
+  scene/texture name; `{datablock}` and `{type}` were added, and whitespace becomes `_`.
+- Optional **Copy to Clipboard** puts the saved PNG on the system clipboard.
+- An empty **Default Directory** opens the file dialog instead of writing to a
+  temporary folder.
 
 ## Validated platforms
 
@@ -19,8 +31,10 @@ It captures the Node Editor in overlapping tiles and stitches them with
 | 4.5.9 LTS | Windows 10 22H2 | `screenshot_area` | PASS for Shader/GN/Texture |
 | 4.2.23 LTS | Windows 10 22H2 | `screenshot_area` | PASS for Shader/GN/Texture |
 
-The release artifact was installed into isolated profiles and exported a PNG as an
-extension on all five versions, and as a classic add-on on 5.3.0. Unit tests are 13/13 on
+The 1.1.0 artifact exported a PNG as an extension on Blender 4.2.23 and 5.3.0 and as a
+classic add-on on all five versions. On 4.5.9, 5.1.2 and 5.2.4 the local builds'
+`--command extension` Python runtime is incomplete, so the same zip payload was
+validated through the classic install path. Unit tests are 16/16 on
 all five versions. The host had two 2048×1152 displays at 125% OS scale; GUI tests ran
 on the primary display. Effective UI scales 1.0/1.25/1.5/2.0 were covered through
 Resolution Scale (`view.ui_scale`), because `system.ui_scale` follows the OS.
@@ -68,16 +82,18 @@ Press `N` in any Node Editor and open the **Node Atlas** tab. The quick export s
 - The view is restored to the nearest pixel (`View2D.cur` is not exposed); tree, UI and
   selection restoration is exact.
 - Transparent background, batch export, SVG/JSON and headless capture are deferred.
+- **Copy to Clipboard** depends on Blender's image clipboard support and OS limits;
+  very large PNGs may be rejected or slow to paste. The PNG is still saved.
 - No screenshots or example images are committed; the README is text-only by decision.
 
 ## Verification
 
-- `blender --background --factory-startup --python tests/unit/test_core.py`: 13/13 on
+- `blender --background --factory-startup --python tests/unit/test_core.py`: 16/16 on
   4.2.23, 4.5.9, 5.1.2, 5.2.4 and 5.3.0.
 - Live GUI suite: export, legacy adapter, selected nodes, all tree types, Texture,
   determinism, cancel, injected failure, 120-node, max-MP, density, scaling, Dmax,
   multi-area, multi-window, 1000 nodes at 118 MP, limits, read-only, disk-full, lost
-  area.
+  area, estimate invariance, owner naming + DPI metadata, clipboard and path prompting.
 - Release artifact: extension install on all five versions and classic install on 5.3.0
   with a GUI export from the installed module.
 - Full measurements and known issues are in [`QA_REPORT.md`](QA_REPORT.md).

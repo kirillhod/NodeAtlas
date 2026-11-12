@@ -7,13 +7,13 @@ import bpy
 
 from . import bounds, capture, operators, preferences
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __author__ = "kirillhod"
 
 bl_info = {
     "name": "Node Atlas",
     "author": "kirillhod",
-    "version": (1, 0, 0),
+    "version": (1, 1, 0),
     "blender": (4, 2, 0),
     "location": "Node Editor > Sidebar > Node Atlas",
     "description": "Export any node tree as one high-resolution PNG",
@@ -37,8 +37,10 @@ def _estimate(context, prefs):
     if height < 64:
         return None
     try:
-        metrics = bounds.measure_view(
-            region.view2d, context.preferences.system.ui_scale
+        system = context.preferences.system.ui_scale
+        target, _used_dpi, _dpi_max = bounds.target_upp(prefs.output_dpi, system)
+        metrics = bounds.ViewMetrics(
+            upp=target, k=1.0 / target, s=system / target, ox=0.0, oy=0.0
         )
         rects = bounds.collect_rects(tree.nodes, metrics)
         content = bounds.union_rects(rects)
@@ -114,6 +116,7 @@ class NODE_PT_node_atlas(bpy.types.Panel):
         advanced.prop(prefs, "hide_ui")
         advanced.prop(prefs, "restore_ui")
         advanced.prop(prefs, "deterministic")
+        advanced.prop(prefs, "copy_to_clipboard")
         advanced.prop(prefs, "default_dir")
         advanced.prop(prefs, "filename_pattern")
         advanced.prop(prefs, "show_header_button")

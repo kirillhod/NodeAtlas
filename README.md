@@ -13,7 +13,7 @@ in overlapping tiles, stitches them into one seamless image, and saves it withou
 external dependencies. Output density is controlled independently of the monitor and
 current zoom.
 
-> **Status: 1.0.0.** Current-tree and selected-nodes export work for Shader,
+> **Status: 1.1.0.** Current-tree and selected-nodes export work for Shader,
 > Geometry Nodes, Compositor and Texture. Blender 5.2+ uses the raw screenshot path;
 > Blender 4.2–5.1 uses the legacy path for Shader/GN/Texture (validated on 4.2.23,
 > 4.5.9 and 5.1.2; Compositor is guarded because of a native 4.2–5.1 crash). The
@@ -31,6 +31,8 @@ current zoom.
 - Clean frame: UI panels, gizmos, selection and context path hidden during export
 - Full editor state restoration, including after an error or cancel
 - Undo-neutral: the capture pipeline never pushes an undo step
+- Optional automatic copy of the saved PNG to the system clipboard
+- PNG density metadata (`pHYs`) matches the effective DPI
 - Timer-driven progress and `Esc` cancellation
 
 ## Requirements
@@ -64,9 +66,10 @@ Install the resulting zip through *Edit → Preferences → Extensions*.
 3. Use **Export Current Tree**, **Export As…**, or `Ctrl+Shift+E`.
 4. Press `Esc` to cancel a running export; the editor is restored afterwards.
 
-Settings live in the sidebar and in *Edit → Preferences → Add-ons → Node Atlas*. The
-quick action uses the `.blend` folder and the `{blend}_{tree}_{date}.png` pattern by
-default.
+Settings live in the sidebar and in *Edit → Preferences → Add-ons → Node Atlas*. If
+Default Directory is empty, **Export Current Tree** opens the file dialog instead of
+writing to a temporary folder; **Export As…** always asks for a path. The default pattern
+is `{blend}_{tree}_{date}.png`.
 
 ## Settings
 
@@ -77,13 +80,19 @@ default.
 | Max Megapixels | 200 | Abort before capture when the output would exceed this size |
 | Scope | Current Tree | Export the displayed tree or only selected nodes |
 | Background | Theme | Editor theme background (solid color is planned) |
-| Default Directory | empty | Quick-export folder; empty uses the `.blend` folder |
-| Filename Pattern | `{blend}_{tree}_{date}.png` | Fields: `{blend}`, `{tree}`, `{date}` |
+| Default Directory | empty | Quick-export folder; empty opens the file dialog |
+| Filename Pattern | `{blend}_{tree}_{date}.png` | Fields: `{blend}`, `{tree}`, `{datablock}`, `{type}`, `{date}` |
 | Hide UI During Export | on | Hide header, toolbar, sidebar, gizmos and context path |
 | Restore UI | on | Restore the editor state after success, error or cancel |
 | Deterministic View | on | Prime with View All so repeated exports match |
+| Copy to Clipboard | off | Put the saved PNG on the system clipboard after export |
 | Header Button | on | Show the quick export button in the Node Editor header |
 | Ctrl+Shift+E | on | Enable the quick export shortcut |
+
+`{tree}` uses the owning datablock name (material, world, light, object, scene or
+texture) and falls back to the tree name; `{datablock}` is always the raw tree name and
+`{type}` is `Shader`, `Geometry_Nodes`, `Compositor` or `Texture`. Whitespace in token
+values becomes `_`, and unknown tokens fall back to `{blend}_{tree}_{date}.png`.
 
 ## Troubleshooting
 
@@ -96,10 +105,12 @@ default.
 - **"Not enough free disk space"** — free space on the destination volume; the temporary
   PNG is removed.
 - **"DPI clamped from X to Y"** — `D_max = effective_ui_scale / 0.43311`; lower Output
-  DPI or increase the UI scale.
+  DPI or increase the UI scale. The PNG `pHYs` metadata reports the effective DPI.
 - **"Output would be … above the N MP limit"** — raise Max Megapixels if RAM allows, or
   lower Output DPI.
 - **"Node Editor is too small for export"** — enlarge the editor area.
+- **Clipboard copy failed** — the PNG is still saved; the OS may reject very large
+  images. Try a lower Output DPI or a smaller padding.
 - **Blank or overlapped tiles** — keep the Blender window visible and unobstructed
   during export; a minimized or occluded window can break screenshots.
 
@@ -155,6 +166,10 @@ blender --factory-startup --python tests/gui/test_limits.py
 blender --factory-startup --python tests/gui/test_readonly.py
 blender --factory-startup --python tests/gui/test_diskfull.py
 blender --factory-startup --python tests/gui/test_arealost.py
+blender --factory-startup --python tests/gui/test_estimate.py
+blender --factory-startup --python tests/gui/test_naming.py
+blender --factory-startup --python tests/gui/test_clipboard.py
+blender --factory-startup --python tests/gui/test_path.py
 blender --python tests/gui/test_artifact.py
 ```
 

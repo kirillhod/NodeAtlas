@@ -1,6 +1,6 @@
 # NodeAtlas QA report
 
-**Version:** 1.0.0
+**Version:** 1.1.0
 **Date:** 12 November 2026  
 **Platforms:** Windows, GUI sessions only
 
@@ -36,20 +36,21 @@ blender --background --factory-startup --python tests/unit/test_core.py
 | View metrics | PASS | PASS | PASS | PASS | PASS |
 | Rect/layout math | PASS | PASS | PASS | PASS | PASS |
 | Density limits | PASS | PASS | PASS | PASS | PASS |
-| Single-tile stitching | PASS | PASS | PASS | PASS | PASS |
-| Memmap spill path | PASS | PASS | PASS | PASS | PASS |
-| NumPy PNG writer round-trip | PASS | PASS | PASS | PASS | PASS |
+| Single-tile stitching (memmap sub-case) | PASS | PASS | PASS | PASS | PASS |
+| PNG writer round-trip + pHYs | PASS | PASS | PASS | PASS | PASS |
 | Failed-save temp cleanup | PASS | PASS | PASS | PASS | PASS |
 | Locked target error + cleanup | PASS | PASS | PASS | PASS | PASS |
 | Long output path (180+ chars) | PASS | PASS | PASS | PASS | PASS |
 | Output preflight (read-only/missing) | PASS | PASS | PASS | PASS | PASS |
 | Disk-full error mapping | PASS | PASS | PASS | PASS | PASS |
 | Filename sanitization / Unicode | PASS | PASS | PASS | PASS | PASS |
+| Filename tokens / fallback | PASS | PASS | PASS | PASS | PASS |
+| Tree owner names | PASS | PASS | PASS | PASS | PASS |
+| Quick path / empty directory | PASS | PASS | PASS | PASS | PASS |
 | Registration/preferences | PASS | PASS | PASS | PASS | PASS |
 | Manifest/`__version__` consistency | PASS | PASS | PASS | PASS | PASS |
 
-Result: **13/13 PASS on all five versions.** The memmap spill is a sub-case of the
-single-tile stitching test.
+Result: **16/16 PASS on all five versions.**
 
 ## GUI tests
 
@@ -80,6 +81,10 @@ window, exports a fixture, validates the PNG and editor restoration, then exits.
 | `test_diskfull.py` | PASS, injected ENOSPC | PASS | PASS | PASS | PASS |
 | `test_arealost.py` | PASS, lost area after snapshot | PASS | PASS | PASS | PASS |
 | `test_artifact.py` | PASS, extension install | PASS | PASS | PASS | PASS |
+| `test_estimate.py` | PASS, zoom-invariant | PASS | PASS | PASS | PASS |
+| `test_naming.py` | PASS, owner name + 96 dpi | PASS | PASS | PASS | PASS |
+| `test_clipboard.py` | PASS, OS clipboard checked | PASS | PASS | PASS | PASS |
+| `test_path.py` | PASS, empty dir refused | PASS | PASS | PASS | PASS |
 
 All GUI tests validate that the editor state is restored and that failed/cancelled
 exports leave no PNG. The 1000-node test forces the memmap path and ~75.8 MP (118 MP at
@@ -88,23 +93,29 @@ effective scales 1.0/1.25/1.5/2.0 in one session (size spread ≤ 15 px); the ex
 test runs at D_max with `view.ui_scale = 6` (4.0 max on 4.2); the limits test clamps D_min
 and uses 120 px padding; the multi-area/multi-window tests keep the other editor/window
 untouched; the max-MP test uses a 1 MP limit. The read-only test applies a real Windows
-ACL deny entry, and the disk-full test injects ENOSPC at the save boundary.
+ACL deny entry, and the disk-full test injects ENOSPC at the save boundary. The estimate
+test checks that the panel size is independent of zoom and matches the PNG; the naming
+test checks the owner-based `{tree}` token and 96 dpi `pHYs`; the clipboard test reads the
+image back from the Windows clipboard with .NET; the path test verifies that an empty
+Default Directory refuses to write to a temporary folder.
 
 ## Packaging
 
 - `blender --command extension validate node_atlas`: PASS.
 - `blender --command extension build --source-dir node_atlas --output-dir dist`:
-  produces `node_atlas-1.0.0.zip` with the manifest and package modules.
+  produces `node_atlas-1.1.0.zip` with the manifest and package modules.
 - Classic add-on clean-profile install: PASS on Blender 4.2.23, 4.5.9, 5.1.2, 5.2.4
   and 5.3.0 in isolated `BLENDER_USER_SCRIPTS/scripts/addons` profiles (0.6.1); the
-  0.6.2, 0.7.0 and 0.8.0 packages were re-validated on 5.3.0. The 1.0.0 package was
-  copied into an isolated `scripts/addons` profile on 5.3.0, enabled as `node_atlas`
-  and exported a PNG with `test_artifact.py`.
+  0.6.2, 0.7.0, 0.8.0 and 1.0.0 packages were re-validated on 5.3.0. The 1.1.0 package
+  was copied into isolated profiles on all five versions; `test_artifact.py` enabled
+  `node_atlas` and exported a PNG on each.
 - Extension clean-profile install: PASS across the same five versions with 0.6.1; the
-  0.6.2 and 0.7.0 zips were installed into isolated 5.3.0 repositories with
-  `install-file --enable`, loading `bl_ext.nodeatlas_test.node_atlas`. The 0.8.0 and
-  1.0.0 zips were installed the same way on all five versions, and `test_artifact.py`
-  exported a PNG from `bl_ext.nodeatlas_test.node_atlas` on each of them.
+  0.6.2, 0.7.0, 0.8.0 and 1.0.0 zips were installed into isolated repositories with
+  `install-file --enable`, loading `bl_ext.nodeatlas_test.node_atlas`. The 1.1.0 zip
+  installed and exported through `bl_ext.nodeatlas_test.node_atlas` on 4.2.23 and 5.3.0.
+  On 4.5.9, 5.1.2 and 5.2.4 the local builds' `--command extension` Python runtime is
+  incomplete (their bundled `python.exe` cannot find the stdlib), so the same 1.1.0 zip
+  payload was validated through the classic install path on those versions instead.
 - Linux and macOS are untested: no Linux distribution is installed under WSL and no Mac
   hardware is available. `system.ui_scale` cannot be changed from RNA, so OS-level
   scaling percentages were approximated with the effective view scale (1.0–2.0).
@@ -136,6 +147,8 @@ ACL deny entry, and the disk-full test injects ENOSPC at the save boundary.
 6. If Blender hard-crashes mid-export, the in-memory `view.ui_scale` cannot be restored
    by the add-on. Blender saves preferences only on a normal quit; NodeAtlas never calls
    `save_userpref`.
+7. **Copy to Clipboard** relies on Blender's image clipboard operator. Very large images
+   may be refused by the OS or take a long time to paste; the PNG is saved regardless.
 
 ## Not in scope for 1.0.0
 

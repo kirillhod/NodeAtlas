@@ -15,7 +15,7 @@ as one high-resolution PNG. It captures the
 [NumPy](https://numpy.org/doc/stable/), and saves through
 [`imbuf`](https://docs.blender.org/api/current/imbuf.html). No re-rendering.
 
-**Status:** 1.0.0. M0–M8 are complete (Shader/Geometry Nodes/Compositor/Texture),
+**Status:** 1.1.0. M0–M8 are complete (Shader/Geometry Nodes/Compositor/Texture),
 the legacy 4.2–5.1 path is validated for Shader/GN/Texture on Blender 4.2.23, 4.5.9
 and 5.1.2, and hardening (limits, fault injection, read-only/full-disk output, scaling)
 is tested on 4.2–5.3. Compositor on 4.2–5.1 is guarded due to a native crash. Packaging
@@ -100,7 +100,8 @@ Verified on Blender 5.3.0. Violating them yields plausible-looking but wrong ima
    [`zoom_border`](https://docs.blender.org/api/current/bpy.ops.view2d.html#bpy.ops.view2d.zoom_border)
    (linear), then **measure** `upp`. `zoom_in/out` with an explicit factor jump to the
    clamp. Density `D = output_dpi / 96`, target `upp = S / D`, limit `upp >= 0.43311`
-   (`D_max = S / 0.43311`). No PNG DPI metadata.
+   (`D_max = S / 0.43311`). Write PNG `pHYs` metadata with the effective
+   (clamped) DPI and drop imbuf's fixed 72-dpi EXIF block.
 
 3. **Pan sign is inverted.** `pan(+dx, ...)` moves content left, `pan(..., -dy)` moves it
    down; steps are exact integer pixels. Anchor tile 0 with 1–2 nudge passes. Set

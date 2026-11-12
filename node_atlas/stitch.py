@@ -197,7 +197,96 @@ def _ramp(length: int, overlap: int, lower: bool, upper: bool) -> np.ndarray:
     return weights
 
 
-def _write_png_numpy(image: np.ndarray, filepath: str) -> None:
+def _png_chunk(tag: bytes, data: bytes) -> bytes:
+    import struct
+    import zlib
+
+    return (
+        struct.pack(">I", len(data))
+        + tag
+        + data
+        + struct.pack(">I", zlib.crc32(tag + data) & 0xFFFFFFFF)
+    )
+
+
+def phys_ppm(dpi: float) -> int:
+    """Convert dots per inch to the PNG pHYs pixels-per-metre value."""
+    return max(1, int(round(float(dpi) / 0.0254)))
+
+
+def _phys_chunk(dpi: float) -> bytes:
+    import struct
+
+    ppm = phys_ppm(dpi)
+    return _png_chunk(b"pHYs", struct.pack(">IIB", ppm, ppm, 1))
+
+
+def _png_has_phys(filepath: str) -> bool:
+    import struct
+
+    with open(filepath, "rb") as handle:
+        if handle.read(8) != b"\x89PNG\r\n\x1a\n":
+            raise OutputError("imbuf wrote an unexpected PNG signature")
+        while True:
+            header = handle.read(8)
+            if len(header) < 8:
+                return False
+            length = struct.unpack(">I", header[:4])[0]
+            tag = header[4:8]
+            if tag == b"pHYs":
+                return True
+            handle.seek(length + 4, 1)
+            if tag == b"IEND":
+                return False
+
+
+def _insert_png_phys(filepath: str, dpi: float) -> None:
+    """Set pHYs on a PNG written by imbuf and drop its 72-dpi EXIF block.
+
+    imbuf writes a fixed 72-dpi ``pHYs`` and an EXIF resolution block, which
+    viewers show instead of the requested density. Rewrite the chunks in a
+    streaming pass so large images are not loaded into memory.
+    """
+    import struct
+
+    if not dpi or dpi <= 0:
+        return
+    has_phys = _png_has_phys(filepath)
+
+    temp_path = filepath + ".phys"
+    try:
+        with open(filepath, "rb") as source, open(temp_path, "wb") as target:
+            target.write(source.read(8))
+            while True:
+                header = source.read(8)
+                if len(header) < 8:
+                    break
+                length = struct.unpack(">I", header[:4])[0]
+                tag = header[4:8]
+                data = source.read(length)
+                crc = source.read(4)
+                if tag == b"eXIf":
+                    continue
+                if tag == b"pHYs":
+                    target.write(_phys_chunk(dpi))
+                else:
+                    target.write(header)
+                    target.write(data)
+                    target.write(crc)
+                    if tag == b"IHDR" and not has_phys:
+                        target.write(_phys_chunk(dpi))
+                if tag == b"IEND":
+                    break
+        os.replace(temp_path, filepath)
+    finally:
+        if os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except OSError:
+                pass
+
+
+def _write_png_numpy(image: np.ndarray, filepath: str, dpi: float | None = None) -> None:
     """Write RGBA bottom-up bytes as PNG without Blender's color management."""
     import struct
     import zlib
@@ -210,23 +299,17 @@ def _write_png_numpy(image: np.ndarray, filepath: str) -> None:
     rows[:, 1:] = image[::-1].reshape(height, width * 4)
     compressed = zlib.compress(rows.tobytes(), 6)
 
-    def chunk(tag: bytes, data: bytes) -> bytes:
-        return (
-            struct.pack(">I", len(data))
-            + tag
-            + data
-            + struct.pack(">I", zlib.crc32(tag + data) & 0xFFFFFFFF)
-        )
-
     header = struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0)
     with open(filepath, "wb") as handle:
         handle.write(b"\x89PNG\r\n\x1a\n")
-        handle.write(chunk(b"IHDR", header))
-        handle.write(chunk(b"IDAT", compressed))
-        handle.write(chunk(b"IEND", b""))
+        handle.write(_png_chunk(b"IHDR", header))
+        if dpi and dpi > 0:
+            handle.write(_phys_chunk(dpi))
+        handle.write(_png_chunk(b"IDAT", compressed))
+        handle.write(_png_chunk(b"IEND", b""))
 
 
-def save_png(image: np.ndarray, filepath: str) -> None:
+def save_png(image: np.ndarray, filepath: str, dpi: float | None = None) -> None:
     """Write bottom-up RGBA, using imbuf when available and a NumPy PNG fallback."""
     import bpy
 
@@ -248,6 +331,8 @@ def save_png(image: np.ndarray, filepath: str) -> None:
                     imbuf.write(img, filepath=temp_path)
                 finally:
                     img.free()
+                if dpi and dpi > 0:
+                    _insert_png_phys(temp_path, dpi)
                 os.replace(temp_path, path)
                 return
             except OSError as exc:
@@ -258,7 +343,7 @@ def save_png(image: np.ndarray, filepath: str) -> None:
                 pass
 
         try:
-            _write_png_numpy(image, temp_path)
+            _write_png_numpy(image, temp_path, dpi=dpi)
             os.replace(temp_path, path)
         except OSError as exc:
             raise OutputError(_output_message(path, exc)) from exc

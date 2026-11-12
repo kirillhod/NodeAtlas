@@ -34,11 +34,13 @@ def addon_key():
         key for key in bpy.context.preferences.addons.keys()
         if key == "node_atlas" or key.endswith(".node_atlas")
     ]
-    if not keys:
+    for candidate in ("node_atlas", "bl_ext.nodeatlas_test.node_atlas"):
+        if keys:
+            break
         try:
-            bpy.ops.preferences.addon_enable(module="node_atlas")
+            bpy.ops.preferences.addon_enable(module=candidate)
         except Exception:
-            pass
+            continue
         keys = [
             key for key in bpy.context.preferences.addons.keys()
             if key == "node_atlas" or key.endswith(".node_atlas")

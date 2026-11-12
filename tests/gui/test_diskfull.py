@@ -124,7 +124,7 @@ try:
     state["before"] = setup()
     from node_atlas import stitch
 
-    def disk_full(image, filepath):
+    def disk_full(image, filepath, dpi=None):
         path = os.path.abspath(filepath)
         temp_path = path + ".tmp.png"
         with open(temp_path, "wb") as handle:

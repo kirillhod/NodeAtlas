@@ -8,10 +8,9 @@ exercised without a second Blender installation.
 from __future__ import annotations
 
 import os
-import runpy
 
+path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_export.py")
 os.environ["NODEATLAS_FORCE_LEGACY"] = "1"
-runpy.run_path(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_export.py"),
-    run_name="__main__",
-)
+with open(path, encoding="utf-8") as handle:
+    source = handle.read()
+exec(compile(source, path, "exec"), {"__name__": "__main__", "__file__": path})
