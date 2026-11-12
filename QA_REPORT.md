@@ -1,6 +1,6 @@
 # NodeAtlas QA report
 
-**Version:** 0.6.1  
+**Version:** 0.6.1
 **Date:** 12 November 2026  
 **Platforms:** Windows, GUI sessions only
 
