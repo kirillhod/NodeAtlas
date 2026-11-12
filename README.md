@@ -15,9 +15,10 @@ current zoom.
 
 > **Status: 0.6.0.** Current-tree and selected-nodes export work for Shader,
 > Geometry Nodes, Compositor and Texture. Blender 5.2+ uses the raw screenshot path;
-> Blender 4.2–5.1 uses the legacy path for Shader/GN/Texture (Compositor is guarded
-> because of a native 4.2 crash). Hardening and packaging (M7–M9) remain. See
-> [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md).
+> Blender 4.2–5.1 uses the legacy path for Shader/GN/Texture (validated on 4.2.23,
+> 4.5.9 and 5.1.2; Compositor is guarded because of a native 4.2–5.1 crash). The
+> Windows 4.2–5.3 matrix and clean installs pass. M7–M9 hardening and packaging remain.
+> See [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md).
 
 ## Features
 

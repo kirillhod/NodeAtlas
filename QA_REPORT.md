@@ -9,10 +9,13 @@
 | Blender | OS | Role |
 |---|---|---|
 | 5.3.0 | Windows | Primary development, raw `Window.screenshot` path |
-| 4.2.23 LTS | Windows | Legacy `screenshot_area` path, add-on loading |
+| 5.2.4 LTS | Windows | Raw `Window.screenshot` path |
+| 5.1.2 | Windows | Legacy `screenshot_area` path |
+| 4.5.9 LTS | Windows | Legacy `screenshot_area` path |
+| 4.2.23 LTS | Windows | Legacy `screenshot_area` path |
 
-The fixtures are generated locally by `tests/fixtures/make_scene_*.py` with Blender
-4.2.23 so the resulting `.blend` files open in both 4.2 and 5.3. Generated fixtures are
+Fixtures are generated locally by `tests/fixtures/make_scene_*.py` with Blender 4.2.23
+so the resulting `.blend` files open in all tested versions. Generated fixtures are
 ignored by Git.
 
 ## Headless tests
@@ -23,49 +26,52 @@ Command:
 blender --background --factory-startup --python tests/unit/test_core.py
 ```
 
-| Check | 5.3.0 | 4.2.23 |
-|---|---|---|
-| View metrics | PASS | PASS |
-| Rect/layout math | PASS | PASS |
-| Density limits | PASS | PASS |
-| Single-tile stitching | PASS | PASS |
-| NumPy PNG writer round-trip | PASS | PASS |
-| Registration/preferences | PASS | PASS |
-| Manifest/`__version__` consistency | PASS | PASS |
-| Filename sanitization / Unicode | PASS | PASS |
+| Check | 5.3.0 | 5.2.4 | 5.1.2 | 4.5.9 | 4.2.23 |
+|---|---|---|---|---|---|
+| View metrics | PASS | PASS | PASS | PASS | PASS |
+| Rect/layout math | PASS | PASS | PASS | PASS | PASS |
+| Density limits | PASS | PASS | PASS | PASS | PASS |
+| Single-tile stitching | PASS | PASS | PASS | PASS | PASS |
+| NumPy PNG writer round-trip | PASS | PASS | PASS | PASS | PASS |
+| Filename sanitization / Unicode | PASS | PASS | PASS | PASS | PASS |
+| Registration/preferences | PASS | PASS | PASS | PASS | PASS |
+| Manifest/`__version__` consistency | PASS | PASS | PASS | PASS | PASS |
 
-Result: **8/8 PASS on both versions.**
+Result: **8/8 PASS on all five versions.**
 
 ## GUI tests
 
 Commands are listed in [`README.md`](README.md). Each test starts a visible Blender
 window, exports a fixture, validates the PNG and editor restoration, then exits.
 
-| Test | 5.3.0 | 4.2.23 | Notes |
-|---|---|---|---|
-| `test_export.py` | PASS, 2232×1631 | PASS, 2232×1639 | Shader + sentinel, undo/redo, state restore |
-| `test_legacy.py` | PASS, 2232×1631 | PASS | 5.3 forced through the legacy path |
-| `test_selected.py` | PASS, 781×413 | PASS, 780×419 | Original tree unchanged |
-| `test_trees.py` | PASS, GN 2533×1084, Compositor 2130×896 | PASS, GN 2533×1084; Compositor skipped | 4.2 Compositor is guarded |
-| `test_texture.py` | PASS | PASS | Texture Node Editor |
-| `test_repeat.py` | PASS, 0 differing pixels | PASS, 0 differing pixels | Deterministic `view_all` priming |
-| `test_cancel.py` | PASS, cancelled during capture | PASS, cancelled during capture | UI restored, no PNG |
-| `test_fail.py` | PASS | PASS | Injected capture failure, UI restored, no PNG |
-| `test_large.py` | PASS, 6017×3131, 18.8 MP, 1.87 s | PASS, 6016×3133, 3.25 s | 120-node graph, state restored |
-| `test_maxmp.py` | PASS | PASS | 1 MP guard, no PNG, UI restored |
+| Test | 5.3.0 | 5.2.4 | 5.1.2 | 4.5.9 | 4.2.23 |
+|---|---|---|---|---|---|
+| `test_export.py` | PASS, 2232×1631 | PASS, 2231×1638 | PASS, 2231×1638 | PASS, 2232×1639 | PASS, 2232×1639 |
+| `test_legacy.py` | PASS, forced | raw path | native path | native path | native path |
+| `test_selected.py` | PASS, 781×413 | PASS, 780×419 | PASS, 780×419 | PASS, 780×419 | PASS, 780×419 |
+| `test_trees.py` | PASS, GN + Compositor | PASS, GN + Compositor | PASS, GN; Compositor skipped | PASS, GN; Compositor skipped | PASS, GN; Compositor skipped |
+| `test_texture.py` | PASS | PASS | PASS | PASS | PASS |
+| `test_repeat.py` | PASS, 0 differing px | PASS, 0 differing px | PASS, 0 differing px | PASS, 0 differing px | PASS, 0 differing px |
+| `test_cancel.py` | PASS, capture stage | PASS | PASS | PASS | PASS |
+| `test_fail.py` | PASS | PASS | PASS | PASS | PASS |
+| `test_large.py` | PASS, 6017×3131, 1.87 s | PASS, 6013×3132, 1.69 s | PASS, 6013×3132, 2.71 s | PASS, 6016×3133, 3.18 s | PASS, 6016×3133, 3.25 s |
+| `test_maxmp.py` | PASS | PASS | PASS | PASS | PASS |
+
+All GUI tests validate that the editor state is restored and that failed/cancelled
+exports leave no PNG. The large test uses 120 nodes and ~18.8 MP; the max-MP test uses a
+1 MP limit.
 
 ## Packaging
 
 - `blender --command extension validate node_atlas`: PASS.
 - `blender --command extension build --source-dir node_atlas --output-dir dist`:
   produces `node_atlas-0.6.0.zip` with the manifest and package modules.
-- Classic add-on clean-profile install: copied `node_atlas/` into an isolated
-  `BLENDER_USER_SCRIPTS/scripts/addons`, enabled in a clean profile, version 0.6.0 and
-  preferences registered.
-- Extension clean-profile install: built `node_atlas-0.6.0.zip`, installed into an
-  isolated user repository with `extension install-file --enable`; Blender loaded
+- Classic add-on clean-profile install: PASS on Blender 4.2.23, 4.5.9, 5.1.2, 5.2.4
+  and 5.3.0, each in an isolated `BLENDER_USER_SCRIPTS/scripts/addons` profile.
+- Extension clean-profile install: PASS on 5.3.0; `node_atlas-0.6.0.zip` installed into
+  an isolated user repository with `extension install-file --enable`, loading
   `bl_ext.nodeatlas_test.node_atlas` version 0.6.0.
-- Linux/macOS QA is still pending.
+- Linux/macOS QA and extension install on each legacy build are still pending.
 
 ## Known issues
 
@@ -73,13 +79,11 @@ window, exports a fixture, validates the PNG and editor restoration, then exits.
    `EXCEPTION_ACCESS_VIOLATION` during capture. NodeAtlas detects the version/tree type
    and raises a clear error instead of risking a crash. Use Blender 5.2+ for the
    Compositor.
-2. **Blender 4.5 and 5.1** were not available for this QA pass. The 4.2 legacy path is
-   shared, but those builds are still marked untested.
-3. **macOS/Retina and Linux/X11** were not tested.
-4. View restoration is nearest-pixel (`View2D.cur` is not exposed); UI/tree/selection
-   restore is exact.
-5. Long links may fade; Blender exposes no public setting to disable link LOD.
-6. Per-run setting overrides and transparent background are not in 0.6.0.
+2. **macOS/Retina and Linux/X11** were not tested.
+3. View restoration is nearest-pixel (`View2D.cur` is not exposed); UI/tree/selection
+   restoration is exact.
+4. Long links may fade; Blender exposes no public setting to disable link LOD.
+5. Per-run setting overrides and transparent background are not in 0.6.0.
 
 ## Not in scope for 1.0.0
 

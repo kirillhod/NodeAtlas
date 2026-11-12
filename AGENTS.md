@@ -16,9 +16,9 @@ as one high-resolution PNG. It captures the
 [`imbuf`](https://docs.blender.org/api/current/imbuf.html). No re-rendering.
 
 **Status:** 0.6.0. M0–M5 are implemented (Shader/Geometry Nodes/Compositor/Texture),
-the legacy 4.2 path is validated for Shader/GN/Texture on Blender 4.2.23, and
-cancel/error/undo are tested. The 4.5/5.1 QA, Compositor 4.2 crash workaround, and
-M7–M9 hardening/packaging remain.
+the legacy 4.2–5.1 path is validated for Shader/GN/Texture on Blender 4.2.23, 4.5.9
+and 5.1.2, and cancel/error/undo are tested on 4.2–5.3. Compositor on 4.2–5.1 is
+guarded due to a native crash. Linux/macOS and M7–M9 hardening/packaging remain.
 
 **Agreed identifiers** (do not rename without approval):
 
@@ -59,10 +59,10 @@ and as an extension. Do not commit generated artifacts.
 
 ## 4. Environment
 
-- **Blender 4.2+ target**, primary development on **5.3.0 / Windows**; Blender 4.2.23
-  is validated for the legacy Shader/GN/Texture path. The Compositor on 4.2–5.1 is
-  guarded because of a native crash; 4.5/5.1 QA is pending. Test 4.2 LTS, 4.5 LTS,
-  5.1, 5.2, 5.3 on Windows/macOS/Linux.
+- **Blender 4.2+ target**, primary development on **5.3.0 / Windows**; Blender 4.2.23,
+  4.5.9, 5.1.2, 5.2.4 and 5.3.0 are validated for the Shader/GN/Texture paths. The
+  Compositor on 4.2–5.1 is guarded because of a native crash; Linux/macOS QA is
+  pending. Test 4.2 LTS, 4.5 LTS, 5.1, 5.2, 5.3 on Windows/macOS/Linux.
 - **[Python 3.11](https://www.python.org/)** is bundled with 4.2+; NumPy is available
   inside Blender. No third-party dependencies (no [Pillow](https://python-pillow.org/),
   no wheels).
