@@ -32,8 +32,9 @@ blender --background --factory-startup --python tests/unit/test_core.py
 | NumPy PNG writer round-trip | PASS | PASS |
 | Registration/preferences | PASS | PASS |
 | Manifest/`__version__` consistency | PASS | PASS |
+| Filename sanitization / Unicode | PASS | PASS |
 
-Result: **7/7 PASS on both versions.**
+Result: **8/8 PASS on both versions.**
 
 ## GUI tests
 
@@ -50,13 +51,18 @@ window, exports a fixture, validates the PNG and editor restoration, then exits.
 | `test_repeat.py` | PASS, 0 differing pixels | PASS, 0 differing pixels | Deterministic `view_all` priming |
 | `test_cancel.py` | PASS, cancelled during capture | PASS, cancelled during capture | UI restored, no PNG |
 | `test_fail.py` | PASS | PASS | Injected capture failure, UI restored, no PNG |
+| `test_large.py` | PASS, 6017×3131, 18.8 MP, 1.87 s | PASS, 6016×3133, 3.25 s | 120-node graph, state restored |
+| `test_maxmp.py` | PASS | PASS | 1 MP guard, no PNG, UI restored |
 
 ## Packaging
 
 - `blender --command extension validate node_atlas`: PASS.
 - `blender --command extension build --source-dir node_atlas --output-dir dist`:
   produces `node_atlas-0.6.0.zip` with the manifest and package modules.
-- Clean-profile installation and Linux/macOS QA are still pending.
+- Classic add-on clean-profile install: copied `node_atlas/` into an isolated
+  `BLENDER_USER_SCRIPTS/scripts/addons`, enabled in a clean profile, version 0.6.0 and
+  preferences registered.
+- Extension install from the zip on a clean profile and Linux/macOS QA are still pending.
 
 ## Known issues
 

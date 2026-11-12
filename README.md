@@ -101,6 +101,8 @@ blender --factory-startup --python tests/gui/test_texture.py
 blender --factory-startup --python tests/gui/test_repeat.py
 blender --factory-startup --python tests/gui/test_cancel.py
 blender --factory-startup --python tests/gui/test_fail.py
+blender --factory-startup --python tests/gui/test_large.py
+blender --factory-startup --python tests/gui/test_maxmp.py
 ```
 
 Source layout:

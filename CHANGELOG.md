@@ -13,6 +13,8 @@
 - Validate the legacy Shader/Geometry Nodes/Texture path on Blender 4.2.23 LTS.
 - Test cancel, failure recovery and undo neutrality on Blender 4.2 and 5.3.
 - Keep the deterministic repeat test at zero differing pixels on both versions.
+- Validate a 120-node graph and the max-MP guard on Blender 4.2 and 5.3.
+- Validate Unicode filename sanitization and a classic clean-profile install.
 - Update the implementation plan, README and QA report.
 
 ## 0.5.0

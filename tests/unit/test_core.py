@@ -181,6 +181,15 @@ def test_version_consistency():
     )
 
 
+def test_filename_sanitization():
+    from node_atlas import operators
+
+    check(operators._safe_name("Дерево 儀") == "Дерево 儀", "unicode filename")
+    sanitized = operators._safe_name('a/b:c*?"<>|')
+    check(not any(char in sanitized for char in '/\\:*?"<>|'), "invalid characters")
+    check(operators._safe_name("...") == "export", "empty filename fallback")
+
+
 def main():
     tests = [
         test_view_metrics,
@@ -188,6 +197,7 @@ def main():
         test_density,
         test_stitch_single_tile,
         test_png_writer,
+        test_filename_sanitization,
         test_registration,
         test_version_consistency,
     ]
