@@ -1,0 +1,56 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.pyd
+.python-version
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Blender add-on / extension build output ---
+dist/
+build/
+*.zip
+
+# Blender backups, temp saves and logs
+*.blend1
+*.blend2
+*.blend@
+*.blend~
+blender.log
+*.crash.txt
+
+# Local extension installs and sandboxes
+.blender/
+.local/
+scratch/
+
+# --- Test artifacts ---
+# Generated Blender fixtures (create with tests/fixtures/make_scene_*.py)
+tests/fixtures/*.blend
+tests/fixtures/*.blend1
+# Captures and reports produced by live-Blender test runs
+out/
+out_*/
+artifacts/
+test_output/
+tmp/
+*.tmp.png
+*.tmp.tif
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Editors / IDEs ---
+.vscode/
+.idea/
+*.swp
+*.swo
