@@ -7,9 +7,25 @@ and [`AGENTS.md`](AGENTS.md) (non-negotiable rules).
 [Blender 4.2+](https://www.blender.org/download/) that exports the current node tree,
 or the selected nodes, as one PNG.
 
-**Progress (0.5.0 MVP):** M0–M4 are implemented, plus the verified tree-type path
-from M5 (Shader, Geometry Nodes, Compositor) and the timer/cancel parts of M7. The
-4.2–5.1 adapter (M6), full hardening and packaging (M7–M9) remain.
+**Progress (0.6.0):** M0–M5 are implemented, covering Shader, Geometry Nodes,
+Compositor and Texture. The legacy `screenshot_area` path is validated on Blender
+4.2.23 for Shader/GN/Texture (including a NumPy PNG writer for saving); Compositor on
+4.2–5.1 hits a native Blender crash and is rejected with a clear error instead. The
+cancel/error/undo paths are tested on 4.2 and 5.3. Still open: real 4.5/5.1 QA, the
+Blender 6.0 compositor adapter, large-graph/limit hardening, and M8–M9 packaging.
+
+| Milestone | Version | Status |
+|---|---|---|
+| M0 Foundation | 0.1.0 | Done (combined into 0.5.0) |
+| M1 Geometry/bounds | 0.2.0 | Done |
+| M2 Capture 5.2+ | 0.3.0 | Done |
+| M3 Stitch/save | 0.4.0 | Done |
+| M4 Operator/UI MVP | 0.5.0 | Done; per-run overrides and popups deferred |
+| M5 Tree types | 0.6.0 | Done for Shader/GN/Compositor/Texture; 6.0 adapter open |
+| M6 Legacy adapter | 0.7.0 | Validated on 4.2.23 for Shader/GN/Texture; Compositor 4.2 is guarded; 4.5/5.1 pending |
+| M7 Hardening | 0.8.0 | Cancel/failure/undo tested on 4.2 + 5.3; limits open |
+| M8 Packaging/QA | 0.9.0 | Partial |
+| M9 Release | 1.0.0 | Pending |
 
 This plan is a dependency-ordered roadmap, not a promise of dates. Estimates are focused
 development days and exclude waiting for Blender builds, OS/hardware access and review.
@@ -270,8 +286,8 @@ Tasks:
 - [ ] Exact tile placement; assert no uncovered pixels in the final crop.
 - [ ] Top-anchored crop with no `+1`; expose `holes`, margins and overlap metrics to tests.
 - [ ] Save through [`imbuf.new`](https://docs.blender.org/api/current/imbuf.html) +
-      `with_buffer` + `imbuf.write`; atomic `.tmp.png` + `os.replace`; fallback via
-      [`bpy.data.images`](https://docs.blender.org/api/current/bpy.types.BlendData.html#bpy.types.BlendData.images).
+      `with_buffer` + `imbuf.write`; atomic `.tmp.png` + `os.replace`; 4.2–5.1
+      fallback via the NumPy PNG writer (`stitch._write_png_numpy`).
 - [ ] Memory prediction and `max_mp` enforcement before capture;
       [`np.memmap`](https://numpy.org/doc/stable/reference/generated/numpy.memmap.html)
       canvas above a threshold; clean temporary files in `finally`.
@@ -355,8 +371,9 @@ Tasks:
       adapter: temporary PNG/TIFF, force PNG/Image settings, restore
       `scene.render.image_settings`, crop the header; determine actual region size per
       version instead of assuming.
-- [ ] Loading/saving fallback: [`imbuf.load`](https://docs.blender.org/api/current/imbuf.html) /
-      [`bpy.data.images`](https://docs.blender.org/api/current/bpy.types.BlendData.html#bpy.types.BlendData.images).
+- [ ] Loading/saving fallback: [`bpy.data.images`](https://docs.blender.org/api/current/bpy.types.BlendData.html#bpy.types.BlendData.images)
+      with `Non-Color` + `pixels.foreach_get` for reading a legacy screenshot;
+      NumPy PNG writer for saving.
 - [ ] Capability detection module (`hasattr`, `bpy.app.version`) used only at the adapter
       boundary.
 - [ ] Re-run geometry, selected-only, state-restore and undo suites on 4.2 LTS, 4.5 LTS
@@ -452,7 +469,7 @@ artifact.
 
 1. **Headless unit (no capture):** view math, layout, bounds, selected-tree semantics,
    stitcher on synthetic arrays, version/feature detection. Run with
-   `blender --background --factory-startup --python tests/unit/run_all.py`
+   `blender --background --factory-startup --python tests/unit/test_core.py`
    ([`--background` docs](https://docs.blender.org/manual/en/latest/advanced/command_line/arguments.html)).
 2. **Headless fixture (no capture):** load fixtures, collect node bounds, verify
    expected layout/size for known scenes. This catches most geometry regressions

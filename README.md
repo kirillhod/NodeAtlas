@@ -13,9 +13,10 @@ in overlapping tiles, stitches them into one seamless image, and saves it withou
 external dependencies. Output density is controlled independently of the monitor and
 current zoom.
 
-> **Status: 0.5.0 MVP.** Current-tree and selected-nodes export work for Shader,
-> Geometry Nodes and Compositor trees on Blender 5.2+. The 4.2–5.1 adapter and the
-> 1.0 hardening/packaging milestones are still in progress. See
+> **Status: 0.6.0.** Current-tree and selected-nodes export work for Shader,
+> Geometry Nodes, Compositor and Texture. Blender 5.2+ uses the raw screenshot path;
+> Blender 4.2–5.1 uses the legacy path for Shader/GN/Texture (Compositor is guarded
+> because of a native 4.2 crash). Hardening and packaging (M7–M9) remain. See
 > [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md).
 
 ## Features
@@ -32,8 +33,8 @@ current zoom.
 
 ## Requirements
 
-- [Blender 5.2](https://www.blender.org/download/) or newer for this MVP
-  (the 4.2–5.1 `screenshot_area` adapter is the next milestone)
+- [Blender 4.2](https://www.blender.org/download/) or newer; 5.2+ uses the faster
+  raw-buffer capture, 4.2–5.1 uses the `screenshot_area` adapter
 - A GUI session ([Blender cannot capture UI in `--background`](https://docs.blender.org/manual/en/latest/advanced/command_line/arguments.html))
 
 ## Install
@@ -65,7 +66,10 @@ default.
 ## Known limitations
 
 - GUI only; `--background` cannot capture the editor.
-- Blender 4.2–5.1 currently raises a clear "5.2+ required" error.
+- Blender 4.2–5.1 uses the legacy `screenshot_area` adapter (validated on 4.2.23 for
+  Shader/GN/Texture); 5.2+ uses the raw screenshot path.
+- Compositor export on Blender 4.2–5.1 is blocked by a native Blender crash and shows
+  a clear error; use 5.2+ for the Compositor. Blender 4.5/5.1 QA is still pending.
 - Very long links may fade; Blender has no public setting to disable link LOD.
 - The view is restored to the nearest pixel (`View2D.cur` is not exposed).
 - Transparent background and batch export are planned after 1.0.
@@ -89,9 +93,13 @@ blender --background --factory-startup --python tests/fixtures/make_scene_uniq.p
 blender --background --factory-startup --python tests/fixtures/make_scene_small.py
 blender --background --factory-startup --python tests/fixtures/make_scene_both.py
 blender --factory-startup --python tests/gui/test_export.py
+blender --factory-startup --python tests/gui/test_legacy.py
 blender --factory-startup --python tests/gui/test_selected.py
 blender --factory-startup --python tests/gui/test_trees.py
+blender --factory-startup --python tests/gui/test_texture.py
 blender --factory-startup --python tests/gui/test_repeat.py
+blender --factory-startup --python tests/gui/test_cancel.py
+blender --factory-startup --python tests/gui/test_fail.py
 ```
 
 Source layout:

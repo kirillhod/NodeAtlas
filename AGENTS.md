@@ -15,11 +15,10 @@ as one high-resolution PNG. It captures the
 [NumPy](https://numpy.org/doc/stable/), and saves through
 [`imbuf`](https://docs.blender.org/api/current/imbuf.html). No re-rendering.
 
-**Status:** research and live validation are complete on
-[Blender 5.3.0](https://developer.blender.org/docs/release_notes/5.3/). The 0.5.0 MVP
-is implemented (current tree, selected nodes, Shader/Geometry Nodes/Compositor, PNG,
-state restore, undo-neutral); the 4.2–5.1 adapter and 1.0 hardening remain. Follow the
-milestone order in [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md).
+**Status:** 0.6.0. M0–M5 are implemented (Shader/Geometry Nodes/Compositor/Texture),
+the legacy 4.2 path is validated for Shader/GN/Texture on Blender 4.2.23, and
+cancel/error/undo are tested. The 4.5/5.1 QA, Compositor 4.2 crash workaround, and
+M7–M9 hardening/packaging remain.
 
 **Agreed identifiers** (do not rename without approval):
 
@@ -60,9 +59,10 @@ and as an extension. Do not commit generated artifacts.
 
 ## 4. Environment
 
-- **Blender 4.2+ target**, primary development on **5.3.0 / Windows**; the 0.5.0 MVP
-  requires **5.2+** (raw screenshot path); the 4.2–5.1 adapter is M6. Test 4.2 LTS,
-  4.5 LTS, 5.1, 5.2, 5.3 on Windows/macOS/Linux.
+- **Blender 4.2+ target**, primary development on **5.3.0 / Windows**; Blender 4.2.23
+  is validated for the legacy Shader/GN/Texture path. The Compositor on 4.2–5.1 is
+  guarded because of a native crash; 4.5/5.1 QA is pending. Test 4.2 LTS, 4.5 LTS,
+  5.1, 5.2, 5.3 on Windows/macOS/Linux.
 - **[Python 3.11](https://www.python.org/)** is bundled with 4.2+; NumPy is available
   inside Blender. No third-party dependencies (no [Pillow](https://python-pillow.org/),
   no wheels).
@@ -169,8 +169,8 @@ Verified on Blender 5.3.0. Violating them yields plausible-looking but wrong ima
     [`ImBuf.with_buffer`](https://docs.blender.org/api/current/imbuf.types.html) +
     `np.frombuffer(buf, ...)[:] = arr`, then `imbuf.write(..., filepath=...)`.
     `buf[:] = arr` fails. Write `*.tmp.png` then `os.replace`. 4.2–5.1 fallback:
-    [`bpy.data.images`](https://docs.blender.org/api/current/bpy.types.BlendData.html#bpy.types.BlendData.images)
-    + [`pixels.foreach_set`](https://docs.blender.org/api/current/bpy.types.Image.html#bpy.types.Image.pixels).
+    the NumPy PNG writer in `stitch._write_png_numpy` (no color-management
+    round-trip); `bpy.data.images` is not used for saving.
 
 13. **Version adapters:** 5.2+ uses `Window.screenshot`; 4.2–5.1 uses
     [`screenshot_area`](https://docs.blender.org/api/current/bpy.ops.screen.html#bpy.ops.screen.screenshot_area)
