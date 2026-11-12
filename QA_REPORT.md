@@ -59,10 +59,12 @@ window, exports a fixture, validates the PNG and editor restoration, then exits.
 | `test_large.py` | PASS, 6017×3131, 1.87 s | PASS, 6013×3132, 1.69 s | PASS, 6013×3132, 2.71 s | PASS, 6016×3133, 3.18 s | PASS, 6016×3133, 3.25 s |
 | `test_maxmp.py` | PASS | PASS | PASS | PASS | PASS |
 | `test_density.py` | PASS, 4240×935 | PASS, 4240×937 | PASS, 4241×937 | PASS, 4239×937 | PASS, 4243×938 |
+| `test_multiarea.py` | PASS, 2230×643 | PASS, 2230×643 | PASS, 2231×622 | PASS, 2229×621 | PASS, 2229×610 |
 
 All GUI tests validate that the editor state is restored and that failed/cancelled
 exports leave no PNG. The large test uses 120 nodes and ~18.8 MP; the density test uses
-D=2, zero padding and `view.ui_scale = 2.0`; the max-MP test uses a 1 MP limit.
+D=2, zero padding and `view.ui_scale = 2.0`; the multi-area test keeps a second Node
+Editor untouched; the max-MP test uses a 1 MP limit.
 
 ## Packaging
 
