@@ -13,12 +13,12 @@ in overlapping tiles, stitches them into one seamless image, and saves it withou
 external dependencies. Output density is controlled independently of the monitor and
 current zoom.
 
-> **Status: 0.7.0.** Current-tree and selected-nodes export work for Shader,
+> **Status: 0.8.0.** Current-tree and selected-nodes export work for Shader,
 > Geometry Nodes, Compositor and Texture. Blender 5.2+ uses the raw screenshot path;
 > Blender 4.2–5.1 uses the legacy path for Shader/GN/Texture (validated on 4.2.23,
 > 4.5.9 and 5.1.2; Compositor is guarded because of a native 4.2–5.1 crash). The
-> Windows 4.2–5.3 matrix, 118 MP exports, read-only/full-disk handling and clean
-> installs pass. M8 packaging and Linux/macOS QA remain.
+> Windows 4.2–5.3 matrix, 118 MP exports, output-path guards and clean installs pass.
+> Linux, macOS and a second monitor are untested. 1.0.0 is the next release.
 > See [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md).
 
 ## Features
@@ -155,7 +155,11 @@ blender --factory-startup --python tests/gui/test_limits.py
 blender --factory-startup --python tests/gui/test_readonly.py
 blender --factory-startup --python tests/gui/test_diskfull.py
 blender --factory-startup --python tests/gui/test_arealost.py
+blender --python tests/gui/test_artifact.py
 ```
+
+`test_artifact.py` exports with an installed add-on or extension; run it against a
+clean profile without `--factory-startup` so the desired install is loaded.
 
 `tests/run_blender.ps1` wraps a GUI test with a wall-clock timeout, kills a stuck
 Blender, and prints the tail of its log. It is a Windows convenience; the test scripts

@@ -2,7 +2,8 @@ param(
     [Parameter(Mandatory = $true)][string]$Blender,
     [Parameter(Mandatory = $true)][string]$Script,
     [int]$TimeoutSec = 180,
-    [switch]$Background
+    [switch]$Background,
+    [switch]$UserConfig
 )
 
 # Convenience wrapper for Windows: run one GUI test with a wall-clock limit and
@@ -12,7 +13,8 @@ $name = [IO.Path]::GetFileNameWithoutExtension($scriptPath)
 $blenderTag = Split-Path (Split-Path $Blender -Parent) -Leaf
 $log = Join-Path $env:TEMP "nodeatlas-$blenderTag-$name.log"
 $errLog = "$log.err"
-$arguments = @("--factory-startup", "--python", $scriptPath)
+$arguments = @("--python", $scriptPath)
+if (-not $UserConfig) { $arguments = @("--factory-startup") + $arguments }
 if ($Background) { $arguments = @("--background") + $arguments }
 
 $proc = Start-Process -FilePath $Blender -ArgumentList $arguments -PassThru `

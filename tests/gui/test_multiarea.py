@@ -30,7 +30,10 @@ def fail(message):
 
 def node_areas(window=None):
     window = window or bpy.context.window_manager.windows[0]
-    areas = [area for area in window.screen.areas if area.type == "NODE_EDITOR"]
+    areas = [
+        area for area in window.screen.areas
+        if area.type == "NODE_EDITOR" and area.width > 0 and area.height > 0
+    ]
     return sorted(areas, key=lambda area: (area.x, area.y))
 
 
@@ -52,39 +55,36 @@ def area_snapshot(area):
     }
 
 
-def setup():
-    bpy.ops.wm.open_mainfile(filepath=FIXTURE)
-    window = bpy.context.window_manager.windows[0]
-    area = max(window.screen.areas, key=lambda item: item.width * item.height)
-    area.type = "NODE_EDITOR"
+def configure(area, material_name, window):
     space = area.spaces.active
     space.tree_type = "ShaderNodeTree"
     space.pin = True
-    space.node_tree = bpy.data.materials["M_Small"].node_tree
+    space.node_tree = bpy.data.materials[material_name].node_tree
     region = next((item for item in area.regions if item.type == "WINDOW"), None)
     with bpy.context.temp_override(window=window, area=area, region=region):
         bpy.ops.wm.redraw_timer(type="DRAW_WIN_SWAP", iterations=1)
 
-    with bpy.context.temp_override(window=window, area=area, region=region):
-        bpy.ops.screen.area_split(direction="VERTICAL", factor=0.5)
+
+def setup():
+    bpy.ops.wm.open_mainfile(filepath=FIXTURE)
+    window = bpy.context.window_manager.windows[0]
+    candidates = sorted(
+        (area for area in window.screen.areas if area.width >= 64 and area.height >= 64),
+        key=lambda item: item.width * item.height,
+        reverse=True,
+    )
+    if len(candidates) < 2:
+        fail("the fixture layout needs at least two sizable areas")
+    targets = candidates[:2]
+    targets[0].type = "NODE_EDITOR"
+    configure(targets[0], "M_Small", window)
+    targets[1].type = "NODE_EDITOR"
+    configure(targets[1], "M_Uniq", window)
 
     areas = node_areas(window)
     if len(areas) != 2:
-        fail(f"area split produced {len(areas)} node editors")
-    left, right = areas
-    left.spaces.active.tree_type = "ShaderNodeTree"
-    left.spaces.active.pin = True
-    left.spaces.active.node_tree = bpy.data.materials["M_Small"].node_tree
-    right.spaces.active.tree_type = "ShaderNodeTree"
-    right.spaces.active.pin = True
-    right.spaces.active.node_tree = bpy.data.materials["M_Uniq"].node_tree
-
-    for target in (left, right):
-        target_region = next(
-            (item for item in target.regions if item.type == "WINDOW"), None
-        )
-        with bpy.context.temp_override(window=window, area=target, region=target_region):
-            bpy.ops.wm.redraw_timer(type="DRAW_WIN_SWAP", iterations=1)
+        fail(f"expected 2 node editors, got {len(areas)}")
+    areas_before = [area_snapshot(item) for item in areas]
 
     prefs = bpy.context.preferences.addons["node_atlas"].preferences
     prefs.default_dir = OUT + os.sep
@@ -96,7 +96,7 @@ def setup():
     prefs.hide_ui = True
     prefs.restore_ui = True
     prefs.deterministic = True
-    return [area_snapshot(item) for item in (left, right)]
+    return areas_before
 
 
 def tick():
@@ -113,7 +113,11 @@ def tick():
                     bpy.data.images.remove(image)
                 areas = node_areas()
                 if len(areas) != 2:
-                    fail(f"expected 2 node editors after restore, got {len(areas)}")
+                    from node_atlas import operators
+                    fail(
+                        f"expected 2 node editors after restore, got {len(areas)}; "
+                        f"result={operators.last_result}"
+                    )
                 after = [area_snapshot(item) for item in areas]
                 if after != state["before"]:
                     fail(f"state mismatch: {state['before']} != {after}")
@@ -136,7 +140,7 @@ print("NodeAtlas multi-area test output:", OUT)
 try:
     bpy.ops.preferences.addon_enable(module="node_atlas")
     state["before"] = setup()
-    area = node_areas()[0]
+    area = max(node_areas(), key=lambda item: item.width * item.height)
     region = next((item for item in area.regions if item.type == "WINDOW"), None)
     window = bpy.context.window_manager.windows[0]
     with bpy.context.temp_override(window=window, area=area, region=region):

@@ -1,12 +1,16 @@
 # Changelog
 
-## Unreleased
+## 0.8.0
 
 - Add a settings table, supported-version notes and a troubleshooting section to the
   README.
 - Add `SPDX-License-Identifier: GPL-3.0-or-later` headers to the package and tests.
 - Add a scaling GUI test: effective scales 1.0/1.25/1.5/2.0 in one session, with view
   restore after every export and a size spread guard.
+- Validate the extension build and clean classic/extension installs for the release
+  candidate.
+- Record Windows-only coverage honestly: Linux, macOS and a second physical monitor
+  are untested; no screenshots or example assets are committed.
 
 ## 0.7.0
 

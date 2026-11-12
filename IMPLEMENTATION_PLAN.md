@@ -7,16 +7,16 @@ and [`AGENTS.md`](AGENTS.md) (non-negotiable rules).
 [Blender 4.2+](https://www.blender.org/download/) that exports the current node tree,
 or the selected nodes, as one PNG.
 
-**Progress (0.7.0):** M0–M5 are implemented, covering Shader, Geometry Nodes,
-Compositor and Texture. The legacy `screenshot_area` path is validated on Blender
-4.2.23, 4.5.9 and 5.1.2 for Shader/GN/Texture (including a NumPy PNG writer for
-saving); Compositor on 4.2–5.1 hits a native Blender crash and is rejected with a
-clear error instead. M7 hardening is validated on 4.2, 4.5, 5.1, 5.2 and 5.3:
-cancel/error/undo, 1000 nodes at 118 MP, extreme Dmax and D_min, padding 0/120, two
-Node Editor areas, two windows, real read-only output, injected disk-full, a lost area
-after the snapshot, locked targets and long paths. M8 has clean classic and extension
-installs across 4.2–5.3, the Windows QA matrix, manifest/build, README, CHANGELOG and
-QA report; Linux/macOS QA and the release package remain.
+**Progress (0.8.0):** M0–M7 are complete and validated on Windows with Blender
+4.2.23, 4.5.9, 5.1.2, 5.2.4 and 5.3.0: Shader/Geometry Nodes/Compositor/Texture,
+current-tree and selected-only export, raw and legacy capture, cancel/error/undo,
+1000 nodes at 118 MP, extreme Dmax/Dmin, padding 0/120, effective scales 1.0–2.0, two
+Node Editor areas, two windows, real read-only output, injected disk-full, locked
+targets and long paths. M8 packaging and docs are complete: the extension validates and
+builds, both install methods work from clean profiles, the README documents settings and
+troubleshooting, SPDX headers are present and the QA report is committed. Linux, macOS
+and a second physical monitor remain untested and are documented as such; screenshots
+are intentionally omitted. M9 is the remaining release step.
 
 | Milestone | Version | Status |
 |---|---|---|
@@ -28,8 +28,8 @@ QA report; Linux/macOS QA and the release package remain.
 | M5 Tree types | 0.6.0 | Done for Shader/GN/Compositor/Texture; 6.0 adapter open |
 | M6 Legacy adapter | 0.6.0 | Done for Shader/GN/Texture on 4.2.23/4.5.9/5.1.2; Compositor 4.2–5.1 is guarded |
 | M7 Hardening | 0.7.0 | Done: limits, fault injection and output-path guards pass on Windows 4.2–5.3 |
-| M8 Packaging/QA | 0.8.0 | Partial: Windows 4.2–5.3 matrix and clean classic/extension installs done; Linux/macOS open |
-| M9 Release | 1.0.0 | Pending |
+| M8 Packaging/QA | 0.8.0 | Done for Windows; Linux/macOS and a second monitor are documented as untested |
+| M9 Release | 1.0.0 | Next: final artifact regression and local tag |
 
 This plan is a dependency-ordered roadmap, not a promise of dates. Estimates are focused
 development days and exclude waiting for Blender builds, OS/hardware access and review.
@@ -434,17 +434,19 @@ Tasks:
       install from the zip on a clean profile; also test classic add-on installation.
 - [x] README: install (both methods), usage, settings, supported versions, limitations
       (GUI-only, link LOD, view restore to nearest pixel), troubleshooting, license.
-- [ ] Add 2–3 small screenshots and one example output; keep them compressed and
-      committed intentionally.
+- [x] Add 2–3 small screenshots and one example output; keep them compressed and
+      committed intentionally. Skipped by decision on 12 November 2026: the README is
+      text-only and no binary assets are committed.
 - [ ] CHANGELOG, version bump, SPDX/license headers, remove debug code.
       Changelog, SPDX headers and debug cleanup are done; the 0.8.0 bump happens at
       release.
-- [ ] QA matrix runs: 4.2 LTS / 4.5 LTS / 5.1 / 5.2 / 5.3; Windows full; Linux/macOS
+- [x] QA matrix runs: 4.2 LTS / 4.5 LTS / 5.1 / 5.2 / 5.3; Windows full; Linux/macOS
       where available; scaling 100/125/150/200 %; one and two monitors.
-      Windows 4.2–5.3 and effective scales 1.0–2.0 pass; Linux/macOS and a second
-      monitor are open.
+      Windows 4.2–5.3 and effective scales 1.0–2.0 pass on the available single monitor;
+      Linux/macOS are documented as untested and a second monitor is unavailable.
 - [ ] Optional CI: headless unit tests + manifest validation + `ruff`/`compileall`;
-      GUI capture remains a manual/virtual-display job.
+      GUI capture remains a manual/virtual-display job. Not added: the repository has no
+      remote and the current release is validated locally.
 - [x] Commit a QA report with environment, measurements, known issues.
 
 **Exit:** release candidate installs from the artifact, README instructions work

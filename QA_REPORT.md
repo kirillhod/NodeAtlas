@@ -1,6 +1,6 @@
 # NodeAtlas QA report
 
-**Version:** 0.7.0
+**Version:** 0.8.0
 **Date:** 12 November 2026  
 **Platforms:** Windows, GUI sessions only
 
@@ -8,11 +8,16 @@
 
 | Blender | OS | Role |
 |---|---|---|
-| 5.3.0 | Windows | Primary development, raw `Window.screenshot` path |
-| 5.2.4 LTS | Windows | Raw `Window.screenshot` path |
-| 5.1.2 | Windows | Legacy `screenshot_area` path |
-| 4.5.9 LTS | Windows | Legacy `screenshot_area` path |
-| 4.2.23 LTS | Windows | Legacy `screenshot_area` path |
+| 5.3.0 | Windows 10 22H2 | Primary development, raw `Window.screenshot` path |
+| 5.2.4 LTS | Windows 10 22H2 | Raw `Window.screenshot` path |
+| 5.1.2 | Windows 10 22H2 | Legacy `screenshot_area` path |
+| 4.5.9 LTS | Windows 10 22H2 | Legacy `screenshot_area` path |
+| 4.2.23 LTS | Windows 10 22H2 | Legacy `screenshot_area` path |
+
+The host has two 2048×1152 displays at a 125% OS scale. GUI tests run on the primary
+display; physical second-monitor placement is not scripted. Effective UI scales
+1.0/1.25/1.5/2.0 are covered by changing `view.ui_scale` (Resolution Scale), because
+`system.ui_scale` is read-only and follows the OS.
 
 Fixtures are generated locally by `tests/fixtures/make_scene_*.py` with Blender 4.2.23
 so the resulting `.blend` files open in all tested versions. Generated fixtures are
@@ -74,6 +79,7 @@ window, exports a fixture, validates the PNG and editor restoration, then exits.
 | `test_readonly.py` | PASS, real ACL deny | PASS | PASS | PASS | PASS |
 | `test_diskfull.py` | PASS, injected ENOSPC | PASS | PASS | PASS | PASS |
 | `test_arealost.py` | PASS, lost area after snapshot | PASS | PASS | PASS | PASS |
+| `test_artifact.py` | PASS, extension install | PASS | PASS | PASS | PASS |
 
 All GUI tests validate that the editor state is restored and that failed/cancelled
 exports leave no PNG. The 1000-node test forces the memmap path and ~75.8 MP (118 MP at
@@ -88,16 +94,21 @@ ACL deny entry, and the disk-full test injects ENOSPC at the save boundary.
 
 - `blender --command extension validate node_atlas`: PASS.
 - `blender --command extension build --source-dir node_atlas --output-dir dist`:
-  produces `node_atlas-0.7.0.zip` with the manifest and package modules.
+  produces `node_atlas-0.8.0.zip` with the manifest and package modules.
 - Classic add-on clean-profile install: PASS on Blender 4.2.23, 4.5.9, 5.1.2, 5.2.4
   and 5.3.0 in isolated `BLENDER_USER_SCRIPTS/scripts/addons` profiles (0.6.1); the
-  0.6.2 package was re-validated on 5.3.0, and the 0.7.0 package is re-validated on
-  5.3.0.
+  0.6.2 and 0.7.0 packages were re-validated on 5.3.0, and the 0.8.0 package is
+  re-validated on 5.3.0.
 - Extension clean-profile install: PASS across the same five versions with 0.6.1; the
-  0.6.2 zip was installed into an isolated 5.3.0 repository with
-  `install-file --enable`, loading `bl_ext.nodeatlas_test.node_atlas` version 0.6.2.
-  The 0.7.0 zip is re-validated the same way.
-- Linux/macOS QA is still pending.
+  0.6.2 and 0.7.0 zips were installed into isolated 5.3.0 repositories with
+  `install-file --enable`, loading `bl_ext.nodeatlas_test.node_atlas`. The 0.8.0 zip was
+  installed the same way on all five versions, and `test_artifact.py` exported a PNG
+  from `bl_ext.nodeatlas_test.node_atlas` on each of them.
+- Classic 0.8.0 install: copied into an isolated `scripts/addons` profile on 5.3.0;
+  `test_artifact.py` enabled `node_atlas` and exported a PNG.
+- Linux and macOS are untested: no Linux distribution is installed under WSL and no Mac
+  hardware is available. `system.ui_scale` cannot be changed from RNA, so OS-level
+  scaling percentages were approximated with the effective view scale (1.0–2.0).
 
 ## Runtime guards
 

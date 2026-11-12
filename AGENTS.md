@@ -15,11 +15,12 @@ as one high-resolution PNG. It captures the
 [NumPy](https://numpy.org/doc/stable/), and saves through
 [`imbuf`](https://docs.blender.org/api/current/imbuf.html). No re-rendering.
 
-**Status:** 0.7.0. M0–M5 are implemented (Shader/Geometry Nodes/Compositor/Texture),
+**Status:** 0.8.0. M0–M7 are complete (Shader/Geometry Nodes/Compositor/Texture),
 the legacy 4.2–5.1 path is validated for Shader/GN/Texture on Blender 4.2.23, 4.5.9
-and 5.1.2, and M7 hardening (limits, fault injection, read-only/full-disk output) is
-tested on 4.2–5.3. Compositor on 4.2–5.1 is guarded due to a native crash. Linux/macOS
-QA and M8–M9 packaging/release remain.
+and 5.1.2, and hardening (limits, fault injection, read-only/full-disk output, scaling)
+is tested on 4.2–5.3. Compositor on 4.2–5.1 is guarded due to a native crash. M8
+packaging and docs are complete for Windows; Linux, macOS and a second monitor are
+untested. M9 is the local 1.0.0 release.
 
 **Agreed identifiers** (do not rename without approval):
 
