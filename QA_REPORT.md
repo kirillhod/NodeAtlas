@@ -62,7 +62,10 @@ window, exports a fixture, validates the PNG and editor restoration, then exits.
 - Classic add-on clean-profile install: copied `node_atlas/` into an isolated
   `BLENDER_USER_SCRIPTS/scripts/addons`, enabled in a clean profile, version 0.6.0 and
   preferences registered.
-- Extension install from the zip on a clean profile and Linux/macOS QA are still pending.
+- Extension clean-profile install: built `node_atlas-0.6.0.zip`, installed into an
+  isolated user repository with `extension install-file --enable`; Blender loaded
+  `bl_ext.nodeatlas_test.node_atlas` version 0.6.0.
+- Linux/macOS QA is still pending.
 
 ## Known issues
 

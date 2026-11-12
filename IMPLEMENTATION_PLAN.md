@@ -25,7 +25,7 @@ report; extension install, the 4.5/5.1 matrix and the remaining M7 limits are op
 | M5 Tree types | 0.6.0 | Done for Shader/GN/Compositor/Texture; 6.0 adapter open |
 | M6 Legacy adapter | 0.7.0 | Validated on 4.2.23 for Shader/GN/Texture; Compositor 4.2 is guarded; 4.5/5.1 pending |
 | M7 Hardening | 0.8.0 | Partial: 120-node graph and max-MP guard pass on 4.2/5.3; multi-window/limits/memmap open |
-| M8 Packaging/QA | 0.9.0 | Partial: classic clean install, manifest/build, README, CHANGELOG, QA report; extension install and 4.5/5.1 matrix open |
+| M8 Packaging/QA | 0.9.0 | Partial: classic + extension clean installs, manifest/build, README, CHANGELOG, QA report; 4.5/5.1 and Linux/macOS open |
 | M9 Release | 1.0.0 | Pending |
 
 This plan is a dependency-ordered roadmap, not a promise of dates. Estimates are focused
