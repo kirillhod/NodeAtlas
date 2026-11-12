@@ -30,6 +30,11 @@ def fail(message):
     print("FAIL:", message)
     traceback.print_exc()
     sys.stdout.flush()
+    if state.get("user"):
+        try:
+            unlock_directory(state["user"])
+        except Exception:
+            pass
     os._exit(1)
 
 
@@ -154,14 +159,14 @@ def tick():
 
 
 print("NodeAtlas read-only test output:", OUT, flush=True)
+if sys.platform != "win32":
+    print(json.dumps({"result": "SKIP", "reason": "icacls is Windows-only"}, indent=2))
+    sys.stdout.flush()
+    os._exit(0)
 try:
-    print("step: enable", flush=True)
     bpy.ops.preferences.addon_enable(module="node_atlas")
-    print("step: setup", flush=True)
     state["before"] = setup()
-    print("step: lock", flush=True)
     state["user"] = lock_directory()
-    print("step: export", flush=True)
     area, region = node_area()
     window = bpy.context.window_manager.windows[0]
     with bpy.context.temp_override(window=window, area=area, region=region):
@@ -170,7 +175,6 @@ try:
         except RuntimeError as exc:
             state["result"] = "ERROR"
             state["message"] = str(exc)
-    print("step: scheduled", flush=True)
 except Exception:
     fail("could not start the read-only export:\n" + traceback.format_exc())
 

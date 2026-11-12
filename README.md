@@ -118,12 +118,13 @@ blender --factory-startup --python tests/gui/test_diskfull.py
 blender --factory-startup --python tests/gui/test_arealost.py
 ```
 
-`tests/run_blender.ps1` wraps a GUI test with a wall-clock and idle timeout, kills a
-stuck Blender, and prints the tail of its log:
+`tests/run_blender.ps1` wraps a GUI test with a wall-clock timeout, kills a stuck
+Blender, and prints the tail of its log. It is a Windows convenience; the test scripts
+also run directly:
 
 ```powershell
 powershell -File tests/run_blender.ps1 -Blender <blender.exe> `
-  -Script tests/gui/test_export.py -TimeoutSec 120 -IdleSec 40
+  -Script tests/gui/test_export.py -TimeoutSec 120
 ```
 
 Set `NODEATLAS_TEST_DPI=120` for the 118 MP variant of `test_1000.py`.

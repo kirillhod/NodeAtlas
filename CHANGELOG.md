@@ -12,8 +12,8 @@
 - Add GUI tests for a real ACL read-only directory, injected disk-full, a lost editor
   area after the snapshot, and minimum density with 120 px padding.
 - Validate a 118 MP export with 1000 nodes and the memmap path on Blender 4.2–5.3.
-- Add `tests/run_blender.ps1`, a hang-safe runner that kills a stuck Blender and reports
-  timeout or stall instead of blocking the test loop.
+- Add `tests/run_blender.ps1`, an optional Windows wrapper that kills a stuck Blender
+  after a wall-clock timeout instead of blocking the test loop.
 
 ## 0.6.2
 
