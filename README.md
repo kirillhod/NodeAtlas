@@ -177,15 +177,18 @@ blender --python tests/gui/test_artifact.py
 clean profile without `--factory-startup` so the desired install is loaded.
 
 `tests/run_blender.ps1` wraps a GUI test with a wall-clock timeout, kills a stuck
-Blender, and prints the tail of its log. It is a Windows convenience; the test scripts
-also run directly:
+Blender, and prints the tail of its log. It runs Blender with an isolated `TEMP` and
+removes that folder afterwards, so session directories and test PNGs do not accumulate.
+It is a Windows convenience; the test scripts also run directly:
 
 ```powershell
 powershell -File tests/run_blender.ps1 -Blender <blender.exe> `
   -Script tests/gui/test_export.py -TimeoutSec 120
 ```
 
-Set `NODEATLAS_TEST_DPI=120` for the 118 MP variant of `test_1000.py`.
+Set `NODEATLAS_TEST_DPI=120` for the 118 MP variant of `test_1000.py`. Direct
+`blender --python` runs can leave a `blender_*` session folder in `%TEMP%`; the wrapper
+removes its isolated copy automatically.
 
 Source layout:
 
