@@ -57,9 +57,15 @@ obj = bpy.data.objects["Cube"]
 mod = obj.modifiers.new("GN", "NODES")
 mod.node_group = gn
 
-# --- compositor tree (5.3: scene.compositing_node_group) ---
-comp = bpy.data.node_groups.new("COMP_Test", "CompositorNodeTree")
-comp.nodes.clear()
+# --- compositor tree (5.3: scene.compositing_node_group; 4.2–5.1: scene.node_tree) ---
+scene = bpy.context.scene
+if hasattr(scene, "compositing_node_group"):
+    comp = bpy.data.node_groups.new("COMP_Test", "CompositorNodeTree")
+    comp.nodes.clear()
+else:
+    scene.use_nodes = True
+    comp = scene.node_tree
+    comp.nodes.clear()
 cspecs = [
     ("CompositorNodeRLayers", -200, 0, "C_layers"),
     ("CompositorNodeGlare", 500, 200, "C_glare"),
@@ -86,11 +92,13 @@ except Exception as e:
     print("COMP link", type(e).__name__, e)
 
 try:
-    scene = bpy.context.scene
-    scene.compositing_node_group = comp
-    print("scene.compositing_node_group ->", scene.compositing_node_group)
+    if hasattr(scene, "compositing_node_group"):
+        scene.compositing_node_group = comp
+        print("scene.compositing_node_group ->", scene.compositing_node_group)
+    else:
+        print("scene.node_tree (legacy compositor) ->", comp)
 except Exception as e:
-    print("assign compositing_node_group FAIL", type(e).__name__, e)
+    print("assign compositor tree FAIL", type(e).__name__, e)
 
 path = os.path.join(OUT, "scene_graphs.blend")
 bpy.ops.wm.save_as_mainfile(filepath=path)

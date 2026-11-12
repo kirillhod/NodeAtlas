@@ -14,6 +14,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
+from node_atlas import bounds  # noqa: E402
+
 OUT = tempfile.mkdtemp(prefix="nodeatlas_selected_")
 FIXTURE = os.path.join(ROOT, "tests", "fixtures", "scene_selected.blend")
 OUTPUT = os.path.join(OUT, "selected.png")
@@ -42,7 +44,9 @@ def tree_state(tree):
         "links": sorted((link.from_node.name, link.to_node.name) for link in tree.links),
         "selected": sorted(node.name for node in tree.nodes if node.select),
         "active": tree.nodes.active.name if tree.nodes.active else None,
-        "locations": {node.name: tuple(node.location_absolute) for node in tree.nodes},
+        "locations": {
+            node.name: tuple(bounds.absolute_location(node)) for node in tree.nodes
+        },
     }
 
 

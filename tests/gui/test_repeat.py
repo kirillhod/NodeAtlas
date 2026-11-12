@@ -9,7 +9,6 @@ import tempfile
 import traceback
 
 import bpy
-import imbuf
 import numpy as np
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -73,12 +72,17 @@ def start_export():
 
 
 def read_pixels(path):
-    image = imbuf.load(path)
-    width, height = image.size
-    with image.with_buffer() as buffer:
-        array = np.frombuffer(buffer, dtype=np.uint8).reshape(height, width, 4).copy()
-    image.free()
-    return array
+    image = bpy.data.images.load(path, check_existing=False)
+    try:
+        image.colorspace_settings.name = "Non-Color"
+        width, height = image.size
+        pixels = np.empty(width * height * 4, dtype=np.float32)
+        image.pixels.foreach_get(pixels)
+        return np.clip(
+            pixels.reshape(height, width, 4) * 255.0 + 0.5, 0, 255
+        ).astype(np.uint8)
+    finally:
+        bpy.data.images.remove(image)
 
 
 def tick():

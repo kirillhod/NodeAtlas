@@ -112,6 +112,38 @@ def test_stitch_single_tile():
     check((image[:, :, 3] == 255).all(), "alpha")
 
 
+def test_png_writer():
+    import os
+    import tempfile
+
+    import bpy
+
+    height, width = 7, 9
+    image = np.zeros((height, width, 4), dtype=np.uint8)
+    image[:, :, 0] = np.arange(width, dtype=np.uint8)[None, :] * 20
+    image[:, :, 1] = np.arange(height, dtype=np.uint8)[:, None] * 30
+    image[:, :, 2] = 123
+    image[:, :, 3] = 200
+    fd, path = tempfile.mkstemp(suffix=".png")
+    os.close(fd)
+    try:
+        stitch._write_png_numpy(image, path)
+        loaded = bpy.data.images.load(path, check_existing=False)
+        try:
+            loaded.colorspace_settings.name = "Non-Color"
+            check(tuple(loaded.size) == (width, height), "png size")
+            pixels = np.empty(width * height * 4, dtype=np.float32)
+            loaded.pixels.foreach_get(pixels)
+            result = np.clip(
+                pixels.reshape(height, width, 4) * 255.0 + 0.5, 0, 255
+            ).astype(np.uint8)
+            check((result == image).all(), "png pixels")
+        finally:
+            bpy.data.images.remove(loaded)
+    finally:
+        os.remove(path)
+
+
 def test_registration():
     import bpy
 
@@ -155,6 +187,7 @@ def main():
         test_rect_and_layout,
         test_density,
         test_stitch_single_tile,
+        test_png_writer,
         test_registration,
         test_version_consistency,
     ]

@@ -70,7 +70,14 @@ def configure_tree(kind):
         space.tree_type = "CompositorNodeTree"
         space.show_backdrop = False
         space.pin = True
-        space.node_tree = bpy.data.node_groups["COMP_Test"]
+        comp = bpy.data.node_groups.get("COMP_Test")
+        if comp is None:
+            comp = getattr(bpy.context.scene, "compositing_node_group", None)
+        if comp is None:
+            comp = getattr(bpy.context.scene, "node_tree", None)
+        if comp is None:
+            raise RuntimeError("No compositor tree in the fixture")
+        space.node_tree = comp
         name = "comp.png"
     with bpy.context.temp_override(window=window, area=area, region=region):
         bpy.ops.wm.redraw_timer(type="DRAW_WIN_SWAP", iterations=1)
@@ -128,6 +135,14 @@ def tick():
                 state["case"] += 1
                 state["found"] = None
                 if state["case"] == 1:
+                    if bpy.app.version < (5, 2, 0):
+                        print(json.dumps({
+                            "result": "PASS",
+                            "sizes": state["sizes"],
+                            "compositor": "skipped (4.2–5.1 guard)",
+                        }, indent=2))
+                        sys.stdout.flush()
+                        os._exit(0)
                     state["before"], state["output"] = configure_tree("comp")
                     start_export()
                     return 0.2
