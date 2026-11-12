@@ -106,6 +106,7 @@ blender --factory-startup --python tests/gui/test_large.py
 blender --factory-startup --python tests/gui/test_maxmp.py
 blender --factory-startup --python tests/gui/test_density.py
 blender --factory-startup --python tests/gui/test_multiarea.py
+blender --factory-startup --python tests/gui/test_multiwindow.py
 ```
 
 Source layout:

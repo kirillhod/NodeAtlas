@@ -30,6 +30,7 @@
 - Add memmap spill for large stitch canvases and clean up temporary PNGs on failed saves.
 - Validate 0.6.1 clean classic and extension installs on 4.2.23–5.3.0.
 - Add a multi-area GUI test: a second Node Editor remains untouched by export/restore.
+- Add a multi-window GUI test: export from one window leaves the other unchanged.
 - Update the implementation plan, README and QA report.
 
 ## 0.5.0
