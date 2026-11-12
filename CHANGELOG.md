@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.1
+
+- Spill the stitching accumulator and weights to memmaps when the canvas is large.
+- Remove temporary PNG files when the final atomic rename fails.
+- Validate the Windows matrix on Blender 4.2.23, 4.5.9, 5.1.2, 5.2.4 and 5.3.0.
+- Validate clean classic and extension installs across the tested versions.
+- Add high-density, 120-node, max-MP, texture, cancel and failure GUI tests.
+
 ## 0.6.0
 
 - Add a legacy `screenshot_area` capture path for Blender 4.2–5.1.
@@ -20,6 +28,7 @@
 - Validate a clean extension install from the built zip.
 - Validate high-density export (D=2, zero padding) and extension installs across 4.2–5.3.
 - Add memmap spill for large stitch canvases and clean up temporary PNGs on failed saves.
+- Validate 0.6.1 clean classic and extension installs on 4.2.23–5.3.0.
 - Update the implementation plan, README and QA report.
 
 ## 0.5.0

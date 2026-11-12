@@ -1,6 +1,6 @@
 # NodeAtlas QA report
 
-**Version:** 0.6.0  
+**Version:** 0.6.1  
 **Date:** 12 November 2026  
 **Platforms:** Windows, GUI sessions only
 
@@ -68,12 +68,12 @@ D=2, zero padding and `view.ui_scale = 2.0`; the max-MP test uses a 1 MP limit.
 
 - `blender --command extension validate node_atlas`: PASS.
 - `blender --command extension build --source-dir node_atlas --output-dir dist`:
-  produces `node_atlas-0.6.0.zip` with the manifest and package modules.
+  produces `node_atlas-0.6.1.zip` with the manifest and package modules.
 - Classic add-on clean-profile install: PASS on Blender 4.2.23, 4.5.9, 5.1.2, 5.2.4
   and 5.3.0, each in an isolated `BLENDER_USER_SCRIPTS/scripts/addons` profile.
 - Extension clean-profile install: PASS on Blender 4.2.23, 4.5.9, 5.1.2, 5.2.4 and
   5.3.0. Each used an isolated user repository with `install-file --enable` and loaded
-  `bl_ext.nodeatlas_test.node_atlas` version 0.6.0.
+  `bl_ext.nodeatlas_test.node_atlas` version 0.6.1.
 - Linux/macOS QA is still pending.
 
 ## Known issues

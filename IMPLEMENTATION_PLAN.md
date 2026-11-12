@@ -7,7 +7,7 @@ and [`AGENTS.md`](AGENTS.md) (non-negotiable rules).
 [Blender 4.2+](https://www.blender.org/download/) that exports the current node tree,
 or the selected nodes, as one PNG.
 
-**Progress (0.6.0):** M0–M5 are implemented, covering Shader, Geometry Nodes,
+**Progress (0.6.1):** M0–M5 are implemented, covering Shader, Geometry Nodes,
 Compositor and Texture. The legacy `screenshot_area` path is validated on Blender
 4.2.23, 4.5.9 and 5.1.2 for Shader/GN/Texture (including a NumPy PNG writer for
 saving); Compositor on 4.2–5.1 hits a native Blender crash and is rejected with a
@@ -27,7 +27,7 @@ are open.
 | M5 Tree types | 0.6.0 | Done for Shader/GN/Compositor/Texture; 6.0 adapter open |
 | M6 Legacy adapter | 0.7.0 | Done for Shader/GN/Texture on 4.2.23/4.5.9/5.1.2; Compositor 4.2–5.1 is guarded |
 | M7 Hardening | 0.8.0 | Partial: 120-node graph, max-MP, high-density, memmap spill and failed-save cleanup pass; multi-window/limits open |
-| M8 Packaging/QA | 0.9.0 | Partial: Windows 4.2–5.3 matrix, clean classic + extension installs, docs; Linux/macOS open |
+| M8 Packaging/QA | 0.9.0 | Partial: Windows 4.2–5.3 matrix and clean classic/extension installs done; Linux/macOS open |
 | M9 Release | 1.0.0 | Pending |
 
 This plan is a dependency-ordered roadmap, not a promise of dates. Estimates are focused

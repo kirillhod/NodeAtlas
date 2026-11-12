@@ -15,7 +15,7 @@ as one high-resolution PNG. It captures the
 [NumPy](https://numpy.org/doc/stable/), and saves through
 [`imbuf`](https://docs.blender.org/api/current/imbuf.html). No re-rendering.
 
-**Status:** 0.6.0. M0–M5 are implemented (Shader/Geometry Nodes/Compositor/Texture),
+**Status:** 0.6.1. M0–M5 are implemented (Shader/Geometry Nodes/Compositor/Texture),
 the legacy 4.2–5.1 path is validated for Shader/GN/Texture on Blender 4.2.23, 4.5.9
 and 5.1.2, and cancel/error/undo are tested on 4.2–5.3. Compositor on 4.2–5.1 is
 guarded due to a native crash. Linux/macOS and M7–M9 hardening/packaging remain.
