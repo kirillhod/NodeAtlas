@@ -7,16 +7,15 @@ and [`AGENTS.md`](AGENTS.md) (non-negotiable rules).
 [Blender 4.2+](https://www.blender.org/download/) that exports the current node tree,
 or the selected nodes, as one PNG.
 
-**Progress (0.8.0):** M0–M7 are complete and validated on Windows with Blender
-4.2.23, 4.5.9, 5.1.2, 5.2.4 and 5.3.0: Shader/Geometry Nodes/Compositor/Texture,
-current-tree and selected-only export, raw and legacy capture, cancel/error/undo,
-1000 nodes at 118 MP, extreme Dmax/Dmin, padding 0/120, effective scales 1.0–2.0, two
-Node Editor areas, two windows, real read-only output, injected disk-full, locked
-targets and long paths. M8 packaging and docs are complete: the extension validates and
-builds, both install methods work from clean profiles, the README documents settings and
-troubleshooting, SPDX headers are present and the QA report is committed. Linux, macOS
-and a second physical monitor remain untested and are documented as such; screenshots
-are intentionally omitted. M9 is the remaining release step.
+**Progress (1.0.0):** All milestones are complete. NodeAtlas exports the current tree or
+selected nodes for Shader, Geometry Nodes, Compositor and Texture on Blender 4.2–5.3
+(Windows), using the raw screenshot path on 5.2+ and the legacy adapter on 4.2–5.1.
+Hardening covers 1000 nodes at 118 MP, extreme Dmax/Dmin, padding 0/120, effective
+scales 1.0–2.0, two Node Editor areas, two windows, real read-only output, injected
+disk-full, locked targets and long paths. Packaging, docs, SPDX headers and the QA
+report are committed, and both install methods were validated from clean profiles.
+Linux, macOS and a second physical monitor remain untested and are stated as such in
+the release notes; screenshots are intentionally omitted.
 
 | Milestone | Version | Status |
 |---|---|---|
@@ -29,7 +28,7 @@ are intentionally omitted. M9 is the remaining release step.
 | M6 Legacy adapter | 0.6.0 | Done for Shader/GN/Texture on 4.2.23/4.5.9/5.1.2; Compositor 4.2–5.1 is guarded |
 | M7 Hardening | 0.7.0 | Done: limits, fault injection and output-path guards pass on Windows 4.2–5.3 |
 | M8 Packaging/QA | 0.8.0 | Done for Windows; Linux/macOS and a second monitor are documented as untested |
-| M9 Release | 1.0.0 | Next: final artifact regression and local tag |
+| M9 Release | 1.0.0 | Done: artifact regression passed, local annotated tag `v1.0.0` |
 
 This plan is a dependency-ordered roadmap, not a promise of dates. Estimates are focused
 development days and exclude waiting for Blender builds, OS/hardware access and review.
@@ -591,14 +590,17 @@ builds and hardware and are the most likely source of calendar variance.
 
 ## 10. Release checklist (1.0.0)
 
-- [ ] Manifest validates; version matches `__version__`; license/metadata correct.
-- [ ] Clean-profile install from the built artifact (extension and classic add-on).
-- [ ] Full GUI regression on the artifact, not the dev tree.
-- [ ] Geometry/state/undo suites green on every claimed version.
-- [ ] README install/usage instructions verified from scratch.
-- [ ] CHANGELOG and known limitations published.
-- [ ] No debug prints, no temp files, no saved preferences.
-- [ ] Annotated tag `v1.0.0` points at the version-bump commit; tag, manifest and
+- [x] Manifest validates; version matches `__version__`; license/metadata correct.
+- [x] Clean-profile install from the built artifact (extension and classic add-on).
+- [x] Full GUI regression on the artifact, not the dev tree.
+      `test_artifact.py` exported and restored the editor from the installed extension
+      on all five versions; the full GUI suite ran on the tagged source tree.
+- [x] Geometry/state/undo suites green on every claimed version.
+- [x] README install/usage instructions verified from scratch.
+- [x] CHANGELOG and known limitations published.
+- [x] No debug prints, no temp files, no saved preferences.
+- [x] Annotated tag `v1.0.0` points at the version-bump commit; tag, manifest and
       `__version__` agree.
-- [ ] Tag `v1.0.0` is local (not pushed); attach the built artifact and publish release
-      notes only with explicit user approval.
+- [x] Tag `v1.0.0` is local (not pushed); the built artifact and
+      [`RELEASE_NOTES.md`](RELEASE_NOTES.md) are ready, publishing awaits explicit
+      approval.

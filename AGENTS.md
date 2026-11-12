@@ -15,12 +15,11 @@ as one high-resolution PNG. It captures the
 [NumPy](https://numpy.org/doc/stable/), and saves through
 [`imbuf`](https://docs.blender.org/api/current/imbuf.html). No re-rendering.
 
-**Status:** 0.8.0. M0–M7 are complete (Shader/Geometry Nodes/Compositor/Texture),
+**Status:** 1.0.0. M0–M8 are complete (Shader/Geometry Nodes/Compositor/Texture),
 the legacy 4.2–5.1 path is validated for Shader/GN/Texture on Blender 4.2.23, 4.5.9
 and 5.1.2, and hardening (limits, fault injection, read-only/full-disk output, scaling)
-is tested on 4.2–5.3. Compositor on 4.2–5.1 is guarded due to a native crash. M8
-packaging and docs are complete for Windows; Linux, macOS and a second monitor are
-untested. M9 is the local 1.0.0 release.
+is tested on 4.2–5.3. Compositor on 4.2–5.1 is guarded due to a native crash. Packaging
+and docs are complete for Windows; Linux, macOS and a second monitor are untested.
 
 **Agreed identifiers** (do not rename without approval):
 
@@ -224,7 +223,20 @@ grid. Full matrix: report §8 and plan §6.
 - **Commit messages:** English, plain imperative, **no conventional prefixes** such as
   `feat:`, `docs:`, `fix:` or `chore:`. Start with a verb that states the change, e.g.
   `Add ...`, `Remove ...`, `Implement ...`, `Fix ...`, `Update ...`, `Refactor ...`.
-  Keep the subject short; use the body for the *why* and report/milestone references.
+  Keep the subject short and **always add a non-empty body**: explain the *why*, the
+  scope and report/milestone references. A subject-only commit is not acceptable.
+
+  ```text
+  Fix the effective UI scale
+
+  Blender stores system x view scale in system.ui_scale after a redraw, so
+  multiplying by view.ui_scale again shrank the output.
+
+  Refs: report section 4.3; CHANGELOG 0.6.2
+  ```
+
+  Do not rewrite history to add a missing body; attach a
+  [`git note`](https://git-scm.com/docs/git-notes) instead.
 - **Version tags:** every milestone/release commit that bumps the version (`0.1.0` …
   `1.0.0`) must carry an annotated tag `vMAJOR.MINOR.PATCH` on that exact commit:
 

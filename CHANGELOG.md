@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.0
+
+- First stable release: current-tree and selected-nodes export for Shader, Geometry
+  Nodes, Compositor and Texture as one high-resolution PNG.
+- Validate the release artifact as an extension on Blender 4.2.23, 4.5.9, 5.1.2, 5.2.4
+  and 5.3.0, and as a classic add-on on 5.3.0.
+- Publish the validated-platform scope honestly: Windows only, one physical display,
+  and Compositor export limited to Blender 5.2+ because 4.2–5.1 crash natively.
+- No behavior changes since 0.8.0.
+
 ## 0.8.0
 
 - Add a settings table, supported-version notes and a troubleshooting section to the

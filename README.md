@@ -13,12 +13,12 @@ in overlapping tiles, stitches them into one seamless image, and saves it withou
 external dependencies. Output density is controlled independently of the monitor and
 current zoom.
 
-> **Status: 0.8.0.** Current-tree and selected-nodes export work for Shader,
+> **Status: 1.0.0.** Current-tree and selected-nodes export work for Shader,
 > Geometry Nodes, Compositor and Texture. Blender 5.2+ uses the raw screenshot path;
 > Blender 4.2–5.1 uses the legacy path for Shader/GN/Texture (validated on 4.2.23,
 > 4.5.9 and 5.1.2; Compositor is guarded because of a native 4.2–5.1 crash). The
 > Windows 4.2–5.3 matrix, 118 MP exports, output-path guards and clean installs pass.
-> Linux, macOS and a second monitor are untested. 1.0.0 is the next release.
+> Linux, macOS and a second monitor are untested. See [`RELEASE_NOTES.md`](RELEASE_NOTES.md).
 > See [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md).
 
 ## Features
