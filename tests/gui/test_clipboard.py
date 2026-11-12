@@ -18,7 +18,6 @@ if ROOT not in sys.path:
 
 OUT = tempfile.mkdtemp(prefix="nodeatlas_clipboard_")
 FIXTURE = os.path.join(ROOT, "tests", "fixtures", "scene_both.blend")
-OUTPUT = os.path.join(OUT, "clipboard.png")
 state = {"ticks": 0, "found": None}
 
 
@@ -69,7 +68,7 @@ def setup():
         bpy.ops.wm.redraw_timer(type="DRAW_WIN_SWAP", iterations=1)
 
     prefs = bpy.context.preferences.addons["node_atlas"].preferences
-    prefs.default_dir = OUT + os.sep
+    prefs.default_dir = ""
     prefs.filename_pattern = "clipboard.png"
     prefs.output_dpi = 96
     prefs.padding = 20
@@ -78,7 +77,6 @@ def setup():
     prefs.hide_ui = True
     prefs.restore_ui = True
     prefs.deterministic = True
-    prefs.copy_to_clipboard = True
     return snapshot()
 
 
@@ -106,42 +104,44 @@ def tick():
     from node_atlas import operators
 
     state["ticks"] += 1
-    if os.path.exists(OUTPUT):
-        if state["found"] is None:
-            state["found"] = state["ticks"]
-        if state["ticks"] - state["found"] >= 5:
-            try:
-                result = operators.last_result
-                if not result or not result["ok"]:
-                    fail(f"export did not succeed: {result}")
-                if any("clipboard" in item for item in result["warnings"]):
-                    fail(f"clipboard copy failed: {result['warnings']}")
-                image = bpy.data.images.load(OUTPUT, check_existing=False)
-                try:
-                    size = tuple(image.size)
-                finally:
-                    bpy.data.images.remove(image)
-                if snapshot() != state["before"]:
-                    fail(f"state mismatch: {state['before']} != {snapshot()}")
-                if sys.platform == "win32":
-                    pasted = clipboard_size()
-                    if pasted != size:
-                        fail(f"clipboard image is {pasted}, expected {size}")
-                else:
-                    pasted = None
-                print(json.dumps({
-                    "result": "PASS",
-                    "size": list(size),
-                    "clipboard": list(pasted) if pasted else "not verified",
-                }, indent=2))
-                sys.stdout.flush()
-                os._exit(0)
-            except Exception:
-                fail("post-export checks failed:\n" + traceback.format_exc())
-            return None
-    if state["ticks"] > 1200:
-        fail("timed out waiting for the clipboard export")
-    return 0.1
+    if operators._current_job is not None:
+        if state["ticks"] > 1200:
+            fail("timed out waiting for the clipboard export")
+        return 0.1
+    result = operators.last_result
+    if result is None:
+        if state["ticks"] > 1200:
+            fail("the clipboard job never reported a result")
+        return 0.1
+    try:
+        if not result["ok"]:
+            fail(f"clipboard export did not succeed: {result}")
+        if not result.get("copy_only"):
+            fail(f"the job was not a clipboard export: {result}")
+        if result["path"] is not None:
+            fail(f"clipboard export wrote a file: {result['path']}")
+        if "Copied to clipboard" not in result["message"]:
+            fail(f"unexpected result message: {result['message']}")
+        if os.listdir(OUT):
+            fail(f"clipboard export left files in the output folder: {os.listdir(OUT)}")
+        size = tuple(result["size"])
+        if snapshot() != state["before"]:
+            fail(f"state mismatch: {state['before']} != {snapshot()}")
+        if sys.platform == "win32":
+            pasted = clipboard_size()
+            if pasted != size:
+                fail(f"clipboard image is {pasted}, expected {size}")
+        else:
+            pasted = None
+        print(json.dumps({
+            "result": "PASS",
+            "size": list(size),
+            "clipboard": list(pasted) if pasted else "not verified",
+        }, indent=2))
+        sys.stdout.flush()
+        os._exit(0)
+    except Exception:
+        fail("post-export checks failed:\n" + traceback.format_exc())
 
 
 print("NodeAtlas clipboard test output:", OUT)
@@ -151,7 +151,7 @@ try:
     area, region = node_area()
     window = bpy.context.window_manager.windows[0]
     with bpy.context.temp_override(window=window, area=area, region=region):
-        bpy.ops.node_atlas.export_png()
+        bpy.ops.node_atlas.copy_png()
 except Exception:
     fail("could not start the clipboard export:\n" + traceback.format_exc())
 

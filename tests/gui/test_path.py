@@ -62,7 +62,6 @@ def setup():
     prefs.hide_ui = True
     prefs.restore_ui = True
     prefs.deterministic = True
-    prefs.copy_to_clipboard = False
     return prefs
 
 

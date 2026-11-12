@@ -7,13 +7,13 @@ import bpy
 
 from . import bounds, capture, operators, preferences
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 __author__ = "kirillhod"
 
 bl_info = {
     "name": "Node Atlas",
     "author": "kirillhod",
-    "version": (1, 1, 0),
+    "version": (1, 2, 0),
     "blender": (4, 2, 0),
     "location": "Node Editor > Sidebar > Node Atlas",
     "description": "Export any node tree as one high-resolution PNG",
@@ -77,6 +77,7 @@ class NODE_PT_node_atlas(bpy.types.Panel):
 
         layout.operator("node_atlas.export_png", text="Export Current Tree", icon="IMAGE_DATA")
         layout.operator("node_atlas.export_as", text="Export As…", icon="FILE_TICK")
+        layout.operator("node_atlas.copy_png", text="Copy to Clipboard", icon="COPYDOWN")
         if operators._current_job is not None:
             layout.operator("node_atlas.cancel_export", text="Cancel Export", icon="CANCEL")
             layout.label(text="Export in progress…", icon="TIME")
@@ -116,7 +117,6 @@ class NODE_PT_node_atlas(bpy.types.Panel):
         advanced.prop(prefs, "hide_ui")
         advanced.prop(prefs, "restore_ui")
         advanced.prop(prefs, "deterministic")
-        advanced.prop(prefs, "copy_to_clipboard")
         advanced.prop(prefs, "default_dir")
         advanced.prop(prefs, "filename_pattern")
         advanced.prop(prefs, "show_header_button")
@@ -126,6 +126,7 @@ class NODE_PT_node_atlas(bpy.types.Panel):
 def _draw_menu(self, context):
     self.layout.operator("node_atlas.export_png", text="Export Node Graph as PNG")
     self.layout.operator("node_atlas.export_as", text="Export Node Graph as PNG…")
+    self.layout.operator("node_atlas.copy_png", text="Copy Node Graph to Clipboard")
 
 
 def _draw_header(self, context):
@@ -167,6 +168,7 @@ classes = (
     preferences.NodeAtlasPreferences,
     operators.NODE_ATLAS_OT_export_png,
     operators.NODE_ATLAS_OT_export_as,
+    operators.NODE_ATLAS_OT_copy_png,
     operators.NODE_ATLAS_OT_cancel_export,
     NODE_PT_node_atlas,
 )

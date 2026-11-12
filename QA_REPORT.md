@@ -1,6 +1,6 @@
 # NodeAtlas QA report
 
-**Version:** 1.1.0
+**Version:** 1.2.0
 **Date:** 12 November 2026  
 **Platforms:** Windows, GUI sessions only
 
@@ -97,25 +97,27 @@ ACL deny entry, and the disk-full test injects ENOSPC at the save boundary. The 
 test checks that the panel size is independent of zoom and matches the PNG; the naming
 test checks the owner-based `{tree}` token and 96 dpi `pHYs`; the clipboard test reads the
 image back from the Windows clipboard with .NET; the path test verifies that an empty
-Default Directory refuses to write to a temporary folder.
+Default Directory refuses to write to a temporary folder. The clipboard test uses the
+**Copy to Clipboard** operator and checks that no file is written.
 
 ## Packaging
 
 - `blender --command extension validate node_atlas`: PASS.
 - `blender --command extension build --source-dir node_atlas --output-dir dist`:
-  produces `node_atlas-1.1.0.zip` with the manifest and package modules.
+  produces `node_atlas-1.2.0.zip` with the manifest and package modules.
 - Classic add-on clean-profile install: PASS on Blender 4.2.23, 4.5.9, 5.1.2, 5.2.4
   and 5.3.0 in isolated `BLENDER_USER_SCRIPTS/scripts/addons` profiles (0.6.1); the
-  0.6.2, 0.7.0, 0.8.0 and 1.0.0 packages were re-validated on 5.3.0. The 1.1.0 package
-  was copied into isolated profiles on all five versions; `test_artifact.py` enabled
-  `node_atlas` and exported a PNG on each.
+  0.6.2, 0.7.0, 0.8.0 and 1.0.0 packages were re-validated on 5.3.0. The 1.1.0 and 1.2.0
+  packages were copied into isolated profiles on all five versions; `test_artifact.py`
+  enabled `node_atlas` and exported a PNG on each.
 - Extension clean-profile install: PASS across the same five versions with 0.6.1; the
   0.6.2, 0.7.0, 0.8.0 and 1.0.0 zips were installed into isolated repositories with
-  `install-file --enable`, loading `bl_ext.nodeatlas_test.node_atlas`. The 1.1.0 zip
-  installed and exported through `bl_ext.nodeatlas_test.node_atlas` on 4.2.23 and 5.3.0.
-  On 4.5.9, 5.1.2 and 5.2.4 the local builds' `--command extension` Python runtime is
-  incomplete (their bundled `python.exe` cannot find the stdlib), so the same 1.1.0 zip
-  payload was validated through the classic install path on those versions instead.
+  `install-file --enable`, loading `bl_ext.nodeatlas_test.node_atlas`. The 1.1.0 and
+  1.2.0 zips installed and exported through `bl_ext.nodeatlas_test.node_atlas` on 4.2.23
+  and 5.3.0. On 4.5.9, 5.1.2 and 5.2.4 the local builds' `--command extension` Python
+  runtime is incomplete (their bundled `python.exe` cannot find the stdlib), so the same
+  1.2.0 zip payload was validated through the classic install path on those versions
+  instead.
 - Linux and macOS are untested: no Linux distribution is installed under WSL and no Mac
   hardware is available. `system.ui_scale` cannot be changed from RNA, so OS-level
   scaling percentages were approximated with the effective view scale (1.0–2.0).
@@ -148,7 +150,8 @@ Default Directory refuses to write to a temporary folder.
    by the add-on. Blender saves preferences only on a normal quit; NodeAtlas never calls
    `save_userpref`.
 7. **Copy to Clipboard** relies on Blender's image clipboard operator. Very large images
-   may be refused by the OS or take a long time to paste; the PNG is saved regardless.
+   may be refused by the OS or take a long time to paste; normal file exports are
+   unaffected.
 
 ## Not in scope for 1.0.0
 

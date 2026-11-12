@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.0
+
+- Replace the **Copy to Clipboard** preference with a dedicated panel/menu button that
+  exports the current tree straight to the clipboard without writing a file.
+- Keep normal exports unchanged; they no longer copy implicitly.
+
 ## 1.1.0
 
 - Write PNG `pHYs` metadata with the effective DPI and drop imbuf's fixed 72-dpi

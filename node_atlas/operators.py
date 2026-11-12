@@ -33,7 +33,7 @@ last_result = None
 
 @dataclass
 class ExportSettings:
-    filepath: str
+    filepath: str | None
     output_dpi: int
     padding: int
     max_mp: float
@@ -41,7 +41,7 @@ class ExportSettings:
     hide_ui: bool
     restore_ui: bool
     deterministic: bool
-    copy_to_clipboard: bool = False
+    copy_only: bool = False
 
 
 def _safe_name(value: str) -> str:
@@ -127,7 +127,7 @@ def quick_filepath(context, prefs) -> str | None:
     return _unique_path(os.path.join(base, name))
 
 
-def settings_from_prefs(prefs, filepath: str) -> ExportSettings:
+def settings_from_prefs(prefs, filepath, copy_only: bool = False) -> ExportSettings:
     return ExportSettings(
         filepath=filepath,
         output_dpi=int(prefs.output_dpi),
@@ -137,7 +137,7 @@ def settings_from_prefs(prefs, filepath: str) -> ExportSettings:
         hide_ui=bool(prefs.hide_ui),
         restore_ui=bool(prefs.restore_ui),
         deterministic=bool(prefs.deterministic),
-        copy_to_clipboard=bool(getattr(prefs, "copy_to_clipboard", False)),
+        copy_only=copy_only,
     )
 
 
@@ -153,6 +153,23 @@ def _copy_to_clipboard(filepath: str) -> None:
             raise RuntimeError(f"clipboard copy returned {result}")
     finally:
         bpy.data.images.remove(image)
+
+
+def _copy_result(image, dpi: float) -> None:
+    """Write the stitched image to a temporary PNG and copy it to the clipboard."""
+    import tempfile
+
+    descriptor, path = tempfile.mkstemp(prefix="nodeatlas_clipboard_", suffix=".png")
+    os.close(descriptor)
+    try:
+        stitch.save_png(image, path, dpi=dpi)
+        _copy_to_clipboard(path)
+    finally:
+        if os.path.exists(path):
+            try:
+                os.remove(path)
+            except OSError:
+                pass
 
 
 class ExportJob:
@@ -339,16 +356,15 @@ class ExportJob:
         self.stage = "save"
 
     def _save(self) -> None:
-        self._status("NodeAtlas: saving…")
-        stitch.save_png(self.final, self.settings.filepath, dpi=self.used_dpi)
-        self.saved_path = self.settings.filepath
+        if self.settings.copy_only:
+            self._status("NodeAtlas: copying to clipboard…")
+            _copy_result(self.final, self.used_dpi)
+            self.saved_path = None
+        else:
+            self._status("NodeAtlas: saving…")
+            stitch.save_png(self.final, self.settings.filepath, dpi=self.used_dpi)
+            self.saved_path = self.settings.filepath
         self.elapsed = time.perf_counter() - self.started
-        if self.settings.copy_to_clipboard:
-            try:
-                _copy_to_clipboard(self.settings.filepath)
-            except Exception as exc:
-                log.warning("Clipboard copy failed", exc_info=True)
-                self.warnings.append(f"PNG saved, but clipboard copy failed: {exc}")
         self.stage = "restore"
 
     def _restore(self) -> None:
@@ -419,8 +435,12 @@ class ExportJob:
         else:
             width, height = self.output_size
             mp = (width * height) / 1_000_000.0
+            if self.settings.copy_only:
+                action = "Copied to clipboard"
+            else:
+                action = f"Saved {self.saved_path}"
             self.message = (
-                f"Saved {self.saved_path} ({width}×{height} px, {mp:.1f} MP) "
+                f"{action} ({width}×{height} px, {mp:.1f} MP) "
                 f"in {self.elapsed:.2f}s"
             )
             level = "WARNING" if self.warnings else "INFO"
@@ -490,6 +510,7 @@ def _job_tick():
         "ok": ok,
         "cancelled": job.cancelled,
         "path": job.saved_path,
+        "copy_only": job.settings.copy_only,
         "error": job.error,
         "warnings": list(job.warnings),
         "size": tuple(job.output_size),
@@ -501,7 +522,7 @@ def _job_tick():
     return None
 
 
-def start_job(context, filepath: str, operator=None) -> bool:
+def start_job(context, filepath, operator=None, copy_only: bool = False) -> bool:
     """Create a job and start it from Blender's application timer."""
     global _current_job, last_result
     if bpy.app.background:
@@ -517,20 +538,21 @@ def start_job(context, filepath: str, operator=None) -> bool:
         if operator is not None:
             operator.report({"ERROR"}, "NodeAtlas preferences are unavailable")
         return False
-    if not filepath:
-        if operator is not None:
-            operator.report({"ERROR"}, "NodeAtlas: no output path was chosen")
-        return False
+    if not copy_only:
+        if not filepath:
+            if operator is not None:
+                operator.report({"ERROR"}, "NodeAtlas: no output path was chosen")
+            return False
 
-    try:
-        stitch.check_output_path(filepath)
-    except stitch.OutputError as exc:
-        log.error("Output path rejected: %s", exc)
-        if operator is not None:
-            operator.report({"ERROR"}, f"NodeAtlas: {exc}")
-        return False
+        try:
+            stitch.check_output_path(filepath)
+        except stitch.OutputError as exc:
+            log.error("Output path rejected: %s", exc)
+            if operator is not None:
+                operator.report({"ERROR"}, f"NodeAtlas: {exc}")
+            return False
 
-    job = ExportJob(context, settings_from_prefs(prefs, filepath))
+    job = ExportJob(context, settings_from_prefs(prefs, filepath, copy_only=copy_only))
     _current_job = job
     last_result = None
     try:
@@ -538,7 +560,7 @@ def start_job(context, filepath: str, operator=None) -> bool:
     except Exception:
         log.warning("Could not register the Esc cancel shortcut", exc_info=True)
     bpy.app.timers.register(_job_tick, first_interval=0.01)
-    log.info("export started: %s", filepath)
+    log.info("export started: %s", "clipboard" if copy_only else filepath)
     return True
 
 
@@ -577,6 +599,30 @@ class NODE_ATLAS_OT_export_png(bpy.types.Operator):
             )
             return {"CANCELLED"}
         return {"FINISHED"} if start_job(context, path, self) else {"CANCELLED"}
+
+
+class NODE_ATLAS_OT_copy_png(bpy.types.Operator):
+    bl_idname = "node_atlas.copy_png"
+    bl_label = "Copy Node Graph to Clipboard"
+    bl_description = "Export the current node tree and copy it to the system clipboard"
+    bl_options = {"REGISTER"}
+
+    @classmethod
+    def poll(cls, context):
+        return not bpy.app.background and capture.get_node_context(context) is not None
+
+    def _run(self, context):
+        return (
+            {"FINISHED"}
+            if start_job(context, None, self, copy_only=True)
+            else {"CANCELLED"}
+        )
+
+    def invoke(self, context, event):
+        return self._run(context)
+
+    def execute(self, context):
+        return self._run(context)
 
 
 class NODE_ATLAS_OT_export_as(bpy.types.Operator, ExportHelper):

@@ -13,7 +13,7 @@ in overlapping tiles, stitches them into one seamless image, and saves it withou
 external dependencies. Output density is controlled independently of the monitor and
 current zoom.
 
-> **Status: 1.1.0.** Current-tree and selected-nodes export work for Shader,
+> **Status: 1.2.0.** Current-tree and selected-nodes export work for Shader,
 > Geometry Nodes, Compositor and Texture. Blender 5.2+ uses the raw screenshot path;
 > Blender 4.2–5.1 uses the legacy path for Shader/GN/Texture (validated on 4.2.23,
 > 4.5.9 and 5.1.2; Compositor is guarded because of a native 4.2–5.1 crash). The
@@ -31,7 +31,7 @@ current zoom.
 - Clean frame: UI panels, gizmos, selection and context path hidden during export
 - Full editor state restoration, including after an error or cancel
 - Undo-neutral: the capture pipeline never pushes an undo step
-- Optional automatic copy of the saved PNG to the system clipboard
+- **Copy to Clipboard** button that exports without writing a file
 - PNG density metadata (`pHYs`) matches the effective DPI
 - Timer-driven progress and `Esc` cancellation
 
@@ -63,13 +63,15 @@ Install the resulting zip through *Edit → Preferences → Extensions*.
 
 1. Open any Node Editor (Material, Geometry Nodes, Compositor, Texture).
 2. Press `N` and open the **Node Atlas** sidebar tab.
-3. Use **Export Current Tree**, **Export As…**, or `Ctrl+Shift+E`.
+3. Use **Export Current Tree**, **Export As…**, **Copy to Clipboard**, or
+   `Ctrl+Shift+E`.
 4. Press `Esc` to cancel a running export; the editor is restored afterwards.
 
 Settings live in the sidebar and in *Edit → Preferences → Add-ons → Node Atlas*. If
 Default Directory is empty, **Export Current Tree** opens the file dialog instead of
-writing to a temporary folder; **Export As…** always asks for a path. The default pattern
-is `{blend}_{tree}_{date}.png`.
+writing to a temporary folder; **Export As…** always asks for a path; **Copy to
+Clipboard** exports directly to the system clipboard without saving a file. The default
+pattern is `{blend}_{tree}_{date}.png`.
 
 ## Settings
 
@@ -85,7 +87,6 @@ is `{blend}_{tree}_{date}.png`.
 | Hide UI During Export | on | Hide header, toolbar, sidebar, gizmos and context path |
 | Restore UI | on | Restore the editor state after success, error or cancel |
 | Deterministic View | on | Prime with View All so repeated exports match |
-| Copy to Clipboard | off | Put the saved PNG on the system clipboard after export |
 | Header Button | on | Show the quick export button in the Node Editor header |
 | Ctrl+Shift+E | on | Enable the quick export shortcut |
 
@@ -93,6 +94,12 @@ is `{blend}_{tree}_{date}.png`.
 texture) and falls back to the tree name; `{datablock}` is always the raw tree name and
 `{type}` is `Shader`, `Geometry_Nodes`, `Compositor` or `Texture`. Whitespace in token
 values becomes `_`, and unknown tokens fall back to `{blend}_{tree}_{date}.png`.
+
+Output pixel size depends on `output_dpi` and the graph, not on monitor resolution or
+window size: a smaller editor only needs more tiles. Changing the effective UI scale can
+move the result by a few pixels because Blender lays out nodes in whole pixels; the
+`test_scaling.py` GUI test keeps that variation within 15 px from 1.0 to 2.0 effective
+scale.
 
 ## Troubleshooting
 
@@ -109,8 +116,9 @@ values becomes `_`, and unknown tokens fall back to `{blend}_{tree}_{date}.png`.
 - **"Output would be … above the N MP limit"** — raise Max Megapixels if RAM allows, or
   lower Output DPI.
 - **"Node Editor is too small for export"** — enlarge the editor area.
-- **Clipboard copy failed** — the PNG is still saved; the OS may reject very large
-  images. Try a lower Output DPI or a smaller padding.
+- **Clipboard copy failed** — the clipboard export reports an error; normal file
+  exports are unaffected. The OS may reject very large images; try a lower Output DPI
+  or smaller padding.
 - **Blank or overlapped tiles** — keep the Blender window visible and unobstructed
   during export; a minimized or occluded window can break screenshots.
 

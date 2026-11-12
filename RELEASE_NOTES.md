@@ -1,13 +1,19 @@
-# NodeAtlas 1.1.0 release notes
+# NodeAtlas 1.2.0 release notes
 
 **Release date:** 12 November 2026
-**Artifact:** `node_atlas-1.1.0.zip` (Blender extension) and the same package as a
+**Artifact:** `node_atlas-1.2.0.zip` (Blender extension) and the same package as a
 classic add-on.
 
 NodeAtlas exports any Blender node tree as one high-resolution PNG with real editor
 background padding, selected-nodes support, `Esc` cancellation and full UI restoration.
 It captures the Node Editor in overlapping tiles and stitches them with
 [NumPy](https://numpy.org/doc/stable/); no re-rendering and no external dependencies.
+
+## Changes since 1.1.0
+
+- **Copy to Clipboard** is now a dedicated button next to **Export Current Tree** and
+  **Export As…**. It exports directly to the clipboard without writing a file; the
+  previous preference toggle was removed.
 
 ## Changes since 1.0.0
 
@@ -31,7 +37,7 @@ It captures the Node Editor in overlapping tiles and stitches them with
 | 4.5.9 LTS | Windows 10 22H2 | `screenshot_area` | PASS for Shader/GN/Texture |
 | 4.2.23 LTS | Windows 10 22H2 | `screenshot_area` | PASS for Shader/GN/Texture |
 
-The 1.1.0 artifact exported a PNG as an extension on Blender 4.2.23 and 5.3.0 and as a
+The 1.2.0 artifact exported a PNG as an extension on Blender 4.2.23 and 5.3.0 and as a
 classic add-on on all five versions. On 4.5.9, 5.1.2 and 5.2.4 the local builds'
 `--command extension` Python runtime is incomplete, so the same zip payload was
 validated through the classic install path. Unit tests are 16/16 on
@@ -83,7 +89,7 @@ Press `N` in any Node Editor and open the **Node Atlas** tab. The quick export s
   selection restoration is exact.
 - Transparent background, batch export, SVG/JSON and headless capture are deferred.
 - **Copy to Clipboard** depends on Blender's image clipboard support and OS limits;
-  very large PNGs may be rejected or slow to paste. The PNG is still saved.
+  very large images may be rejected or slow to paste. Normal file exports are unaffected.
 - No screenshots or example images are committed; the README is text-only by decision.
 
 ## Verification

@@ -65,11 +65,6 @@ class NodeAtlasPreferences(bpy.types.AddonPreferences):
         ),
         default="{blend}_{tree}_{date}.png",
     )
-    copy_to_clipboard: bpy.props.BoolProperty(
-        name="Copy to Clipboard",
-        description="After a successful export, put the PNG on the system clipboard",
-        default=False,
-    )
     hide_ui: bpy.props.BoolProperty(
         name="Hide UI During Export",
         description="Hide headers, toolbars, gizmos and the context path",
