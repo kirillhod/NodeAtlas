@@ -93,7 +93,7 @@ the other editor/window untouched; the max-MP test uses a 1 MP limit.
 3. View restoration is nearest-pixel (`View2D.cur` is not exposed); UI/tree/selection
    restoration is exact.
 4. Long links may fade; Blender exposes no public setting to disable link LOD.
-5. Per-run setting overrides and transparent background are not in 0.6.0.
+5. Per-run setting overrides and transparent background are not in 0.6.2.
 
 ## Not in scope for 1.0.0
 
