@@ -219,6 +219,10 @@ grid. Full matrix: report §8 and plan §6.
 
 - **Local commits are allowed and encouraged** after a coherent verified change.
 - **Do not push** or add/change remotes; do not publish branches, tags, releases or PRs.
+- **Commit messages:** English, plain imperative, **no conventional prefixes** such as
+  `feat:`, `docs:`, `fix:` or `chore:`. Start with a verb that states the change, e.g.
+  `Add ...`, `Remove ...`, `Implement ...`, `Fix ...`, `Update ...`, `Refactor ...`.
+  Keep the subject short; use the body for the *why* and report/milestone references.
 - **Version tags:** every milestone/release commit that bumps the version (`0.1.0` …
   `1.0.0`) must carry an annotated tag `vMAJOR.MINOR.PATCH` on that exact commit:
 
@@ -232,4 +236,4 @@ grid. Full matrix: report §8 and plan §6.
   Tags stay local; the no-push rule applies to them too.
 - Do not rewrite history unless explicitly asked.
 - Check `git status` before committing; no captures, `dist/`, `*.blend1`,
-  `__pycache__/`. English imperative commit messages.
+  `__pycache__/`.
