@@ -30,11 +30,11 @@ the release notes; screenshots are intentionally omitted.
 | M8 Packaging/QA | 0.8.0 | Done for Windows; Linux/macOS and a second monitor are documented as untested |
 | M9 Release | 1.0.0 | Done: artifact regression passed, local annotated tag `v1.0.0` |
 
-**Post-release (1.3.3):** header export buttons, a collapsible Advanced panel with
+**Post-release (1.3.4):** header export buttons, an inline collapsible Advanced section,
 Desktop paths, configurable shortcut, settings in the Export As dialog, DPI 128,
-restored nested group paths (including maximized editors), a compact Open Last Export
-icon and clearer Max Megapixels documentation. See [`CHANGELOG.md`](CHANGELOG.md) and
-[`RELEASE_NOTES.md`](RELEASE_NOTES.md).
+restored nested group paths (including pinned/maximized editors), a compact Open Last
+Export icon and clearer Max Megapixels documentation. See
+[`CHANGELOG.md`](CHANGELOG.md) and [`RELEASE_NOTES.md`](RELEASE_NOTES.md).
 
 This plan is a dependency-ordered roadmap, not a promise of dates. Estimates are focused
 development days and exclude waiting for Blender builds, OS/hardware access and review.

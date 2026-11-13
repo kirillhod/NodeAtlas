@@ -10,13 +10,13 @@ from .log import get_logger
 
 log = get_logger()
 
-__version__ = "1.3.3"
+__version__ = "1.3.4"
 __author__ = "kirillhod"
 
 bl_info = {
     "name": "Node Atlas",
     "author": "kirillhod",
-    "version": (1, 3, 3),
+    "version": (1, 3, 4),
     "blender": (4, 2, 0),
     "location": "Node Editor > Sidebar > Node Atlas",
     "description": "Export any node tree as one high-resolution PNG",
@@ -125,38 +125,28 @@ class NODE_PT_node_atlas(bpy.types.Panel):
                     icon="ERROR",
                 )
 
-
-class NODE_PT_node_atlas_advanced(bpy.types.Panel):
-    bl_space_type = "NODE_EDITOR"
-    bl_region_type = "UI"
-    bl_category = "Node Atlas"
-    bl_parent_id = "NODE_PT_node_atlas"
-    bl_label = "Advanced"
-    bl_options = {"DEFAULT_CLOSED"}
-
-    @classmethod
-    def poll(cls, context):
-        return NODE_PT_node_atlas.poll(context)
-
-    def draw(self, context):
-        layout = self.layout
-        prefs = _get_prefs(context)
-        if prefs is None:
-            layout.label(text="Node Atlas preferences are unavailable", icon="ERROR")
-            return
-        layout.prop(prefs, "default_dir")
-        layout.prop(prefs, "filename_pattern")
-        layout.prop(prefs, "hide_ui")
-        layout.prop(prefs, "restore_ui")
-        layout.prop(prefs, "deterministic")
-        layout.prop(prefs, "show_header_button")
-        layout.prop(prefs, "enable_shortcut")
-        if prefs.enable_shortcut:
-            row = layout.row(align=True)
-            row.prop(prefs, "shortcut_key")
-            row.prop(prefs, "shortcut_ctrl")
-            row.prop(prefs, "shortcut_shift")
-            row.prop(prefs, "shortcut_alt")
+        box.separator()
+        box.prop(
+            prefs,
+            "show_advanced",
+            text="Advanced",
+            emboss=False,
+            icon="TRIA_DOWN" if prefs.show_advanced else "TRIA_RIGHT",
+        )
+        if prefs.show_advanced:
+            box.prop(prefs, "default_dir")
+            box.prop(prefs, "filename_pattern")
+            box.prop(prefs, "hide_ui")
+            box.prop(prefs, "restore_ui")
+            box.prop(prefs, "deterministic")
+            box.prop(prefs, "show_header_button")
+            box.prop(prefs, "enable_shortcut")
+            if prefs.enable_shortcut:
+                row = box.row(align=True)
+                row.prop(prefs, "shortcut_key")
+                row.prop(prefs, "shortcut_ctrl")
+                row.prop(prefs, "shortcut_shift")
+                row.prop(prefs, "shortcut_alt")
 
 
 def _draw_menu(self, context):
@@ -228,7 +218,6 @@ classes = (
     operators.NODE_ATLAS_OT_cancel_export,
     operators.NODE_ATLAS_OT_open_last_export,
     NODE_PT_node_atlas,
-    NODE_PT_node_atlas_advanced,
 )
 
 

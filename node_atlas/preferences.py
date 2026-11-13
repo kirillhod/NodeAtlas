@@ -127,6 +127,11 @@ class NodeAtlasPreferences(bpy.types.AddonPreferences):
         description="Show the export buttons in the Node Editor header",
         default=True,
     )
+    show_advanced: bpy.props.BoolProperty(
+        name="Advanced",
+        description="Show folder, filename, UI and shortcut options",
+        default=False,
+    )
     enable_shortcut: bpy.props.BoolProperty(
         name="Enable Shortcut",
         description="Enable a quick-export shortcut; off by default to avoid conflicts",

@@ -97,6 +97,8 @@ def setup():
             bpy.ops.screen.screen_full_area(use_hide_panels=False)
         window, area, region = node_area()
         space = area.spaces.active
+    if os.environ.get("NODEATLAS_TEST_UNPIN") == "1":
+        space.pin = False
 
     prefs = bpy.context.preferences.addons["node_atlas"].preferences
     prefs.default_dir = OUT + os.sep
@@ -128,8 +130,14 @@ def tick():
                 window, area, _region = node_area()
                 space = area.spaces.active
                 after = group_state(space)
-                if after != state["before"]:
-                    fail(f"group state mismatch: {state['before']} != {after}")
+                before = state["before"]
+                if os.environ.get("NODEATLAS_TEST_UNPIN") == "1":
+                    if not after["pin"]:
+                        fail("the restored group path was not pinned")
+                    before = dict(before)
+                    before["pin"] = True
+                if after != before:
+                    fail(f"group state mismatch: {before} != {after}")
                 result = operators.last_result
                 if not result or not result["ok"]:
                     fail(f"export did not succeed: {result}")

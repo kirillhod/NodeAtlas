@@ -198,9 +198,7 @@ def test_registration():
         check(os.path.isabs(prefs.default_dir), "default directory is absolute")
         check(os.path.isdir(prefs.default_dir), "default directory exists")
         check(prefs.enable_shortcut is False, "shortcut is off by default")
-        advanced = getattr(bpy.types, "NODE_PT_node_atlas_advanced", None)
-        check(advanced is not None, "advanced panel registered")
-        check("DEFAULT_CLOSED" in advanced.bl_options, "advanced panel is collapsed")
+        check(prefs.show_advanced is False, "advanced section is collapsed")
         from node_atlas import operators
 
         check(hasattr(operators.NODE_ATLAS_OT_export_as, "draw"), "export dialog settings")

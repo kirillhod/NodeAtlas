@@ -144,6 +144,7 @@ def save_panel():
     prefs.max_mp = 200.0
     prefs.scope = "CURRENT"
     prefs.enable_shortcut = False
+    prefs.show_advanced = False
     with bpy.context.temp_override(window=window, area=area, region=region):
         bpy.ops.screen.screen_full_area(use_hide_panels=False)
     window, area, region = node_area()

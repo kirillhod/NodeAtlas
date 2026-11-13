@@ -477,11 +477,13 @@ def apply_tree_path(
             except Exception:
                 break
             current_tree = space.edit_tree or group
-        space.pin = pin
+        # Pinning keeps a programmatically restored group path valid across
+        # redraws; an unpinned edit path is dropped by Blender.
+        space.pin = True
     elif groups:
         for group in groups:
             space.path.append(group)
-        space.pin = pin
+        space.pin = True
     else:
         space.pin = pin
     if pin and space.edit_tree is not tree:
@@ -501,7 +503,7 @@ def _restore_tree_path(
         and current_path == snapshot.path_trees
         and space.edit_tree is snapshot.tree
     ):
-        space.pin = snapshot.pin
+        space.pin = True if len(snapshot.path_trees) > 1 else snapshot.pin
         return
     apply_tree_path(
         space,

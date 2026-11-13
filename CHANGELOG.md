@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3.4
+
+- Keep the collapsible **Advanced** controls inside the Settings box instead of a
+  separate child panel, fixing the detached label/background on refresh.
+- Pin restored group paths so Blender keeps them across redraws; nested group export no
+  longer returns to the main tree.
+- Keep **Open Last Export** as a compact Settings icon.
+
 ## 1.3.3
 
 - Capture the node tree and group path when the export is requested, so a context
