@@ -61,7 +61,8 @@ shortcut is disabled by default; configure it in **Advanced**.
 Settings live in the sidebar and in **Edit → Preferences → Add-ons → Node Atlas**.
 
 - **Output DPI — 128.** 96 is 1:1 with node pixels; 128 gives a 33% larger image.
-  The result does not depend on your monitor or current zoom.
+  The result does not depend on your monitor or current zoom. Values above the current
+  limit temporarily raise Blender's Resolution Scale and restore it afterwards.
 - **Padding — 20 px.** Background margin around the graph.
 - **Max Megapixels — 200.** A safety limit, not a target: the export stops before
   capturing if the image would exceed it. 200 MP is about 16000 × 12500 px.

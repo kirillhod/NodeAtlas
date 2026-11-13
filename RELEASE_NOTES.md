@@ -1,7 +1,7 @@
-# NodeAtlas 1.3.4 release notes
+# NodeAtlas 1.3.5 release notes
 
 **Release date:** 13 November 2026
-**Artifact:** `node_atlas-1.3.4.zip` (Blender extension) and the same package as a
+**Artifact:** `node_atlas-1.3.5.zip` (Blender extension) and the same package as a
 classic add-on.
 
 NodeAtlas exports any Blender node tree as one high-resolution PNG with real editor
@@ -9,11 +9,18 @@ background padding, selected-nodes support, `Esc` cancellation and full UI resto
 It captures the Node Editor in overlapping tiles and stitches them with
 [NumPy](https://numpy.org/doc/stable/); no re-rendering and no external dependencies.
 
+## Changes since 1.3.4
+
+- Unpinned nested group paths are rebuilt after redraw, so the editor stays in the same
+  group without leaving `pin` enabled.
+- Output DPI above the current limit temporarily raises Resolution Scale and restores
+  it; only values beyond the boosted maximum are clamped.
+
 ## Changes since 1.3.3
 
 - The collapsible **Advanced** controls live inside the Settings box again, so the label
   cannot detach from the panel background after a refresh.
-- Restored nested group paths are pinned, keeping the user in the group across redraws.
+- Restored group paths are pinned so Blender keeps them across redraws.
 - **Open Last Export** stays a compact icon in the Settings header.
 
 ## Changes since 1.3.2
@@ -82,7 +89,7 @@ It captures the Node Editor in overlapping tiles and stitches them with
 | 4.5.9 LTS | Windows 10 22H2 | `screenshot_area` | PASS for Shader/GN/Texture |
 | 4.2.23 LTS | Windows 10 22H2 | `screenshot_area` | PASS for Shader/GN/Texture |
 
-The 1.3.4 artifact exported a PNG as an extension on Blender 4.2.23 and 5.3.0 and as a
+The 1.3.5 artifact exported a PNG as an extension on Blender 4.2.23 and 5.3.0 and as a
 classic add-on on all five versions. On 4.5.9, 5.1.2 and 5.2.4 the local builds'
 `--command extension` Python runtime is incomplete, so the same zip payload was
 validated through the classic install path. Unit tests are 16/16 on

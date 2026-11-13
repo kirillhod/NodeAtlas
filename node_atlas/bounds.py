@@ -143,6 +143,24 @@ def target_upp(output_dpi: float, ui_scale: float):
     return ui_scale / clamped, clamped * 96.0, dpi_max * 96.0
 
 
+def planned_scale(
+    output_dpi: float, system_scale: float, view_scale: float, max_view: float,
+):
+    """Return (effective_scale, view_scale, max_effective_scale).
+
+    Resolution Scale (``view.ui_scale``) can be raised temporarily so that a
+    requested DPI above the current ``D_max`` is still achievable.
+    """
+    system_scale = max(float(system_scale), 1e-6)
+    view_scale = max(float(view_scale), 1e-6)
+    base = system_scale / view_scale
+    max_effective = base * max(float(max_view), view_scale)
+    required = (max(float(output_dpi), 0.001) / 96.0) * UPP_MIN * 1.01
+    effective = min(max(system_scale, required), max_effective)
+    new_view = view_scale * effective / system_scale
+    return effective, new_view, max_effective
+
+
 def compute_layout(
     content: Rect,
     region_w: int,

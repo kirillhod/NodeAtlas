@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.5
+
+- Rebuild unpinned nested group paths after redraw, so export leaves the user in the
+  same group without leaving the editor pinned.
+- Raise Blender's Resolution Scale temporarily for DPI values above the current limit,
+  then restore it; the panel warns only when even that boost is insufficient.
+
 ## 1.3.4
 
 - Keep the collapsible **Advanced** controls inside the Settings box instead of a

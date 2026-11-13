@@ -72,8 +72,15 @@ def setup():
         region = next((item for item in area.regions if item.type == "WINDOW"), None)
     space = area.spaces.active
     space.tree_type = "ShaderNodeTree"
-    space.pin = True
+    space.pin = False
     material = bpy.data.materials["M_Small"]
+    cube = bpy.data.objects.get("Cube")
+    if cube is not None:
+        cube.data.materials.clear()
+        cube.data.materials.append(material)
+        cube.active_material = material
+        bpy.context.view_layer.objects.active = cube
+        cube.select_set(True)
     space.node_tree = material.node_tree
 
     group1 = bpy.data.node_groups.new("Group1", "ShaderNodeTree")
@@ -97,8 +104,6 @@ def setup():
             bpy.ops.screen.screen_full_area(use_hide_panels=False)
         window, area, region = node_area()
         space = area.spaces.active
-    if os.environ.get("NODEATLAS_TEST_UNPIN") == "1":
-        space.pin = False
 
     prefs = bpy.context.preferences.addons["node_atlas"].preferences
     prefs.default_dir = OUT + os.sep
@@ -131,11 +136,6 @@ def tick():
                 space = area.spaces.active
                 after = group_state(space)
                 before = state["before"]
-                if os.environ.get("NODEATLAS_TEST_UNPIN") == "1":
-                    if not after["pin"]:
-                        fail("the restored group path was not pinned")
-                    before = dict(before)
-                    before["pin"] = True
                 if after != before:
                     fail(f"group state mismatch: {before} != {after}")
                 result = operators.last_result

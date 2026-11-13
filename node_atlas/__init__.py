@@ -10,13 +10,13 @@ from .log import get_logger
 
 log = get_logger()
 
-__version__ = "1.3.4"
+__version__ = "1.3.5"
 __author__ = "kirillhod"
 
 bl_info = {
     "name": "Node Atlas",
     "author": "kirillhod",
-    "version": (1, 3, 4),
+    "version": (1, 3, 5),
     "blender": (4, 2, 0),
     "location": "Node Editor > Sidebar > Node Atlas",
     "description": "Export any node tree as one high-resolution PNG",
@@ -41,9 +41,15 @@ def _estimate(context, prefs):
         return None
     try:
         system = context.preferences.system.ui_scale
-        target, _used_dpi, _dpi_max = bounds.target_upp(prefs.output_dpi, system)
+        view = context.preferences.view.ui_scale
+        ui_prop = context.preferences.view.bl_rna.properties["ui_scale"]
+        max_view = float(getattr(ui_prop, "hard_max", 6.0))
+        effective, _planned_view, _max_effective = bounds.planned_scale(
+            prefs.output_dpi, system, view, max_view
+        )
+        target, _used_dpi, _dpi_max = bounds.target_upp(prefs.output_dpi, effective)
         metrics = bounds.ViewMetrics(
-            upp=target, k=1.0 / target, s=system / target, ox=0.0, oy=0.0
+            upp=target, k=1.0 / target, s=effective / target, ox=0.0, oy=0.0
         )
         nodes = tree.nodes
         if prefs.scope == "SELECTED":
@@ -118,10 +124,16 @@ class NODE_PT_node_atlas(bpy.types.Panel):
                          f"({estimated.megapixels:.1f} MP)"
                 )
             system = context.preferences.system.ui_scale
-            dpi_max = system / bounds.UPP_MIN * 96.0
+            view = context.preferences.view.ui_scale
+            ui_prop = context.preferences.view.bl_rna.properties["ui_scale"]
+            max_view = float(getattr(ui_prop, "hard_max", 6.0))
+            _effective, _planned_view, max_effective = bounds.planned_scale(
+                prefs.output_dpi, system, view, max_view
+            )
+            dpi_max = max_effective / bounds.UPP_MIN * 96.0
             if prefs.output_dpi > dpi_max:
                 box.label(
-                    text=f"Max DPI at this UI scale: {dpi_max:.0f}",
+                    text=f"Max DPI even with Resolution Scale: {dpi_max:.0f}",
                     icon="ERROR",
                 )
 

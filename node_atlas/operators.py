@@ -276,7 +276,6 @@ class ExportJob:
             self.tree, count = bounds.build_selected_copy(tree)
             self.snapshot.temp_tree = self.tree
             self.warnings.append(f"Exporting {count} selected nodes")
-
         capture.assign_tree(space, self.tree, self.tree_type)
         capture.clear_selection(self.tree)
         bpy.context.preferences.view.smooth_view = 0
@@ -309,6 +308,16 @@ class ExportJob:
         # After a redraw, system.ui_scale already includes view.ui_scale.
         effective_scale = prefs.system.ui_scale
         view_scale = prefs.view.ui_scale
+        ui_prop = prefs.view.bl_rna.properties["ui_scale"]
+        max_view = float(getattr(ui_prop, "hard_max", 6.0))
+        planned, new_view, max_effective = bounds.planned_scale(
+            self.settings.output_dpi, effective_scale, view_scale, max_view
+        )
+        if new_view > view_scale + 1e-6:
+            prefs.view.ui_scale = new_view
+            capture.redraw(window, area, region)
+            effective_scale = prefs.system.ui_scale
+            view_scale = prefs.view.ui_scale
         target, used_dpi, dpi_max = bounds.target_upp(
             self.settings.output_dpi, effective_scale
         )
@@ -397,8 +406,9 @@ class ExportJob:
     def _restore(self) -> None:
         self._status("NodeAtlas: restoring UI…")
         if self.snapshot is not None:
+            snapshot = self.snapshot
             errors, warnings = capture.restore_snapshot(
-                self.snapshot, restore_ui=self.settings.restore_ui
+                snapshot, restore_ui=self.settings.restore_ui
             )
             self.warnings.extend(warnings)
             if errors:

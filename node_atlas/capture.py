@@ -181,8 +181,11 @@ def redraw(window, area, region) -> None:
         bpy.ops.wm.redraw_timer(type="DRAW_WIN_SWAP", iterations=1)
 
 
-def view_op(window, area, region, name: str, **kwargs):
-    with bpy.context.temp_override(window=window, area=area, region=region):
+def view_op(window, area, region, name: str, space=None, **kwargs):
+    override = {"window": window, "area": area, "region": region}
+    if space is not None:
+        override["space_data"] = space
+    with bpy.context.temp_override(**override):
         result = getattr(bpy.ops.view2d, name)(**kwargs)
     redraw(window, area, region)
     return result
@@ -212,7 +215,7 @@ def set_zoom(
                 rect_w = max(1, int(width * factor))
                 rect_h = max(1, int(height * factor))
                 view_op(
-                    window, area, region, "zoom_border",
+                    window, area, region, "zoom_border", space=space,
                     xmin=max(0, width // 2 - rect_w // 2),
                     xmax=min(width, width // 2 + rect_w // 2),
                     ymin=max(0, height // 2 - rect_h // 2),
@@ -220,9 +223,9 @@ def set_zoom(
                     wait_for_input=False,
                 )
             else:
-                view_op(window, area, region, "zoom_in")
+                view_op(window, area, region, "zoom_in", space=space)
         else:
-            view_op(window, area, region, "zoom_out")
+            view_op(window, area, region, "zoom_out", space=space)
     return measure_upp(region.view2d)
 
 
@@ -397,7 +400,7 @@ def _capture_tile_legacy(
     return cropped
 
 
-def restore_view(window, snapshot: EditorSnapshot):
+def restore_view(window, snapshot: EditorSnapshot, prime: bool = True):
     area = find_area_by_bbox(window, snapshot) or find_node_area(window)
     if area is None:
         return None, None
@@ -408,9 +411,10 @@ def restore_view(window, snapshot: EditorSnapshot):
 
     bottom_ui = bottom_ui_height(area)
     height = effective_height(region, bottom_ui)
-    node_view_all(window, area, region, space)
-    # view_all can reset the node-group path; re-enter before restoring zoom.
-    _restore_tree_path(space, snapshot, window, area, region)
+    if prime:
+        node_view_all(window, area, region, space)
+        # view_all can reset the node-group path; re-enter before restoring zoom.
+        _restore_tree_path(space, snapshot, window, area, region)
     set_zoom(
         window, area, region, space, snapshot.upp, region.width, height,
         prime=False,
@@ -452,9 +456,16 @@ def apply_tree_path(
         space.node_tree = root
     groups = [group for group in path_trees if group is not root]
     if groups and window is not None and area is not None and region is not None:
+        # Let the editor switch to the root context before entering groups.
+        redraw(window, area, region)
+        area = find_node_area(window) or area
+        space = area.spaces.active
+        region = next((item for item in area.regions if item.type == "WINDOW"), None)
+        if region is None:
+            return
         # Enter groups through the operator so Blender records the full edit
         # path; a bare space.path.append() is dropped on the next redraw.
-        space.pin = True
+        space.pin = pin
         current_tree = root
         for group in groups:
             node = next(
@@ -477,13 +488,11 @@ def apply_tree_path(
             except Exception:
                 break
             current_tree = space.edit_tree or group
-        # Pinning keeps a programmatically restored group path valid across
-        # redraws; an unpinned edit path is dropped by Blender.
-        space.pin = True
+        space.pin = pin
     elif groups:
         for group in groups:
             space.path.append(group)
-        space.pin = True
+        space.pin = pin
     else:
         space.pin = pin
     if pin and space.edit_tree is not tree:
@@ -503,7 +512,7 @@ def _restore_tree_path(
         and current_path == snapshot.path_trees
         and space.edit_tree is snapshot.tree
     ):
-        space.pin = True if len(snapshot.path_trees) > 1 else snapshot.pin
+        space.pin = snapshot.pin
         return
     apply_tree_path(
         space,
@@ -627,6 +636,20 @@ def restore_snapshot(snapshot: EditorSnapshot, restore_ui: bool = True):
                 restore_selection()
             except Exception as exc:
                 errors.append(f"final tree/pin restore failed: {exc}")
+            for _ in range(2):
+                redraw(window, area, region)
+                area2 = find_node_area(window)
+                if area2 is None:
+                    break
+                space = area2.spaces.active
+                region = next((item for item in area2.regions if item.type == "WINDOW"), None)
+                if space is None or region is None:
+                    break
+                try:
+                    _restore_tree_path(space, snapshot, window, area2, region)
+                    restore_selection()
+                except Exception as exc:
+                    errors.append(f"tree/pin restore after redraw failed: {exc}")
 
     try:
         prefs.view.smooth_view = snapshot.smooth_view
