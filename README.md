@@ -49,8 +49,8 @@ Copy the `node_atlas` folder into your Blender `scripts/addons/` directory and e
    - **Export As…** — pick a file name and location.
 4. Press `Esc` to cancel a running export.
 
-After a successful save, **Open Last Export** appears in the panel and opens the PNG in
-your default image viewer.
+After a successful save, a small image icon next to **Settings** opens the PNG in your
+default image viewer.
 
 If **Default Directory** is empty, **Export Current Tree** opens the file dialog instead
 of writing to a temporary folder. It starts at your Desktop by default. The quick-export

@@ -175,9 +175,10 @@ def _copy_result(image, dpi: float) -> None:
 class ExportJob:
     """One export, advanced one stage at a time by the operator's modal timer."""
 
-    def __init__(self, context, settings: ExportSettings):
+    def __init__(self, context, settings: ExportSettings, initial=None):
         self.context = context
         self.settings = settings
+        self.initial = initial
         self.stage = "prepare"
         self.snapshot = None
         self.window = None
@@ -228,7 +229,32 @@ class ExportJob:
     # -- stages ---------------------------------------------------------
     def _prepare(self) -> None:
         self._status("NodeAtlas: preparing…")
-        parts = capture.get_node_context(self.context)
+        parts = None
+        if self.initial:
+            initial = self.initial
+            window = initial["window"]
+            area = capture.find_node_area(window) or initial["area"]
+            space = area.spaces.active if area is not None else initial["space"]
+            region = next(
+                (item for item in area.regions if item.type == "WINDOW"), None
+            ) if area is not None else initial["region"]
+            if space is not None and region is not None:
+                try:
+                    capture.apply_tree_path(
+                        space,
+                        initial["root_tree"],
+                        initial["path_trees"],
+                        initial["pin"],
+                        initial["tree"],
+                        initial["tree_type"],
+                        window=window,
+                        area=area,
+                        region=region,
+                    )
+                    parts = (window, area, space, region)
+                except Exception:
+                    log.warning("Could not restore the captured node path", exc_info=True)
+        parts = parts or capture.get_node_context(self.context)
         if parts is None:
             raise RuntimeError("Open a Node Editor with an active node tree")
         window, area, space, region = parts
@@ -553,7 +579,30 @@ def start_job(context, filepath, operator=None, copy_only: bool = False) -> bool
                 operator.report({"ERROR"}, f"NodeAtlas: {exc}")
             return False
 
-    job = ExportJob(context, settings_from_prefs(prefs, filepath, copy_only=copy_only))
+    parts = capture.get_node_context(context)
+    if parts is None:
+        if operator is not None:
+            operator.report({"ERROR"}, "Open a Node Editor with an active node tree")
+        return False
+    window, area, space, region = parts
+    initial = {
+        "window": window,
+        "area": area,
+        "space": space,
+        "region": region,
+        "tree": capture.current_tree(space),
+        "tree_type": space.tree_type,
+        "root_tree": space.node_tree,
+        "path_trees": tuple(
+            item.node_tree for item in getattr(space, "path", ())
+            if item.node_tree is not None
+        ),
+        "pin": space.pin,
+    }
+
+    job = ExportJob(
+        context, settings_from_prefs(prefs, filepath, copy_only=copy_only), initial
+    )
     _current_job = job
     last_result = None
     try:

@@ -171,6 +171,10 @@ def save_panel():
         bpy.ops.wm.redraw_timer(type="DRAW_WIN_SWAP", iterations=2)
 
     width, height = window.width, window.height
+    from node_atlas import operators
+    operators.last_result = {"ok": True, "path": EXAMPLE}
+    with bpy.context.temp_override(window=window, area=area, region=region):
+        bpy.ops.wm.redraw_timer(type="DRAW_WIN_SWAP", iterations=2)
     shot = window.screenshot(region=((0, 0), (width, height)))
     array = np.frombuffer(shot, dtype=np.uint8)
     if array.size != width * height * 4:

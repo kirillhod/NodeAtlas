@@ -409,7 +409,12 @@ def restore_view(window, snapshot: EditorSnapshot):
     bottom_ui = bottom_ui_height(area)
     height = effective_height(region, bottom_ui)
     node_view_all(window, area, region, space)
-    set_zoom(window, area, region, space, snapshot.upp, region.width, height)
+    # view_all can reset the node-group path; re-enter before restoring zoom.
+    _restore_tree_path(space, snapshot, window, area, region)
+    set_zoom(
+        window, area, region, space, snapshot.upp, region.width, height,
+        prime=False,
+    )
 
     center_x, center_y = snapshot.center
     for _ in range(8):
@@ -435,22 +440,80 @@ def _restore_attr(obj, attr: str, value) -> None:
             log.warning("Could not restore %s: %s", attr, exc)
 
 
-def _restore_tree_path(space, snapshot: EditorSnapshot) -> None:
-    """Restore the root tree, pin flag and the nested group edit path."""
+def apply_tree_path(
+    space, root_tree, path_trees, pin, tree, tree_type,
+    window=None, area=None, region=None,
+) -> None:
+    """Set the root tree, pin flag and nested group edit path."""
     space.pin = False
-    space.tree_type = snapshot.tree_type
-    root = snapshot.root_tree or snapshot.tree
+    space.tree_type = tree_type
+    root = root_tree or tree
     if root is not None:
         space.node_tree = root
-    if snapshot.path_trees:
-        for group in snapshot.path_trees:
-            if group is not root:
-                space.path.append(group)
+    groups = [group for group in path_trees if group is not root]
+    if groups and window is not None and area is not None and region is not None:
+        # Enter groups through the operator so Blender records the full edit
+        # path; a bare space.path.append() is dropped on the next redraw.
+        space.pin = True
+        current_tree = root
+        for group in groups:
+            node = next(
+                (
+                    item for item in current_tree.nodes
+                    if item.type == "GROUP"
+                    and getattr(item, "node_tree", None) is group
+                ),
+                None,
+            )
+            if node is None:
+                break
+            current_tree.nodes.active = node
+            node.select = True
+            try:
+                with bpy.context.temp_override(
+                    window=window, area=area, region=region
+                ):
+                    bpy.ops.node.group_edit(exit=False)
+            except Exception:
+                break
+            current_tree = space.edit_tree or group
+        space.pin = pin
+    elif groups:
+        for group in groups:
+            space.path.append(group)
+        space.pin = pin
     else:
-        space.node_tree = snapshot.tree
-    space.pin = snapshot.pin
-    if snapshot.pin and space.edit_tree is not snapshot.tree:
-        space.node_tree = snapshot.tree
+        space.pin = pin
+    if pin and space.edit_tree is not tree:
+        space.node_tree = tree
+
+
+def _restore_tree_path(
+    space, snapshot: EditorSnapshot, window=None, area=None, region=None,
+) -> None:
+    """Restore the root tree, pin flag and the nested group edit path."""
+    current_path = tuple(
+        item.node_tree for item in getattr(space, "path", ())
+        if item.node_tree is not None
+    )
+    if (
+        space.node_tree is snapshot.root_tree
+        and current_path == snapshot.path_trees
+        and space.edit_tree is snapshot.tree
+    ):
+        space.pin = snapshot.pin
+        return
+    apply_tree_path(
+        space,
+        snapshot.root_tree,
+        snapshot.path_trees,
+        snapshot.pin,
+        snapshot.tree,
+        snapshot.tree_type,
+        window=window,
+        area=area,
+        region=region,
+    )
 
 
 def restore_snapshot(snapshot: EditorSnapshot, restore_ui: bool = True):
@@ -468,28 +531,32 @@ def restore_snapshot(snapshot: EditorSnapshot, restore_ui: bool = True):
         return ["Node Editor space/region is no longer available"], warnings
 
     try:
-        _restore_tree_path(space, snapshot)
+        _restore_tree_path(space, snapshot, window, area, region)
     except Exception as exc:
         errors.append(f"tree/pin restore failed: {exc}")
 
     def restore_ui_state(target_space):
         if not restore_ui:
             return
-        _restore_attr(target_space, "show_region_header", snapshot.header)
-        _restore_attr(target_space, "show_region_ui", snapshot.ui)
-        _restore_attr(target_space, "show_region_toolbar", snapshot.toolbar)
-        _restore_attr(target_space, "show_gizmo", snapshot.gizmo)
-        _restore_attr(target_space.overlay, "show_context_path", snapshot.context_path)
-        _restore_attr(target_space, "show_backdrop", snapshot.backdrop)
-        if snapshot.tree is not None:
-            try:
-                for node in snapshot.tree.nodes:
-                    node.select = node.name in snapshot.selected
-                snapshot.tree.nodes.active = (
-                    snapshot.tree.nodes.get(snapshot.active) if snapshot.active else None
-                )
-            except Exception as exc:
-                errors.append(f"selection restore failed: {exc}")
+        with bpy.context.temp_override(window=snapshot.window):
+            _restore_attr(target_space, "show_region_header", snapshot.header)
+            _restore_attr(target_space, "show_region_ui", snapshot.ui)
+            _restore_attr(target_space, "show_region_toolbar", snapshot.toolbar)
+            _restore_attr(target_space, "show_gizmo", snapshot.gizmo)
+            _restore_attr(target_space.overlay, "show_context_path", snapshot.context_path)
+            _restore_attr(target_space, "show_backdrop", snapshot.backdrop)
+
+    def restore_selection():
+        if not restore_ui or snapshot.tree is None:
+            return
+        try:
+            for node in snapshot.tree.nodes:
+                node.select = node.name in snapshot.selected
+            snapshot.tree.nodes.active = (
+                snapshot.tree.nodes.get(snapshot.active) if snapshot.active else None
+            )
+        except Exception as exc:
+            errors.append(f"selection restore failed: {exc}")
 
     restore_ui_state(space)
 
@@ -523,19 +590,41 @@ def restore_snapshot(snapshot: EditorSnapshot, restore_ui: bool = True):
         errors.append(f"leaving maximize failed: {exc}")
 
     # screen_full_area may reset per-space flags and the node path; apply both
-    # on the final space.
+    # on the final space, then re-apply the path once more because UI flag
+    # updates can rebuild the area.
     if space is not None:
         try:
-            _restore_tree_path(space, snapshot)
+            _restore_tree_path(space, snapshot, window, area, region)
         except Exception as exc:
             errors.append(f"tree/pin restore after maximize failed: {exc}")
         restore_ui_state(space)
+        # Region visibility updates can rebuild the area and invalidate the
+        # space reference; re-acquire before re-applying the node path.
+        area, space, region = fresh_node_area(window)
+        if space is not None:
+            try:
+                _restore_tree_path(space, snapshot, window, area, region)
+            except Exception as exc:
+                errors.append(f"tree/pin restore after UI flags failed: {exc}")
+        restore_selection()
 
     if region is not None:
         try:
             restore_view(window, snapshot)
         except Exception as exc:
             errors.append(f"view restore failed: {exc}")
+
+    # View operators can reset the node path; leave the user in the same tree.
+    area = find_node_area(window)
+    if area is not None:
+        space = area.spaces.active
+        region = next((item for item in area.regions if item.type == "WINDOW"), None)
+        if space is not None and region is not None:
+            try:
+                _restore_tree_path(space, snapshot, window, area, region)
+                restore_selection()
+            except Exception as exc:
+                errors.append(f"final tree/pin restore failed: {exc}")
 
     try:
         prefs.view.smooth_view = snapshot.smooth_view

@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.3
+
+- Capture the node tree and group path when the export is requested, so a context
+  reset before the timer runs can no longer export the root tree.
+- Rebuild nested groups through Blender's group-edit operator and re-apply the path after
+  view restoration, which survives redraws.
+- Move **Open Last Export** to a small icon in the Settings header, so it no longer
+  shifts the panel height or overlaps Estimated/Advanced.
+
 ## 1.3.2
 
 - Fix the remaining node-group exit: restore the group path again after leaving
