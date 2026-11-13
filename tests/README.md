@@ -48,6 +48,7 @@ blender --factory-startup --python tests/gui/test_diskfull.py
 blender --factory-startup --python tests/gui/test_arealost.py
 blender --factory-startup --python tests/gui/test_estimate.py
 blender --factory-startup --python tests/gui/test_estimate_selected.py
+blender --factory-startup --python tests/gui/test_group.py
 blender --factory-startup --python tests/gui/test_naming.py
 blender --factory-startup --python tests/gui/test_clipboard.py
 blender --factory-startup --python tests/gui/test_path.py

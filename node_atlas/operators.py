@@ -567,7 +567,10 @@ def start_job(context, filepath, operator=None, copy_only: bool = False) -> bool
 class NODE_ATLAS_OT_export_png(bpy.types.Operator):
     bl_idname = "node_atlas.export_png"
     bl_label = "Export Node Graph as PNG"
-    bl_description = "Export the current node tree as one high-resolution PNG"
+    bl_description = (
+        "Export the current node tree to the Default Directory set in Advanced "
+        "(asks for a path if it is empty)"
+    )
     bl_options = {"REGISTER"}
 
     @classmethod

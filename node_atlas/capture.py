@@ -38,6 +38,8 @@ class EditorSnapshot:
     area_signature: tuple
     area_count: int
     area_bbox: tuple
+    root_tree: object | None
+    path_trees: tuple
     maximized: bool = False
     temp_tree: object | None = None
     warnings: list[str] = field(default_factory=list)
@@ -125,6 +127,11 @@ def take_snapshot(window, area, space, region, tree) -> EditorSnapshot:
         ),
         area_count=len(window.screen.areas),
         area_bbox=(area.x, area.y, area.width, area.height),
+        root_tree=space.node_tree,
+        path_trees=tuple(
+            item.node_tree for item in getattr(space, "path", ())
+            if item.node_tree is not None
+        ),
     )
 
 
@@ -442,8 +449,17 @@ def restore_snapshot(snapshot: EditorSnapshot, restore_ui: bool = True):
     try:
         space.pin = False
         space.tree_type = snapshot.tree_type
+        root = snapshot.root_tree or snapshot.tree
+        if root is not None:
+            space.node_tree = root
+        if snapshot.path_trees:
+            for group in snapshot.path_trees:
+                if group is not root:
+                    space.path.append(group)
+        else:
+            space.node_tree = snapshot.tree
         space.pin = snapshot.pin
-        if snapshot.tree is not None:
+        if snapshot.pin and space.edit_tree is not snapshot.tree:
             space.node_tree = snapshot.tree
     except Exception as exc:
         errors.append(f"tree/pin restore failed: {exc}")

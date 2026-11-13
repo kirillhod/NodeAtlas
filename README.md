@@ -42,9 +42,10 @@ Copy the `node_atlas` folder into your Blender `scripts/addons/` directory and e
 1. Open any Shader, Geometry Nodes, Compositor or Texture Node Editor.
 2. Press `N` and open the **Node Atlas** tab.
 3. Choose:
-   - **Export Current Tree** — save the whole graph using your default folder/name.
-   - **Export As…** — pick a file name and location.
    - **Copy to Clipboard** — put the image on the clipboard without writing a file.
+   - **Export Current Tree** — save into the folder set as **Default Directory** in
+     **Advanced**.
+   - **Export As…** — pick a file name and location.
 4. Press `Esc` to cancel a running export.
 
 If **Default Directory** is empty, **Export Current Tree** opens the file dialog instead

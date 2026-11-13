@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.1
+
+- Restore the full node-group edit path after export, so exporting from inside nested
+  groups no longer returns to the main tree.
+- Put **Copy to Clipboard** first in the panel, header and menu; Export Current Tree and
+  Export As follow.
+- Clarify the Export Current Tree tooltip: it writes to the **Default Directory** from
+  **Advanced** and asks for a path when that is empty.
+
 ## 1.3.0
 
 - Add **Export As** and **Copy to Clipboard** buttons to the Node Editor header alongside

@@ -10,13 +10,13 @@ from .log import get_logger
 
 log = get_logger()
 
-__version__ = "1.3.0"
+__version__ = "1.3.1"
 __author__ = "kirillhod"
 
 bl_info = {
     "name": "Node Atlas",
     "author": "kirillhod",
-    "version": (1, 3, 0),
+    "version": (1, 3, 1),
     "blender": (4, 2, 0),
     "location": "Node Editor > Sidebar > Node Atlas",
     "description": "Export any node tree as one high-resolution PNG",
@@ -82,9 +82,9 @@ class NODE_PT_node_atlas(bpy.types.Panel):
             layout.label(text="Node Atlas preferences are unavailable", icon="ERROR")
             return
 
+        layout.operator("node_atlas.copy_png", text="Copy to Clipboard", icon="COPYDOWN")
         layout.operator("node_atlas.export_png", text="Export Current Tree", icon="IMAGE_DATA")
         layout.operator("node_atlas.export_as", text="Export As…", icon="FILE_TICK")
-        layout.operator("node_atlas.copy_png", text="Copy to Clipboard", icon="COPYDOWN")
         if operators._current_job is not None:
             layout.operator("node_atlas.cancel_export", text="Cancel Export", icon="CANCEL")
             layout.label(text="Export in progress…", icon="TIME")
@@ -154,18 +154,18 @@ class NODE_PT_node_atlas_advanced(bpy.types.Panel):
 
 
 def _draw_menu(self, context):
+    self.layout.operator("node_atlas.copy_png", text="Copy Node Graph to Clipboard")
     self.layout.operator("node_atlas.export_png", text="Export Node Graph as PNG")
     self.layout.operator("node_atlas.export_as", text="Export Node Graph as PNG…")
-    self.layout.operator("node_atlas.copy_png", text="Copy Node Graph to Clipboard")
 
 
 def _draw_header(self, context):
     prefs = _get_prefs(context)
     if prefs is not None and prefs.show_header_button:
         row = self.layout.row(align=True)
+        row.operator("node_atlas.copy_png", text="", icon="COPYDOWN")
         row.operator("node_atlas.export_png", text="", icon="IMAGE_DATA")
         row.operator("node_atlas.export_as", text="", icon="FILE_TICK")
-        row.operator("node_atlas.copy_png", text="", icon="COPYDOWN")
 
 
 def _register_keymap():
