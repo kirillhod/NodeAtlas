@@ -152,10 +152,9 @@ def save_panel():
         overlay.show_context_path = False
     from node_atlas import capture
 
-    try:
-        capture.node_view_all(window, area, region, space)
-    except Exception as exc:
-        print("view_all skipped:", exc)
+    capture.redraw(window, area, region)
+    bpy.context.preferences.view.ui_scale = 1.0
+    capture.node_view_all(window, area, region, space)
     with bpy.context.temp_override(window=window, area=area, region=region):
         bpy.ops.wm.redraw_timer(type="DRAW_WIN_SWAP", iterations=1)
 
@@ -171,9 +170,18 @@ def save_panel():
     array = np.frombuffer(shot, dtype=np.uint8)
     if array.size != width * height * 4:
         fail(f"unexpected panel screenshot size: {array.size}")
+
+    # Bottom-up screenshot: keep the top of the window and the Node Atlas
+    # sidebar at native resolution so the controls stay legible in the README.
+    left = max(0, ui_region.x - 10)
+    right = min(width, ui_region.x + ui_region.width)
+    top = height
+    bottom = max(0, height - 820)
+    crop = array.reshape(height, width, 4)[bottom:top, left:right]
     from node_atlas import stitch
 
-    stitch._write_png_numpy(array.reshape(height, width, 4), PANEL)
+    stitch._write_png_numpy(crop, PANEL)
+    print(f"panel crop: {left},{bottom} .. {right},{top}")
 
 
 def tick():

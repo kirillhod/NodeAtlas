@@ -3,11 +3,6 @@
 **[Blender](https://www.blender.org/) add-on that turns any node graph into one clean,
 high-resolution PNG.**
 
-No re-rendering, no stitching by hand, no tiny screenshots. Node Atlas captures the whole
-[Node Editor](https://docs.blender.org/manual/en/latest/interface/controls/nodes/node_editors.html)
-— including the parts outside your current view — and saves a single readable image for
-documentation, tutorials, reviews or your portfolio.
-
 ![Example export](docs/images/example-export.png)
 
 ## What it does
@@ -42,7 +37,7 @@ Copy the `node_atlas` folder into your Blender `scripts/addons/` directory and e
 
 ## Use
 
-![Node Atlas panel](docs/images/panel.png)
+<img src="docs/images/panel.png" alt="Node Atlas panel" width="440">
 
 1. Open any Shader, Geometry Nodes, Compositor or Texture Node Editor.
 2. Press `N` and open the **Node Atlas** tab.
@@ -115,10 +110,6 @@ The README images can be regenerated with a normal GUI Blender session:
 ```powershell
 blender --factory-startup --python docs/make_images.py
 ```
-
-## Author
-
-[kirillhod](https://github.com/kirillhod)
 
 ## License
 
