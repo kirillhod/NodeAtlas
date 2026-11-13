@@ -3,7 +3,46 @@
 
 from __future__ import annotations
 
+import os
+import sys
+
 import bpy
+
+
+def default_output_dir() -> str:
+    """Return the user's Desktop when it exists, otherwise the home folder.
+
+    Handles XDG on Linux and OneDrive-redirected Desktops on Windows.
+    """
+    home = os.path.expanduser("~")
+    candidates = []
+    if sys.platform.startswith("linux"):
+        config = os.environ.get("XDG_CONFIG_HOME", os.path.join(home, ".config"))
+        user_dirs = os.path.join(config, "user-dirs.dirs")
+        try:
+            with open(user_dirs, encoding="utf-8") as handle:
+                for line in handle:
+                    if line.startswith("XDG_DESKTOP_DIR="):
+                        value = line.split("=", 1)[1].strip().strip('"')
+                        candidates.append(value.replace("$HOME", home))
+                        break
+        except OSError:
+            pass
+    if sys.platform == "win32":
+        one_drive = os.environ.get("OneDrive") or os.environ.get("OneDriveConsumer")
+        if one_drive:
+            candidates.append(os.path.join(one_drive, "Desktop"))
+    candidates.append(os.path.join(home, "Desktop"))
+    for candidate in candidates:
+        if candidate and os.path.isdir(candidate):
+            return os.path.abspath(candidate)
+    return os.path.abspath(home)
+
+
+def _shortcut_updated(self, context):
+    from . import refresh_keymap
+
+    refresh_keymap()
 
 
 def get_prefs(context):
@@ -19,8 +58,8 @@ class NodeAtlasPreferences(bpy.types.AddonPreferences):
 
     output_dpi: bpy.props.IntProperty(
         name="Output DPI",
-        description="Output density; 96 = 1:1 pixels per node unit",
-        default=96,
+        description="Output density; 96 = 1:1 pixels per node unit, 128 is 33% larger",
+        default=128,
         min=1,
         max=2000,
     )
@@ -33,7 +72,10 @@ class NodeAtlasPreferences(bpy.types.AddonPreferences):
     )
     max_mp: bpy.props.FloatProperty(
         name="Max Megapixels",
-        description="Abort before capturing when the output would exceed this size",
+        description=(
+            "Safety limit: stop before capturing when the image would exceed this "
+            "many megapixels (200 MP is about 16000x12500 px)"
+        ),
         default=200.0,
         min=1.0,
         max=100000.0,
@@ -53,9 +95,9 @@ class NodeAtlasPreferences(bpy.types.AddonPreferences):
     )
     default_dir: bpy.props.StringProperty(
         name="Default Directory",
-        description="Directory for quick exports; empty asks for a path on every export",
+        description="Folder for quick exports; clear it to ask for a path every time",
         subtype="DIR_PATH",
-        default="",
+        default=default_output_dir(),
     )
     filename_pattern: bpy.props.StringProperty(
         name="Filename Pattern",
@@ -81,12 +123,38 @@ class NodeAtlasPreferences(bpy.types.AddonPreferences):
         default=True,
     )
     show_header_button: bpy.props.BoolProperty(
-        name="Header Button",
-        description="Show the quick export button in the Node Editor header",
+        name="Header Buttons",
+        description="Show the export buttons in the Node Editor header",
         default=True,
     )
-    show_keymap: bpy.props.BoolProperty(
-        name="Ctrl+Shift+E",
-        description="Enable the quick export shortcut in the Node Editor",
+    enable_shortcut: bpy.props.BoolProperty(
+        name="Enable Shortcut",
+        description="Enable a quick-export shortcut; off by default to avoid conflicts",
+        default=False,
+        update=_shortcut_updated,
+    )
+    shortcut_key: bpy.props.StringProperty(
+        name="Key",
+        description="Key for the quick export, for example E or F5",
+        default="E",
+        maxlen=4,
+        update=_shortcut_updated,
+    )
+    shortcut_ctrl: bpy.props.BoolProperty(
+        name="Ctrl",
+        description="Require Ctrl",
         default=True,
+        update=_shortcut_updated,
+    )
+    shortcut_shift: bpy.props.BoolProperty(
+        name="Shift",
+        description="Require Shift",
+        default=True,
+        update=_shortcut_updated,
+    )
+    shortcut_alt: bpy.props.BoolProperty(
+        name="Alt",
+        description="Require Alt",
+        default=False,
+        update=_shortcut_updated,
     )

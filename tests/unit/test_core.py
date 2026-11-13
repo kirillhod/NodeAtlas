@@ -192,10 +192,55 @@ def test_registration():
                 prefs = addon.preferences
                 break
         check(prefs is not None, "preferences registered")
-        check(prefs.output_dpi == 96, "default dpi")
+        check(prefs.output_dpi == 128, "default dpi")
         check(prefs.padding == 20, "default padding")
         check(prefs.scope == "CURRENT", "default scope")
+        check(os.path.isabs(prefs.default_dir), "default directory is absolute")
+        check(os.path.isdir(prefs.default_dir), "default directory exists")
+        check(prefs.enable_shortcut is False, "shortcut is off by default")
+        advanced = getattr(bpy.types, "NODE_PT_node_atlas_advanced", None)
+        check(advanced is not None, "advanced panel registered")
+        check("DEFAULT_CLOSED" in advanced.bl_options, "advanced panel is collapsed")
+        from node_atlas import operators
+
+        check(hasattr(operators.NODE_ATLAS_OT_export_as, "draw"), "export dialog settings")
     finally:
+        bpy.ops.preferences.addon_disable(module="node_atlas")
+
+
+def test_shortcut_keymap():
+    import bpy
+
+    bpy.ops.preferences.addon_enable(module="node_atlas")
+    prefs = None
+    for key, addon in bpy.context.preferences.addons.items():
+        if key == "node_atlas" or key.endswith(".node_atlas"):
+            prefs = addon.preferences
+            break
+    check(prefs is not None, "preferences for shortcut test")
+    try:
+        prefs.enable_shortcut = True
+        prefs.shortcut_key = "J"
+        prefs.shortcut_ctrl = False
+        prefs.shortcut_shift = True
+        prefs.shortcut_alt = False
+        keymap = bpy.context.window_manager.keyconfigs.addon.keymaps.get("Node Editor")
+        check(keymap is not None, "node editor keymap")
+        item = next(
+            (i for i in keymap.keymap_items if i.idname == "node_atlas.export_png"),
+            None,
+        )
+        check(item is not None, "shortcut item")
+        check(item.type == "J", "shortcut key")
+        check(not item.ctrl and item.shift and not item.alt, "shortcut modifiers")
+        prefs.enable_shortcut = False
+        item = next(
+            (i for i in keymap.keymap_items if i.idname == "node_atlas.export_png"),
+            None,
+        )
+        check(item is None, "shortcut removed when disabled")
+    finally:
+        prefs.enable_shortcut = False
         bpy.ops.preferences.addon_disable(module="node_atlas")
 
 
@@ -476,6 +521,7 @@ def main():
         test_tree_owner_name,
         test_quick_filepath,
         test_registration,
+        test_shortcut_keymap,
         test_version_consistency,
     ]
     for test in tests:

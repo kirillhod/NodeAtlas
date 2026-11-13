@@ -1,6 +1,6 @@
 # NodeAtlas QA report
 
-**Version:** 1.2.1
+**Version:** 1.3.0
 **Date:** 12 November 2026  
 **Platforms:** Windows, GUI sessions only
 
@@ -49,9 +49,10 @@ blender --background --factory-startup --python tests/unit/test_core.py
 | Tree owner names | PASS | PASS | PASS | PASS | PASS |
 | Quick path / empty directory | PASS | PASS | PASS | PASS | PASS |
 | Registration/preferences | PASS | PASS | PASS | PASS | PASS |
+| Shortcut keymap / customization | PASS | PASS | PASS | PASS | PASS |
 | Manifest/`__version__` consistency | PASS | PASS | PASS | PASS | PASS |
 
-Result: **17/17 PASS on all five versions.**
+Result: **18/18 PASS on all five versions.**
 
 ## GUI tests
 
@@ -107,19 +108,19 @@ Default Directory refuses to write to a temporary folder. The clipboard test use
 
 - `blender --command extension validate node_atlas`: PASS.
 - `blender --command extension build --source-dir node_atlas --output-dir dist`:
-  produces `node_atlas-1.2.1.zip` with the manifest and package modules.
+  produces `node_atlas-1.3.0.zip` with the manifest and package modules.
 - Classic add-on clean-profile install: PASS on Blender 4.2.23, 4.5.9, 5.1.2, 5.2.4
   and 5.3.0 in isolated `BLENDER_USER_SCRIPTS/scripts/addons` profiles (0.6.1); the
-  0.6.2, 0.7.0, 0.8.0 and 1.0.0 packages were re-validated on 5.3.0. The 1.1.0, 1.2.0
-  and 1.2.1 packages were copied into isolated profiles on all five versions;
+  0.6.2, 0.7.0, 0.8.0 and 1.0.0 packages were re-validated on 5.3.0. The 1.1.0, 1.2.0,
+  1.2.1 and 1.3.0 packages were copied into isolated profiles on all five versions;
   `test_artifact.py` enabled `node_atlas` and exported a PNG on each.
 - Extension clean-profile install: PASS across the same five versions with 0.6.1; the
   0.6.2, 0.7.0, 0.8.0 and 1.0.0 zips were installed into isolated repositories with
-  `install-file --enable`, loading `bl_ext.nodeatlas_test.node_atlas`. The 1.1.0 and
-  1.2.1 zips installed and exported through `bl_ext.nodeatlas_test.node_atlas` on 4.2.23
-  and 5.3.0. On 4.5.9, 5.1.2 and 5.2.4 the local builds' `--command extension` Python
-  runtime is incomplete (their bundled `python.exe` cannot find the stdlib), so the same
-  1.2.1 zip payload was validated through the classic install path on those versions
+  `install-file --enable`, loading `bl_ext.nodeatlas_test.node_atlas`. The 1.1.0, 1.2.0,
+  1.2.1 and 1.3.0 zips installed and exported through `bl_ext.nodeatlas_test.node_atlas`
+  on 4.2.23 and 5.3.0. On 4.5.9, 5.1.2 and 5.2.4 the local builds' `--command extension`
+  Python runtime is incomplete (their bundled `python.exe` cannot find the stdlib), so the
+  same 1.3.0 zip payload was validated through the classic install path on those versions
   instead.
 - Linux and macOS are untested: no Linux distribution is installed under WSL and no Mac
   hardware is available. `system.ui_scale` cannot be changed from RNA, so OS-level

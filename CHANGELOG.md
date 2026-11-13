@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.3.0
+
+- Add **Export As** and **Copy to Clipboard** buttons to the Node Editor header alongside
+  the quick export.
+- Move **Default Directory** and **Filename Pattern** to the top of a collapsible
+  **Advanced** panel.
+- Disable the quick-export shortcut by default; choose the key and Ctrl/Shift/Alt in
+  **Advanced**.
+- Show the main Node Atlas settings inside the **Export As** file dialog.
+- Default exports to the user's Desktop, with XDG and OneDrive detection and a home
+  fallback.
+- Raise the default Output DPI to 128 and explain the Max Megapixels safety limit in the
+  UI and README.
+- Rebuild the README: compact centered panel screenshot, grouped settings, no author
+  section or marketing copy.
+
 ## 1.2.1
 
 - Fix the panel estimate in **Selected Nodes** mode: it now measures the filtered

@@ -644,6 +644,22 @@ class NODE_ATLAS_OT_export_as(bpy.types.Operator, ExportHelper):
             self.filepath = quick_filepath(context, prefs) or ""
         return ExportHelper.invoke(self, context, event)
 
+    def draw(self, context):
+        prefs = get_prefs(context)
+        layout = self.layout
+        layout.label(text="Node Atlas Settings", icon="IMAGE_DATA")
+        if prefs is None:
+            layout.label(text="Preferences are unavailable", icon="ERROR")
+            return
+        box = layout.box()
+        box.prop(prefs, "output_dpi")
+        box.prop(prefs, "padding")
+        box.prop(prefs, "max_mp")
+        box.prop(prefs, "scope", expand=True)
+        box.prop(prefs, "hide_ui")
+        box.prop(prefs, "restore_ui")
+        box.prop(prefs, "deterministic")
+
     def execute(self, context):
         if not self.filepath.strip():
             self.report({"ERROR"}, "NodeAtlas: choose an output file")

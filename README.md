@@ -37,7 +37,7 @@ Copy the `node_atlas` folder into your Blender `scripts/addons/` directory and e
 
 ## Use
 
-<img src="docs/images/panel.png" alt="Node Atlas panel" width="440">
+<p align="center"><img src="docs/images/panel.png" alt="Node Atlas panel" width="260"></p>
 
 1. Open any Shader, Geometry Nodes, Compositor or Texture Node Editor.
 2. Press `N` and open the **Node Atlas** tab.
@@ -48,29 +48,28 @@ Copy the `node_atlas` folder into your Blender `scripts/addons/` directory and e
 4. Press `Esc` to cancel a running export.
 
 If **Default Directory** is empty, **Export Current Tree** opens the file dialog instead
-of writing to a temporary folder. `Ctrl+Shift+E` is the quick export shortcut.
+of writing to a temporary folder. It starts at your Desktop by default. The quick-export
+shortcut is disabled by default; configure it in **Advanced**.
 
 ## Settings
 
 Settings live in the sidebar and in **Edit → Preferences → Add-ons → Node Atlas**.
 
-| Setting | Default | What it does |
-|---|---|---|
-| Output DPI | 96 | Output density; 96 = 1:1 node pixels |
-| Padding (px) | 20 | Background margin around the graph |
-| Max Megapixels | 200 | Stop before capturing an image larger than this |
-| Scope | Current Tree | Export everything or only selected nodes |
-| Default Directory | empty | Folder for quick exports; empty asks for a path |
-| Filename Pattern | `{blend}_{tree}_{date}.png` | How exported files are named |
-| Hide UI During Export | on | Hide header, toolbar, sidebar and gizmos |
-| Restore UI | on | Restore the editor after success, error or cancel |
-| Deterministic View | on | Make repeated exports of the same graph match |
-| Header Button | on | Show the quick export button in the Node Editor header |
-| Ctrl+Shift+E | on | Enable the quick export shortcut |
-
-The filename pattern supports `{blend}`, `{tree}` (the material, object, scene or texture
-that owns the tree), `{datablock}` (the raw tree name), `{type}` and `{date}`. Unknown
-fields fall back to the default pattern; spaces become `_`.
+- **Output DPI — 128.** 96 is 1:1 with node pixels; 128 gives a 33% larger image.
+  The result does not depend on your monitor or current zoom.
+- **Padding — 20 px.** Background margin around the graph.
+- **Max Megapixels — 200.** A safety limit, not a target: the export stops before
+  capturing if the image would exceed it. 200 MP is about 16000 × 12500 px.
+- **Scope — Current Tree.** Export the whole tree or only selected nodes.
+- **Default Directory — Desktop.** Folder for quick exports. Clear it to ask for a path
+  every time.
+- **Filename Pattern — `{blend}_{tree}_{date}.png`.** `{tree}` uses the material, object,
+  scene or texture that owns the tree; `{datablock}`, `{type}` and `{date}` are also
+  available. Unknown fields fall back to the default; spaces become `_`.
+- **Export behavior.** Hide UI during export, restore the editor afterwards, keep the
+  view deterministic, and show the three quick buttons in the Node Editor header.
+- **Shortcut — off by default.** Enable it in **Advanced** and choose the key plus
+  Ctrl/Shift/Alt, so it cannot conflict with an existing shortcut.
 
 ## Supported versions
 

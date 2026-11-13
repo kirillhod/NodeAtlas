@@ -6,14 +6,17 @@ from __future__ import annotations
 import bpy
 
 from . import bounds, capture, operators, preferences
+from .log import get_logger
 
-__version__ = "1.2.1"
+log = get_logger()
+
+__version__ = "1.3.0"
 __author__ = "kirillhod"
 
 bl_info = {
     "name": "Node Atlas",
     "author": "kirillhod",
-    "version": (1, 2, 1),
+    "version": (1, 3, 0),
     "blender": (4, 2, 0),
     "location": "Node Editor > Sidebar > Node Atlas",
     "description": "Export any node tree as one high-resolution PNG",
@@ -116,15 +119,38 @@ class NODE_PT_node_atlas(bpy.types.Panel):
                     icon="ERROR",
                 )
 
-        advanced = layout.box()
-        advanced.label(text="Advanced")
-        advanced.prop(prefs, "hide_ui")
-        advanced.prop(prefs, "restore_ui")
-        advanced.prop(prefs, "deterministic")
-        advanced.prop(prefs, "default_dir")
-        advanced.prop(prefs, "filename_pattern")
-        advanced.prop(prefs, "show_header_button")
-        advanced.prop(prefs, "show_keymap")
+
+class NODE_PT_node_atlas_advanced(bpy.types.Panel):
+    bl_space_type = "NODE_EDITOR"
+    bl_region_type = "UI"
+    bl_category = "Node Atlas"
+    bl_parent_id = "NODE_PT_node_atlas"
+    bl_label = "Advanced"
+    bl_options = {"DEFAULT_CLOSED"}
+
+    @classmethod
+    def poll(cls, context):
+        return NODE_PT_node_atlas.poll(context)
+
+    def draw(self, context):
+        layout = self.layout
+        prefs = _get_prefs(context)
+        if prefs is None:
+            layout.label(text="Node Atlas preferences are unavailable", icon="ERROR")
+            return
+        layout.prop(prefs, "default_dir")
+        layout.prop(prefs, "filename_pattern")
+        layout.prop(prefs, "hide_ui")
+        layout.prop(prefs, "restore_ui")
+        layout.prop(prefs, "deterministic")
+        layout.prop(prefs, "show_header_button")
+        layout.prop(prefs, "enable_shortcut")
+        if prefs.enable_shortcut:
+            row = layout.row(align=True)
+            row.prop(prefs, "shortcut_key")
+            row.prop(prefs, "shortcut_ctrl")
+            row.prop(prefs, "shortcut_shift")
+            row.prop(prefs, "shortcut_alt")
 
 
 def _draw_menu(self, context):
@@ -136,16 +162,15 @@ def _draw_menu(self, context):
 def _draw_header(self, context):
     prefs = _get_prefs(context)
     if prefs is not None and prefs.show_header_button:
-        self.layout.operator(
-            "node_atlas.export_png",
-            text="",
-            icon="IMAGE_DATA",
-        )
+        row = self.layout.row(align=True)
+        row.operator("node_atlas.export_png", text="", icon="IMAGE_DATA")
+        row.operator("node_atlas.export_as", text="", icon="FILE_TICK")
+        row.operator("node_atlas.copy_png", text="", icon="COPYDOWN")
 
 
 def _register_keymap():
     prefs = _get_prefs(bpy.context)
-    if prefs is not None and not prefs.show_keymap:
+    if prefs is None or not prefs.enable_shortcut:
         return
     keyconfig = bpy.context.window_manager.keyconfigs.addon
     if keyconfig is None:
@@ -153,9 +178,24 @@ def _register_keymap():
     keymap = keyconfig.keymaps.get("Node Editor")
     if keymap is None:
         keymap = keyconfig.keymaps.new(name="Node Editor", space_type="NODE_EDITOR")
-    item = keymap.keymap_items.new(
-        "node_atlas.export_png", "E", "PRESS", ctrl=True, shift=True
-    )
+    key = (prefs.shortcut_key or "E").strip().upper()
+    try:
+        item = keymap.keymap_items.new(
+            "node_atlas.export_png",
+            key,
+            "PRESS",
+            ctrl=bool(prefs.shortcut_ctrl),
+            shift=bool(prefs.shortcut_shift),
+            alt=bool(prefs.shortcut_alt),
+        )
+    except Exception:
+        log.warning("Invalid shortcut key %r; falling back to E", key, exc_info=True)
+        try:
+            item = keymap.keymap_items.new(
+                "node_atlas.export_png", "E", "PRESS", ctrl=True, shift=True
+            )
+        except Exception:
+            return
     _keymaps.append((keymap, item))
 
 
@@ -168,6 +208,12 @@ def _unregister_keymap():
     _keymaps.clear()
 
 
+def refresh_keymap():
+    """Rebuild the add-on shortcut after a preference change."""
+    _unregister_keymap()
+    _register_keymap()
+
+
 classes = (
     preferences.NodeAtlasPreferences,
     operators.NODE_ATLAS_OT_export_png,
@@ -175,6 +221,7 @@ classes = (
     operators.NODE_ATLAS_OT_copy_png,
     operators.NODE_ATLAS_OT_cancel_export,
     NODE_PT_node_atlas,
+    NODE_PT_node_atlas_advanced,
 )
 
 

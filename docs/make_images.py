@@ -139,6 +139,11 @@ def save_panel():
     prefs = bpy.context.preferences.addons["node_atlas"].preferences
     prefs.default_dir = ""
     prefs.filename_pattern = "{blend}_{tree}_{date}.png"
+    prefs.output_dpi = 128
+    prefs.padding = 20
+    prefs.max_mp = 200.0
+    prefs.scope = "CURRENT"
+    prefs.enable_shortcut = False
     with bpy.context.temp_override(window=window, area=area, region=region):
         bpy.ops.screen.screen_full_area(use_hide_panels=False)
     window, area, region = node_area()
@@ -176,7 +181,7 @@ def save_panel():
     left = max(0, ui_region.x - 10)
     right = min(width, ui_region.x + ui_region.width)
     top = height
-    bottom = max(0, height - 820)
+    bottom = max(0, height - 620)
     crop = array.reshape(height, width, 4)[bottom:top, left:right]
     from node_atlas import stitch
 
