@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import os
+
 import bpy
 
 from . import bounds, capture, operators, preferences
@@ -10,13 +12,13 @@ from .log import get_logger
 
 log = get_logger()
 
-__version__ = "1.3.1"
+__version__ = "1.3.2"
 __author__ = "kirillhod"
 
 bl_info = {
     "name": "Node Atlas",
     "author": "kirillhod",
-    "version": (1, 3, 1),
+    "version": (1, 3, 2),
     "blender": (4, 2, 0),
     "location": "Node Editor > Sidebar > Node Atlas",
     "description": "Export any node tree as one high-resolution PNG",
@@ -88,6 +90,13 @@ class NODE_PT_node_atlas(bpy.types.Panel):
         if operators._current_job is not None:
             layout.operator("node_atlas.cancel_export", text="Cancel Export", icon="CANCEL")
             layout.label(text="Export in progress…", icon="TIME")
+        last = operators.last_result
+        if last and last.get("path") and os.path.exists(last["path"]):
+            layout.operator(
+                "node_atlas.open_last_export",
+                text="Open Last Export",
+                icon="FILE_IMAGE",
+            )
 
         box = layout.box()
         box.label(text="Settings")
@@ -220,6 +229,7 @@ classes = (
     operators.NODE_ATLAS_OT_export_as,
     operators.NODE_ATLAS_OT_copy_png,
     operators.NODE_ATLAS_OT_cancel_export,
+    operators.NODE_ATLAS_OT_open_last_export,
     NODE_PT_node_atlas,
     NODE_PT_node_atlas_advanced,
 )

@@ -18,6 +18,7 @@ high-resolution PNG.**
 - **Your file stays untouched.** The editor, tree, selection and view are restored after
   success, error or cancel. No undo steps are added.
 - **Copy to Clipboard.** Export straight to the clipboard without saving a file.
+- **Open Last Export.** After saving, jump to the PNG from the sidebar.
 
 ## Install
 
@@ -47,6 +48,9 @@ Copy the `node_atlas` folder into your Blender `scripts/addons/` directory and e
      **Advanced**.
    - **Export As…** — pick a file name and location.
 4. Press `Esc` to cancel a running export.
+
+After a successful save, **Open Last Export** appears in the panel and opens the PNG in
+your default image viewer.
 
 If **Default Directory** is empty, **Export Current Tree** opens the file dialog instead
 of writing to a temporary folder. It starts at your Desktop by default. The quick-export

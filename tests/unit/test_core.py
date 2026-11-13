@@ -204,6 +204,16 @@ def test_registration():
         from node_atlas import operators
 
         check(hasattr(operators.NODE_ATLAS_OT_export_as, "draw"), "export dialog settings")
+        check(hasattr(bpy.ops.node_atlas, "open_last_export"), "open-last-export operator")
+        previous = operators.last_result
+        operators.last_result = {"path": __file__}
+        try:
+            check(
+                bpy.ops.node_atlas.open_last_export.poll(),
+                "open-last-export poll",
+            )
+        finally:
+            operators.last_result = previous
     finally:
         bpy.ops.preferences.addon_disable(module="node_atlas")
 

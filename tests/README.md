@@ -57,7 +57,8 @@ blender --python tests/gui/test_artifact.py
 
 `test_artifact.py` exports with an installed add-on or extension; run it against a
 clean profile without `--factory-startup`. Set `NODEATLAS_TEST_DPI=120` for the 118 MP
-variant of `test_1000.py`.
+variant of `test_1000.py`, and `NODEATLAS_TEST_MAXIMIZE=1` for the already-maximized
+group-editing variant of `test_group.py`.
 
 ## Hang-safe runner
 

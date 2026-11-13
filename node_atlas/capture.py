@@ -232,8 +232,11 @@ def pan(window, area, region, dx: int, dy: int) -> None:
 
 
 def maximize(window, area, region):
-    with bpy.context.temp_override(window=window, area=area, region=region):
-        bpy.ops.screen.screen_full_area(use_hide_panels=True)
+    # screen_full_area toggles: calling it on an already-maximized area would
+    # restore the old layout and capture the wrong region.
+    if len(window.screen.areas) > 1:
+        with bpy.context.temp_override(window=window, area=area, region=region):
+            bpy.ops.screen.screen_full_area(use_hide_panels=True)
     area = find_node_area(window)
     if area is None:
         raise RuntimeError("Node Editor area disappeared after maximizing")
@@ -432,6 +435,24 @@ def _restore_attr(obj, attr: str, value) -> None:
             log.warning("Could not restore %s: %s", attr, exc)
 
 
+def _restore_tree_path(space, snapshot: EditorSnapshot) -> None:
+    """Restore the root tree, pin flag and the nested group edit path."""
+    space.pin = False
+    space.tree_type = snapshot.tree_type
+    root = snapshot.root_tree or snapshot.tree
+    if root is not None:
+        space.node_tree = root
+    if snapshot.path_trees:
+        for group in snapshot.path_trees:
+            if group is not root:
+                space.path.append(group)
+    else:
+        space.node_tree = snapshot.tree
+    space.pin = snapshot.pin
+    if snapshot.pin and space.edit_tree is not snapshot.tree:
+        space.node_tree = snapshot.tree
+
+
 def restore_snapshot(snapshot: EditorSnapshot, restore_ui: bool = True):
     """Best-effort restoration. Returns (errors, warnings)."""
     errors: list[str] = []
@@ -447,20 +468,7 @@ def restore_snapshot(snapshot: EditorSnapshot, restore_ui: bool = True):
         return ["Node Editor space/region is no longer available"], warnings
 
     try:
-        space.pin = False
-        space.tree_type = snapshot.tree_type
-        root = snapshot.root_tree or snapshot.tree
-        if root is not None:
-            space.node_tree = root
-        if snapshot.path_trees:
-            for group in snapshot.path_trees:
-                if group is not root:
-                    space.path.append(group)
-        else:
-            space.node_tree = snapshot.tree
-        space.pin = snapshot.pin
-        if snapshot.pin and space.edit_tree is not snapshot.tree:
-            space.node_tree = snapshot.tree
+        _restore_tree_path(space, snapshot)
     except Exception as exc:
         errors.append(f"tree/pin restore failed: {exc}")
 
@@ -514,8 +522,13 @@ def restore_snapshot(snapshot: EditorSnapshot, restore_ui: bool = True):
     except Exception as exc:
         errors.append(f"leaving maximize failed: {exc}")
 
-    # screen_full_area may reset per-space flags; apply them on the final space.
+    # screen_full_area may reset per-space flags and the node path; apply both
+    # on the final space.
     if space is not None:
+        try:
+            _restore_tree_path(space, snapshot)
+        except Exception as exc:
+            errors.append(f"tree/pin restore after maximize failed: {exc}")
         restore_ui_state(space)
 
     if region is not None:

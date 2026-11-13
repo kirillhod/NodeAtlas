@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.2
+
+- Fix the remaining node-group exit: restore the group path again after leaving
+  maximize, and do not toggle an already-maximized editor.
+- Add an **Open Last Export** button after a successful save; Blender's status-line
+  report itself cannot be made clickable.
+
 ## 1.3.1
 
 - Restore the full node-group edit path after export, so exporting from inside nested

@@ -38,11 +38,13 @@ def node_area():
 
 
 def group_state(space):
+    window = bpy.context.window_manager.windows[0]
     return {
         "root": space.node_tree.name if space.node_tree else None,
         "edit": space.edit_tree.name if space.edit_tree else None,
         "pin": bool(space.pin),
         "path": [item.node_tree.name for item in space.path if item.node_tree],
+        "areas": len(window.screen.areas),
         "selected": sorted(
             node.name for node in space.edit_tree.nodes if node.select
         ) if space.edit_tree else [],
@@ -89,6 +91,12 @@ def setup():
 
     enter_group(space, outer, material.node_tree)
     enter_group(space, inner, group1)
+
+    if os.environ.get("NODEATLAS_TEST_MAXIMIZE") == "1":
+        with bpy.context.temp_override(window=window, area=area, region=region):
+            bpy.ops.screen.screen_full_area(use_hide_panels=False)
+        window, area, region = node_area()
+        space = area.spaces.active
 
     prefs = bpy.context.preferences.addons["node_atlas"].preferences
     prefs.default_dir = OUT + os.sep

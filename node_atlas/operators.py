@@ -257,8 +257,9 @@ class ExportJob:
         if self.settings.hide_ui:
             capture.hide_ui(space)
 
+        was_maximized = len(window.screen.areas) == 1
         window, area, space, region = capture.maximize(window, area, region)
-        self.snapshot.maximized = True
+        self.snapshot.maximized = not was_maximized
         self.window, self.area, self.space, self.region = window, area, space, region
         if self.settings.hide_ui:
             capture.hide_ui(space)
@@ -684,5 +685,29 @@ class NODE_ATLAS_OT_cancel_export(bpy.types.Operator):
         if _current_job is not None:
             _current_job.cancel()
             self.report({"WARNING"}, "Cancelling NodeAtlas export…")
+        return {"FINISHED"}
+
+
+class NODE_ATLAS_OT_open_last_export(bpy.types.Operator):
+    bl_idname = "node_atlas.open_last_export"
+    bl_label = "Open Last Export"
+    bl_description = "Open the last saved PNG in the default image viewer"
+    bl_options = {"REGISTER"}
+
+    @classmethod
+    def poll(cls, context):
+        result = last_result
+        return bool(
+            result
+            and result.get("path")
+            and os.path.exists(result["path"])
+        )
+
+    def execute(self, context):
+        path = last_result["path"] if last_result else None
+        if not path or not os.path.exists(path):
+            self.report({"ERROR"}, "The last export is no longer available")
+            return {"CANCELLED"}
+        bpy.ops.wm.path_open(filepath=path)
         return {"FINISHED"}
 
