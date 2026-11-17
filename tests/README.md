@@ -3,6 +3,10 @@
 NodeAtlas has headless unit tests and live-GUI tests. The GUI tests need a real
 Blender window; `--background` cannot capture the UI.
 
+The agent-facing verification loop, evidence rules and cleanup are in
+[`docs/agent/live-check.md`](../docs/agent/live-check.md); this file stays the canonical
+test inventory.
+
 ## Headless unit tests
 
 ```powershell

@@ -1,0 +1,97 @@
+# NodeAtlas live GUI check
+
+NodeAtlas captures the Node Editor's `WINDOW` region, so `--background` cannot verify the
+pipeline. Unit tests are headless; every capture, stitch, and restore claim needs a real
+window. This is the verification procedure behind `AGENTS.md` §7.
+
+## 1. Blender binary
+
+Use the version under test and set it once per shell. Never commit a local path:
+
+```powershell
+$env:BLENDER = 'blender'      # or the full path to blender.exe
+& $env:BLENDER --version
+```
+
+Windows is the validated platform; 4.2.23 LTS, 4.5.9 LTS, 5.1.2, 5.2.4 LTS and 5.3.0 are
+the matrix. Linux and macOS are untested. The Compositor is guarded on 4.2-5.1.
+
+## 2. Fast loop
+
+One GUI test with a wall-clock limit and an isolated `TEMP`:
+
+```powershell
+powershell -File tests/run_blender.ps1 -Blender $env:BLENDER `
+  -Script tests/gui/test_export.py -TimeoutSec 120
+```
+
+The unit suite is headless:
+
+```powershell
+powershell -File tests/run_blender.ps1 -Blender $env:BLENDER `
+  -Script tests/unit/test_core.py -Background
+```
+
+The wrapper prints `DONE (0)` or `TIMEOUT ...` and the last log lines. It removes its
+isolated temp folder. A direct `blender --python` run can leave a `blender_*` folder in
+`%TEMP%`; clean it up yourself.
+
+Fixtures are generated, not committed. Generate them with Blender 4.2 first so later
+versions can open them; see [`tests/fixtures/README.md`](../../tests/fixtures/README.md).
+
+## 3. Which test
+
+Use the task map in [`context-map.md`](context-map.md). Run the focused GUI test while
+iterating, then the unit suite plus every affected GUI test before claiming a change is
+done. The canonical test inventory is [`tests/README.md`](../../tests/README.md); do not
+copy the list into a new file.
+
+`-UserConfig` is only for installed-artifact tests (`test_artifact.py`), which must run
+without `--factory-startup` so the add-on or extension is enabled from a clean profile.
+
+## 4. Reading a result
+
+The wrapper writes the full log to `%TEMP%\nodeatlas_logs`. Filter it:
+
+```powershell
+Get-Content $log | Select-String -Pattern 'NodeAtlas|PASS|FAIL|Error|Traceback|Saved'
+```
+
+A test passes only when it prints its own verdict and exits 0. A clean Blender quit is
+not a pass. Paste the command, the Blender version, and the verdict; do not paste the
+whole log.
+
+## 5. Geometry and artifact checks
+
+The tests assert the report invariants. When you need the numbers yourself, print them
+instead of opening the image:
+
+```powershell
+Add-Type -AssemblyName System.Drawing
+$image = [System.Drawing.Image]::FromFile("$env:TEMP\export.png")
+"$($image.Width)x$($image.Height) @ $($image.HorizontalResolution) dpi"
+$image.Dispose()
+```
+
+For a capture or stitch change also confirm:
+
+- size `ceil(content) + 2 * padding`;
+- `holes = 0`;
+- overlap mean absolute difference below 0.1;
+- node corners within 2 px of the model;
+- editor, tree, group path, selection and view restored after success, cancel, and an
+  injected exception;
+- the undo sentinel is unchanged.
+
+Only view an image when a visual decision (padding, feather, theme, text) depends on it;
+an image costs thousands of tokens.
+
+## 6. Before claiming done
+
+- Unit suite passes.
+- Every affected GUI test passes on the primary Blender version.
+- Repeatability (`test_repeat.py`) and state restoration (`test_group.py`,
+  `test_artifact.py`) pass when capture or restore changed.
+- `git status` is clean of fixtures, captures, `dist/`, `*.blend1` and `__pycache__/`.
+- The final message names the tests run and their verdicts; the full matrix is only
+  claimed when it was actually run and recorded in [`QA_REPORT.md`](../../QA_REPORT.md).

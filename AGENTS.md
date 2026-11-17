@@ -39,6 +39,12 @@ and docs are complete for Windows; Linux, macOS and a second monitor are unteste
 Do not simplify a formula, constant or ordering without reproducing the measurement.
 If implementation diverges, say why and update the report.
 
+Do not read the report end to end (about 27k tokens). Locate a section with
+`python tools/doc.py --list NodeGraph_Export_Report.md`, then print only that section, for
+example `python tools/doc.py NodeGraph_Export_Report.md 4.6`. The same tool prints one
+milestone from `IMPLEMENTATION_PLAN.md`, for example `M7`. The task-to-file map is
+[`docs/agent/context-map.md`](docs/agent/context-map.md).
+
 ## 3. Layout
 
 ```text
@@ -53,6 +59,9 @@ node_atlas/              # extension/add-on root
 └─ blender_manifest.toml
 tests/                   # unit + live-GUI scripts, fixtures
 reference/prototypes/    # archived validated research scripts
+docs/agent/              # agent procedures: context map, live check, release, publish
+tools/                   # development helpers (Markdown section loader)
+.opencode/skills/        # thin adapters that register docs/agent procedures
 ```
 
 Keep the manifest at the package root. The package must work both as a classic add-on
@@ -196,12 +205,14 @@ Verified on Blender 5.3.0. Violating them yields plausible-looking but wrong ima
 
 ## 7. Definition of done
 
-A change is done only after a live GUI run. Verify: size `ceil(content) + 2*padding`;
+A capture, stitching, UI or state-restoration change is done only after a live GUI run.
+Verify: size `ceil(content) + 2*padding`;
 `holes = 0`; real padding with no frame/scrollbar; overlap diff < 0.1; node positions
 within 2 px; repeatable `view_all` exports; full state restored after success, cancel and
 injected exception; undo sentinel passes. Compare geometry invariants, not pixels, across
 machines. Record Blender version, OS, `system.ui_scale`, region size, `D`, `padding`,
-grid. Full matrix: report §8 and plan §6.
+grid. Full matrix: report §8 and plan §6. The concrete runner and evidence steps are in
+[`docs/agent/live-check.md`](docs/agent/live-check.md).
 
 ## 8. Documentation
 
@@ -245,10 +256,26 @@ grid. Full matrix: report §8 and plan §6.
   git tag -a v1.0.0 -m "NodeAtlas 1.0.0"
   ```
 
-  The tag, the manifest version and `__version__` must match. Pre-releases use
-  `vX.Y.Z-rc.N`. Tag only the version-bump commit; ordinary feature/fix/docs commits do
-  not get a tag. Never move, delete or reuse a tag — ship a new patch version instead.
-  Tags stay local; the no-push rule applies to them too.
+  The tag, the manifest version, `__version__` and `bl_info["version"]` must match.
+  The full release procedure is [`docs/agent/release.md`](docs/agent/release.md).
+  Pre-releases use `vX.Y.Z-rc.N`. Tag only the version-bump commit; ordinary
+  feature/fix/docs commits do not get a tag. Never move, delete or reuse a tag — ship a
+  new patch version instead. Tags stay local; the no-push rule applies to them too.
 - Do not rewrite history unless explicitly asked.
 - Check `git status` before committing; no captures, `dist/`, `*.blend1`,
   `__pycache__/`.
+
+## 10. Agent workflow and context budget
+
+1. Start with [`docs/agent/context-map.md`](docs/agent/context-map.md) or the
+   `node-atlas-context-map` skill. It maps a task to one module, the measured report
+   sections, and one focused test; do not sweep the repository.
+2. `AGENTS.md` is loaded automatically; do not re-read it. Grep before reading, keep each
+   read under about 200 lines, and use `python tools/doc.py` for long documents.
+3. Send "where is this" and "how do these modules fit" questions to the `explore`
+   subagent; keep the main context for edits, tests and the user's request.
+4. Print geometry numbers instead of opening `.blend` fixtures or exported PNGs; view an
+   image only when a visual decision depends on it. Keep tool output filtered.
+5. The full five-version matrix belongs to a release; follow
+   [`docs/agent/live-check.md`](docs/agent/live-check.md). Update the owning file in
+   `docs/agent/` when a workflow fact changes; do not restate it here.
