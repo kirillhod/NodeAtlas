@@ -120,9 +120,10 @@ without a clamp warning.
 - `blender --command extension build --source-dir node_atlas --output-dir dist`:
   produces `node_atlas-1.3.6.zip` with the manifest and package modules.
 - 1.3.6 manifest and artifact: `extension validate` PASS; `test_artifact.py` exported a
-  PNG through the extension module `bl_ext.user_default.node_atlas` and through the
-  classic module `node_atlas` on Blender 5.3.0; the unit suite passed 18/18. The zip
-  contains only the manifest and seven package modules, with no `__pycache__`.
+  PNG through the extension module `bl_ext.nodeatlas_test.node_atlas` in an isolated
+  repository and through the classic module `node_atlas` in an isolated scripts profile
+  on Blender 5.3.0; the unit suite passed 18/18. The zip contains only the manifest and
+  seven package modules, with no `__pycache__`.
 - `node_atlas-1.3.6.zip` SHA256:
   `481C071BEA155893E9CCDD6580F6976831B13751ED0A29E8738D1A6C68E6785E`.
 - Classic add-on clean-profile install: PASS on Blender 4.2.23, 4.5.9, 5.1.2, 5.2.4

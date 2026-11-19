@@ -31,6 +31,12 @@ The version lives in three places and all must match in the tagged commit:
 6. Install the zip into a clean profile and run `test_artifact.py`; also copy the folder
    into an isolated classic `BLENDER_USER_SCRIPTS/scripts/addons` profile and export
    there. Use `-UserConfig` with the runner. Record the Blender versions.
+
+   Create the isolated `config`, `scripts` and `extensions` directories before starting
+   Blender and set `BLENDER_USER_CONFIG`, `BLENDER_USER_SCRIPTS` and
+   `BLENDER_USER_EXTENSIONS`. A missing config directory falls back to the real profile.
+   Do not use `repo-add --clear-all`: it rewrites the active preferences and can drop the
+   user's repositories.
 7. Commit the version bump and records, then tag that exact commit locally:
 
    ```powershell
