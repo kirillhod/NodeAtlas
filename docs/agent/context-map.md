@@ -61,9 +61,9 @@ matches a heading prefix (`M7`). Use `--max-lines N` when a section is still too
    lines and expand only the call sites that matter.
 3. Use the `explore` subagent for "where does this happen" / "how do these modules fit"
    questions; keep the main context for edits and test output.
-4. Run the unit suite first, then one focused GUI test. The full matrix belongs to a
-   release, not to every edit. The test inventory is `tests/README.md`; the procedure is
-   [`live-check.md`](live-check.md).
+4. Run the unit suite first, then the smoke matrix or one focused GUI test. The full
+   matrix belongs to a release, not to every edit. The test inventory is
+   `tests/README.md`; the procedure is [`live-check.md`](live-check.md).
 5. Do not open an exported PNG to judge geometry. Print width, height, DPI, holes, overlap
    difference and node positions with a short script. View an image only when a visual
    decision (padding, feather, theme, text) depends on it.

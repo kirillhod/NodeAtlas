@@ -32,9 +32,17 @@ powershell -File tests/run_blender.ps1 -Blender $env:BLENDER `
   -Script tests/unit/test_core.py -Background
 ```
 
+The smoke tier runs the seven cross-cutting GUI tests on one version:
+
+```powershell
+powershell -File tests/run_matrix.ps1 -Tier smoke -Blender "5.3.0=$env:BLENDER"
+```
+
 The wrapper prints `DONE (0)` or `TIMEOUT ...` and the last log lines. It removes its
 isolated temp folder. A direct `blender --python` run can leave a `blender_*` folder in
-`%TEMP%`; clean it up yourself.
+`%TEMP%`; clean it up yourself. After a successful run the wrapper samples exported PNGs
+and exits 2 for a blank or single-colour image; see
+[`tests/README.md`](../../tests/README.md#matrix-runner) for the thresholds.
 
 Fixtures are generated, not committed. Generate them with Blender 4.2 first so later
 versions can open them; see [`tests/fixtures/README.md`](../../tests/fixtures/README.md).
@@ -58,8 +66,9 @@ Get-Content $log | Select-String -Pattern 'NodeAtlas|PASS|FAIL|Error|Traceback|S
 ```
 
 A test passes only when it prints its own verdict and exits 0. A clean Blender quit is
-not a pass. Paste the command, the Blender version, and the verdict; do not paste the
-whole log.
+not a pass; the wrapper enforces this and exits 3 with `NO PASS VERDICT` when Blender
+exits 0 without a test result. Paste the command, the Blender version, and the verdict;
+do not paste the whole log.
 
 ## 5. Geometry and artifact checks
 
@@ -89,9 +98,12 @@ an image costs thousands of tokens.
 ## 6. Before claiming done
 
 - Unit suite passes.
+- The smoke matrix passes on the primary Blender version.
 - Every affected GUI test passes on the primary Blender version.
 - Repeatability (`test_repeat.py`) and state restoration (`test_group.py`,
   `test_artifact.py`) pass when capture or restore changed.
+- For a release, run `tests/run_matrix.ps1 -Tier full` on the five-version matrix and
+  record the result in [`QA_REPORT.md`](../../QA_REPORT.md).
 - `git status` is clean of fixtures, captures, `dist/`, `*.blend1` and `__pycache__/`.
 - The final message names the tests run and their verdicts; the full matrix is only
   claimed when it was actually run and recorded in [`QA_REPORT.md`](../../QA_REPORT.md).

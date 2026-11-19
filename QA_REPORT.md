@@ -101,7 +101,10 @@ window, exports a fixture, validates the PNG and editor restoration, then exits.
 
 Re-run for 1.3.6: **29/29 source GUI runs passed on each of the five versions**, including
 `test_1000.py` at 120 dpi and `test_group.py` with `NODEATLAS_TEST_MAXIMIZE=1`.
-`test_artifact.py` passed via classic install on all five and via extension export on all
+On 4.2.23, 4.5.9 and 5.1.2 `test_trees.py` exports Geometry Nodes and then skips the
+Compositor case because the add-on guards it against a native crash; the Compositor
+export itself is verified on 5.2.4 and 5.3.0. `test_artifact.py` passed via classic
+install on all five and via extension export on all
 five. The official installer was used on 4.2.23 and 5.3.0; on 4.5.9, 5.1.2 and 5.2.4 the
 local installer subprocess cannot start Python, so the same payload was extracted into a
 local repository and loaded as `bl_ext.nodeatlas_test.node_atlas`.

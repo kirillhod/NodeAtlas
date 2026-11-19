@@ -16,9 +16,10 @@ The version lives in three places and all must match in the tagged commit:
    - `README.md` only when user-facing behavior changed.
    - `IMPLEMENTATION_PLAN.md` only when a milestone or scope changed; it is a roadmap,
      not the release log.
-4. Run the unit suite and every affected GUI test. A release claim needs the full
-   matrix recorded in `QA_REPORT.md`; do not infer Linux or macOS support. The procedure
-   is [`live-check.md`](live-check.md).
+4. Run the unit suite, then `tests/run_matrix.ps1 -Tier smoke` on the primary version.
+   A release claim needs `-Tier full` on the five-version matrix recorded in
+   `QA_REPORT.md`; do not infer Linux or macOS support. The procedure is
+   [`live-check.md`](live-check.md).
 5. Build and validate the extension:
 
    ```powershell
