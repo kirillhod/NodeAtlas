@@ -266,11 +266,6 @@ class ExportJob:
         self.snapshot = capture.take_snapshot(window, area, space, region, tree)
         self.tree_type = space.tree_type
         self.tree = tree
-        if self.tree_type == "CompositorNodeTree" and bpy.app.version < (5, 2, 0):
-            raise RuntimeError(
-                "Compositor export on Blender 4.2–5.1 is not supported yet; "
-                "use Blender 5.2+ or export a Shader/Geometry Nodes tree"
-            )
 
         if self.settings.scope == "SELECTED":
             self.tree, count = bounds.build_selected_copy(tree)

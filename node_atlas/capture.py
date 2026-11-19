@@ -134,12 +134,24 @@ def take_snapshot(window, area, space, region, tree) -> EditorSnapshot:
     )
 
 
+def effective_pin(tree_type: str, pin: bool) -> bool:
+    """Avoid the Blender 4.2-4.5 compositor pin crash.
+
+    Pinning a CompositorNodeTree on 4.2/4.5 crashes the next
+    ``node_area_refresh``; 5.1 fixed the native bug. The compositor tree is
+    scene-owned, so pin=False still displays it.
+    """
+    if tree_type == "CompositorNodeTree" and bpy.app.version < (5, 1, 0):
+        return False
+    return pin
+
+
 def assign_tree(space, tree, tree_type: str) -> None:
     space.pin = False
     space.tree_type = tree_type
     if hasattr(space, "show_backdrop"):
         space.show_backdrop = False
-    space.pin = True
+    space.pin = effective_pin(tree_type, True)
     space.node_tree = tree
 
 
@@ -448,6 +460,7 @@ def apply_tree_path(
     window=None, area=None, region=None,
 ) -> None:
     """Set the root tree, pin flag and nested group edit path."""
+    pin = effective_pin(tree_type, pin)
     space.pin = False
     space.tree_type = tree_type
     root = root_tree or tree
@@ -511,7 +524,7 @@ def _restore_tree_path(
         and current_path == snapshot.path_trees
         and space.edit_tree is snapshot.tree
     ):
-        space.pin = snapshot.pin
+        space.pin = effective_pin(snapshot.tree_type, snapshot.pin)
         return
     apply_tree_path(
         space,
@@ -530,6 +543,10 @@ def restore_snapshot(snapshot: EditorSnapshot, restore_ui: bool = True):
     """Best-effort restoration. Returns (errors, warnings)."""
     errors: list[str] = []
     warnings: list[str] = list(snapshot.warnings)
+    if snapshot.pin and not effective_pin(snapshot.tree_type, snapshot.pin):
+        warnings.append(
+            "Compositor pin is disabled on Blender 4.2-4.5 to avoid a native crash"
+        )
     window = snapshot.window
     area = find_area_by_bbox(window, snapshot) or find_node_area(window)
     if area is None:

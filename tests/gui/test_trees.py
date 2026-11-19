@@ -14,9 +14,15 @@ import bpy
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
+HERE = os.path.dirname(os.path.abspath(__file__))
+if HERE not in sys.path:
+    sys.path.insert(0, HERE)
+
+import png_content
 
 OUT = tempfile.mkdtemp(prefix="nodeatlas_trees_")
 FIXTURE = os.path.join(ROOT, "tests", "fixtures", "scene_graphs.blend")
+PADDING = 20
 state = {"ticks": 0, "case": 0, "found": None, "sizes": {}}
 
 
@@ -68,9 +74,12 @@ def configure_tree(kind):
         space.node_tree = bpy.data.node_groups["GN_Test"]
         name = "gn.png"
     else:
+        space.pin = False
         space.tree_type = "CompositorNodeTree"
         space.show_backdrop = False
-        space.pin = True
+        # Pinning a compositor tree crashes Blender 4.2-4.5 on the next area
+        # refresh; the scene tree is shown without pin and 5.1+ accepts pin.
+        space.pin = bpy.app.version >= (5, 1, 0)
         comp = bpy.data.node_groups.get("COMP_Test")
         if comp is None:
             comp = getattr(bpy.context.scene, "compositing_node_group", None)
@@ -86,7 +95,7 @@ def configure_tree(kind):
     prefs.default_dir = OUT + os.sep
     prefs.filename_pattern = name
     prefs.output_dpi = 96
-    prefs.padding = 20
+    prefs.padding = PADDING
     prefs.max_mp = 100.0
     prefs.scope = "CURRENT"
     prefs.hide_ui = True
@@ -118,6 +127,7 @@ def finish_case(path):
         fail(f"empty output {path}")
     if size[0] < 500:
         fail(f"suspiciously narrow output {size}")
+    png_content.check_capture(path, PADDING)
     state["sizes"][os.path.basename(path)] = size
     after = snapshot()
     if after != state["before"]:
@@ -136,14 +146,6 @@ def tick():
                 state["case"] += 1
                 state["found"] = None
                 if state["case"] == 1:
-                    if bpy.app.version < (5, 2, 0):
-                        print(json.dumps({
-                            "result": "PASS",
-                            "sizes": state["sizes"],
-                            "compositor": "skipped (4.2–5.1 guard)",
-                        }, indent=2))
-                        sys.stdout.flush()
-                        os._exit(0)
                     state["before"], state["output"] = configure_tree("comp")
                     start_export()
                     return 0.2

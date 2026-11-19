@@ -67,9 +67,10 @@ variant of `test_1000.py`, and `NODEATLAS_TEST_MAXIMIZE=1` for the already-maxim
 group-editing variant of `test_group.py`.
 
 Tree coverage: Shader Node Tree is the default in most tests; `test_trees.py` covers
-Geometry Nodes and the Compositor (the Compositor case is skipped below Blender 5.2 by
-the add-on guard); `test_texture.py` covers the Texture Node Editor. `test_ui_options.py`
-covers `hide_ui` and `restore_ui`; `test_export.py` and `test_large.py` also run
+Geometry Nodes and the Compositor on every version. On Blender 4.2/4.5 the test leaves
+the compositor tree unpinned because pinning it crashes the next area refresh;
+`test_texture.py` covers the Texture Node Editor. `test_ui_options.py` covers
+`hide_ui` and `restore_ui`; `test_export.py` and `test_large.py` also run
 `png_content.check_capture` for opaque pixels, real padding and non-empty content. The
 commands above are for debugging; they do not run the runner's PNG content check, so use
 the wrapper or the matrix runner when the result is evidence.

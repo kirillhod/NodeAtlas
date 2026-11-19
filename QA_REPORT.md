@@ -11,6 +11,10 @@
 > install on all five versions; extension export on all five, using the official installer
 > on 4.2.23 and 5.3.0 and manual repository extraction on 4.5.9, 5.1.2 and 5.2.4 because
 > their local installer subprocess cannot start Python.
+>
+> **Post-1.3.6 source fix.** The compositor pin crash is solved by leaving the compositor
+> tree unpinned on Blender 4.2/4.5. The source suite now runs the Compositor on all five
+> versions and passes 30/30 on each. The released 1.3.6 artifact still blocks it.
 
 ## Environment
 
@@ -101,13 +105,14 @@ window, exports a fixture, validates the PNG and editor restoration, then exits.
 
 Re-run for 1.3.6: **29/29 source GUI runs passed on each of the five versions**, including
 `test_1000.py` at 120 dpi and `test_group.py` with `NODEATLAS_TEST_MAXIMIZE=1`.
-On 4.2.23, 4.5.9 and 5.1.2 `test_trees.py` exports Geometry Nodes and then skips the
-Compositor case because the add-on guards it against a native crash; the Compositor
-export itself is verified on 5.2.4 and 5.3.0. `test_artifact.py` passed via classic
-install on all five and via extension export on all
-five. The official installer was used on 4.2.23 and 5.3.0; on 4.5.9, 5.1.2 and 5.2.4 the
-local installer subprocess cannot start Python, so the same payload was extracted into a
-local repository and loaded as `bl_ext.nodeatlas_test.node_atlas`.
+The 1.3.6 artifact runs Geometry Nodes and then skips the Compositor on 4.2.23, 4.5.9 and
+5.1.2 because the add-on guards it against a native crash. The post-1.3.6 source fix
+removes that guard: `test_trees.py` now exports the Compositor on all five and the source
+matrix is **30/30 per version**. `test_artifact.py` passed via classic install on all
+five and via extension export on all five. The official installer was used on 4.2.23 and
+5.3.0; on 4.5.9, 5.1.2 and 5.2.4 the local installer subprocess cannot start Python, so
+the same payload was extracted into a local repository and loaded as
+`bl_ext.nodeatlas_test.node_atlas`.
 
 All GUI tests validate that the editor state is restored and that failed/cancelled
 exports leave no PNG. The 1000-node test forces the memmap path and ~75.8 MP (118 MP at
@@ -174,11 +179,13 @@ without a clamp warning.
 
 ## Known issues
 
-1. **Compositor on Blender 4.2–5.1.** The native crash is in `node_area_refresh`
-   after `SpaceNodeEditor.pin = True` on a compositor tree. Measured on 4.2.23 and
-   4.5.9: `pin = False` exports correctly and the minimal `screenshot_area` path works;
-   5.1.2 accepts `pin = True`. NodeAtlas conservatively blocks every Compositor export
-   below 5.2 until the pin handling is changed. Use Blender 5.2+ for the Compositor.
+1. **Compositor on Blender 4.2–5.1 in the 1.3.6 artifact.** The native crash is in
+   `node_area_refresh` after `SpaceNodeEditor.pin = True` on a compositor tree.
+   Measured on 4.2.23 and 4.5.9: `pin = False` exports correctly and the minimal
+   `screenshot_area` path works; 5.1.2 accepts `pin = True`. The released 1.3.6 artifact
+   conservatively blocks every Compositor export below 5.2. The post-1.3.6 source leaves
+   the compositor tree unpinned on 4.2/4.5, removes the guard, and passes 30/30 on all
+   five versions.
 2. **macOS/Retina and Linux/X11** were not tested.
 3. View restoration is nearest-pixel (`View2D.cur` is not exposed); UI/tree/selection
    restoration is exact.
