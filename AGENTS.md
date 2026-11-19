@@ -15,13 +15,13 @@ as one high-resolution PNG. It captures the
 [NumPy](https://numpy.org/doc/stable/), and saves through
 [`imbuf`](https://docs.blender.org/api/current/imbuf.html). No re-rendering.
 
-**Status:** 1.3.6. M0–M8 are complete (Shader/Geometry Nodes/Compositor/Texture),
-the legacy 4.2–5.1 path is validated for Shader/GN/Texture on Blender 4.2.23, 4.5.9
-and 5.1.2, and hardening (limits, fault injection, read-only/full-disk output, scaling)
-is tested on 4.2–5.3. The 1.3.6 artifact guards the Compositor on 4.2–5.1; the current
-source leaves the compositor tree unpinned on 4.2/4.5, removes the guard and passes the
-full matrix (release pending). Packaging and docs are complete for Windows; Linux, macOS
-and a second monitor are untested.
+**Status:** 1.4.0. M0–M8 are complete (Shader/Geometry Nodes/Compositor/Texture),
+the legacy 4.2–5.1 path is validated on Blender 4.2.23, 4.5.9 and 5.1.2, and hardening
+(limits, fault injection, read-only/full-disk output, scaling) is tested on 4.2–5.3.
+The Compositor works on 4.2–5.3: the compositor tree stays unpinned on 4.2/4.5, where
+pinning crashes the next area refresh, and selected-only compositor export needs 5.1+.
+The 1.4.0 artifact ships that behavior and passes 32/32 per version. Packaging and docs
+are complete for Windows; Linux, macOS and a second monitor are untested.
 
 **Agreed identifiers** (do not rename without approval):
 
@@ -72,11 +72,10 @@ and as an extension. Do not commit generated artifacts.
 ## 4. Environment
 
 - **Blender 4.2+ target**, primary development on **5.3.0 / Windows**; Blender 4.2.23,
-  4.5.9, 5.1.2, 5.2.4 and 5.3.0 are validated for the Shader/GN/Texture paths. The
-  Compositor works in source on 4.2–5.3; leave the compositor tree unpinned on 4.2/4.5
-  because pinning it crashes the next area refresh. The 1.3.6 artifact still guards
-  Compositor there; Linux/macOS QA is pending. Test 4.2 LTS, 4.5 LTS, 5.1, 5.2, 5.3 on
-  Windows/macOS/Linux.
+  4.5.9, 5.1.2, 5.2.4 and 5.3.0 are validated for Shader, Geometry Nodes, Compositor and
+  Texture. Leave the compositor tree unpinned on 4.2/4.5 because pinning it crashes the
+  next area refresh; selected-only compositor export needs 5.1+. Linux/macOS QA is
+  pending. Test 4.2 LTS, 4.5 LTS, 5.1, 5.2, 5.3 on Windows/macOS/Linux.
 - **[Python 3.11](https://www.python.org/)** is bundled with 4.2+; NumPy is available
   inside Blender. No third-party dependencies (no [Pillow](https://python-pillow.org/),
   no wheels).

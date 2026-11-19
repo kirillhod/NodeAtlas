@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.4.0
 
 - Enable Compositor export on Blender 4.2–5.1. Pinning a compositor tree on 4.2/4.5
   crashes the next area refresh; NodeAtlas now leaves it unpinned there and removes the

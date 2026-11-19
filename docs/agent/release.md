@@ -55,5 +55,6 @@ The version lives in three places and all must match in the tagged commit:
 - `dist/` is ignored; never commit the zip or a hash file.
 - Release notes stay simple: changes, UI, validated platforms, known limitations. No
   Install section, no asset name/hash, no marketing.
-- Be honest in the notes: GUI-only capture, Compositor 5.2+, Linux/macOS untested,
-  temporary DPI boost, nearest-pixel view restore.
+- Be honest in the notes: GUI-only capture, Compositor on all validated versions
+  (selected-only 5.1+), Linux/macOS untested, temporary DPI boost, nearest-pixel view
+  restore.

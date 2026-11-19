@@ -26,8 +26,8 @@ push, create a public release, upload, or submit for review.
 
 - Describe only the shipped version: any node tree, real background padding, selected
   nodes, output DPI, clipboard, and state restoration.
-- State the limits: GUI-only capture, Compositor on all validated versions (the 1.3.6
-  artifact still blocks 4.2–5.1), Linux and macOS untested,
+- State the limits: GUI-only capture, Compositor on all validated versions (selected-only
+  needs 5.1+), Linux and macOS untested,
   temporary DPI boost, nearest-pixel view restore, no transparent background, no batch
   export.
 - No planned features and no donation links. This is a project decision, stricter than

@@ -83,9 +83,7 @@ Settings live in the sidebar and in **Edit → Preferences → Add-ons → Node 
 
 Validated on Windows with Blender **4.2.23 LTS, 4.5.9 LTS, 5.1.2, 5.2.4 LTS and 5.3.0**.
 The Compositor works on all validated versions; exporting only selected nodes from a
-Compositor tree needs Blender 5.1 or newer. The 1.3.6 artifact still blocks the
-Compositor on Blender 4.2-5.1; the next patch removes that guard. Linux and macOS are
-untested.
+Compositor tree needs Blender 5.1 or newer. Linux and macOS are untested.
 
 ## Good to know
 

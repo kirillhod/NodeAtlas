@@ -1,24 +1,20 @@
 # NodeAtlas QA report
 
-**Version:** 1.3.6<br>
+**Version:** 1.4.0<br>
 **Date:** 19 November 2026<br>
 **Platforms:** Windows, GUI sessions only
 
-> 1.3.6 changes only the extension manifest and removes an unused import and an unused
-> preference. The full matrix below was re-run for 1.3.6 on Blender 4.2.23, 4.5.9, 5.1.2,
-> 5.2.4 and 5.3.0: 18/18 unit tests and 29/29 source GUI runs per version (27 tests plus
-> the 120 dpi and maximized-group variants). `test_artifact.py` passed separately: classic
-> install on all five versions; extension export on all five, using the official installer
-> on 4.2.23 and 5.3.0 and manual repository extraction on 4.5.9, 5.1.2 and 5.2.4 because
-> their local installer subprocess cannot start Python.
+> **1.4.0.** The Compositor works on Blender 4.2–5.3: the compositor tree is left
+> unpinned on 4.2/4.5, where pinning crashes the next area refresh, and selected-only
+> compositor export needs 5.1+ (4.2/4.5 refuse with a clear error). The node outline now
+> gets a `VIS` margin, and Padding is stored in density-independent units.
 >
-> **Post-1.3.6 source fix.** The compositor pin crash is solved by leaving the compositor
-> tree unpinned on Blender 4.2/4.5. The source suite now runs the Compositor on all five
-> versions and passes 32/32 on each. Selected-only compositor export needs 5.1+ and is
-> refused with a clear error on 4.2/4.5. The node outline now gets a visual margin
-> (`VIS`), so it no longer lands in the padding. Padding is stored in density-independent
-> units and converted with the effective DPI; `test_padding.py` verifies 20 units become
-> 40 px at 192 DPI. The released 1.3.6 artifact still blocks the Compositor on 4.2-5.1.
+> Full source matrix for 1.4.0: **32/32 GUI runs and 19/19 unit tests on each of
+> Blender 4.2.23, 4.5.9, 5.1.2, 5.2.4 and 5.3.0**. `test_artifact.py` results and the
+> artifact hash are in [Packaging](#packaging).
+>
+> The detailed tables below are the 1.3.6 baseline; 1.4.0 changed sizes only by the
+> `VIS` margin and the padding unit.
 
 ## Environment
 
@@ -143,16 +139,21 @@ without a clamp warning.
 
 - `blender --command extension validate node_atlas`: PASS.
 - `blender --command extension build --source-dir node_atlas --output-dir dist`:
-  produces `node_atlas-1.3.6.zip` with the manifest and package modules.
-- 1.3.6 manifest and artifact: `extension validate` PASS; classic install/export PASS on
-  all five versions; extension export PASS on all five. The official extension installer
-  was used on 4.2.23 and 5.3.0. On 4.5.9, 5.1.2 and 5.2.4 the local installer subprocess
-  cannot start Python (`No module named 'encodings'`), so the same zip was extracted into
-  a local repository and loaded as `bl_ext.nodeatlas_test.node_atlas`; the payload
-  exported successfully. The zip contains only the manifest and seven package modules,
-  with no `__pycache__`.
-- `node_atlas-1.3.6.zip` SHA256:
-  `481C071BEA155893E9CCDD6580F6976831B13751ED0A29E8738D1A6C68E6785E`.
+  produces `node_atlas-1.4.0.zip` with the manifest and the seven package modules.
+- **1.4.0 artifact:** `extension validate` PASS; extension install and GUI export PASS on
+  all five versions with the official installer (`install-file -r user_default -e`,
+  module `bl_ext.user_default.node_atlas`); classic add-on install and export PASS on all
+  five. Each run used an isolated `BLENDER_USER_CONFIG`/`BLENDER_USER_SCRIPTS`/
+  `BLENDER_USER_EXTENSIONS` profile. The zip contains only the manifest and seven package
+  modules, with no `__pycache__`.
+- `node_atlas-1.4.0.zip` SHA256:
+  `CFEBF1C4BB673A4421A3F19310D60B766482C27EA3D829EE0E7C40CB0B6CDEF8`.
+- 1.3.6 artifact (previous release): `extension validate` PASS; classic install/export
+  PASS on all five versions; extension export PASS on all five. The official extension
+  installer was used on 4.2.23 and 5.3.0. On 4.5.9, 5.1.2 and 5.2.4 the local installer
+  subprocess could not start Python (`No module named 'encodings'`), so the same zip was
+  extracted into a local repository and loaded as
+  `bl_ext.nodeatlas_test.node_atlas`.
 - Classic add-on clean-profile install: PASS on Blender 4.2.23, 4.5.9, 5.1.2, 5.2.4
   and 5.3.0 in isolated `BLENDER_USER_SCRIPTS/scripts/addons` profiles (0.6.1); the
   0.6.2, 0.7.0, 0.8.0 and 1.0.0 packages were re-validated on 5.3.0. The 1.1.0, 1.2.0,
@@ -166,7 +167,8 @@ without a clamp warning.
   `bl_ext.nodeatlas_test.node_atlas` on 4.2.23 and 5.3.0. On 4.5.9, 5.1.2 and 5.2.4 the
   local builds' `--command extension` Python runtime is incomplete (their bundled
   `python.exe` cannot find the stdlib), so the same 1.3.5 zip payload was validated
-  through the classic install path on those versions instead.
+  through the classic install path on those versions instead. The 1.4.0 zip installed
+  through the official installer on all five.
 - Linux and macOS are untested: no Linux distribution is installed under WSL and no Mac
   hardware is available. `system.ui_scale` cannot be changed from RNA, so OS-level
   scaling percentages were approximated with the effective view scale (1.0–2.0).
@@ -186,13 +188,12 @@ without a clamp warning.
 
 ## Known issues
 
-1. **Compositor on Blender 4.2–5.1 in the 1.3.6 artifact.** The native crash is in
+1. **Compositor on Blender 4.2–5.1 (fixed in 1.4.0).** The native crash is in
    `node_area_refresh` after `SpaceNodeEditor.pin = True` on a compositor tree.
    Measured on 4.2.23 and 4.5.9: `pin = False` exports correctly and the minimal
-   `screenshot_area` path works; 5.1.2 accepts `pin = True`. The released 1.3.6 artifact
-   conservatively blocks every Compositor export below 5.2. The post-1.3.6 source leaves
-   the compositor tree unpinned on 4.2/4.5, removes the guard, and passes 31/31 on all
-   five versions.
+   `screenshot_area` path works; 5.1.2 accepts `pin = True`. The 1.3.6 artifact blocked
+   every Compositor export below 5.2; 1.4.0 leaves the compositor tree unpinned on
+   4.2/4.5 and passes 32/32 on all five versions.
 2. **Selected-only Compositor export needs 5.1+.** A filtered copy cannot be shown
    without pin, pinning a compositor tree crashes 4.2/4.5 when the area is rebuilt, and
    `Scene.node_tree` is read-only there. NodeAtlas raises a clear error instead of
