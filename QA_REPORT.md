@@ -174,10 +174,11 @@ without a clamp warning.
 
 ## Known issues
 
-1. **Compositor on Blender 4.2–5.1.** Native Blender crashes with
-   `EXCEPTION_ACCESS_VIOLATION` during capture. NodeAtlas detects the version/tree type
-   and raises a clear error instead of risking a crash. Use Blender 5.2+ for the
-   Compositor.
+1. **Compositor on Blender 4.2–5.1.** The native crash is in `node_area_refresh`
+   after `SpaceNodeEditor.pin = True` on a compositor tree. Measured on 4.2.23 and
+   4.5.9: `pin = False` exports correctly and the minimal `screenshot_area` path works;
+   5.1.2 accepts `pin = True`. NodeAtlas conservatively blocks every Compositor export
+   below 5.2 until the pin handling is changed. Use Blender 5.2+ for the Compositor.
 2. **macOS/Retina and Linux/X11** were not tested.
 3. View restoration is nearest-pixel (`View2D.cur` is not exposed); UI/tree/selection
    restoration is exact.
