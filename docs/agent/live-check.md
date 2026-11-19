@@ -32,7 +32,7 @@ powershell -File tests/run_blender.ps1 -Blender $env:BLENDER `
   -Script tests/unit/test_core.py -Background
 ```
 
-The smoke tier runs the seven cross-cutting GUI tests on one version:
+The smoke tier runs the eight cross-cutting GUI tests on one version:
 
 ```powershell
 powershell -File tests/run_matrix.ps1 -Tier smoke -Blender "5.3.0=$env:BLENDER"
@@ -86,11 +86,16 @@ For a capture or stitch change also confirm:
 
 - size `ceil(content) + 2 * padding`;
 - `holes = 0`;
+- the outer padding is real background with no frame or scrollbar strip;
 - overlap mean absolute difference below 0.1;
 - node corners within 2 px of the model;
 - editor, tree, group path, selection and view restored after success, cancel, and an
   injected exception;
 - the undo sentinel is unchanged.
+
+`test_export.py` and `test_large.py` check the padding and opaque pixels from the
+final PNG through `tests/gui/png_content.py`; `test_ui_options.py` covers the
+`hide_ui`/`restore_ui` branches.
 
 Only view an image when a visual decision (padding, feather, theme, text) depends on it;
 an image costs thousands of tokens.

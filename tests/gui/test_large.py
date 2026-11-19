@@ -14,10 +14,16 @@ import bpy
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
+HERE = os.path.dirname(os.path.abspath(__file__))
+if HERE not in sys.path:
+    sys.path.insert(0, HERE)
+
+import png_content
 
 OUT = tempfile.mkdtemp(prefix="nodeatlas_large_")
 FIXTURE = os.path.join(ROOT, "tests", "fixtures", "scene_both.blend")
 OUTPUT = os.path.join(OUT, "large.png")
+PADDING = 20
 state = {"ticks": 0, "found": None}
 
 
@@ -84,7 +90,7 @@ def setup():
     prefs.default_dir = OUT + os.sep
     prefs.filename_pattern = "large.png"
     prefs.output_dpi = 48  # D=0.5 keeps the 120-node output manageable
-    prefs.padding = 20
+    prefs.padding = PADDING
     prefs.max_mp = 100.0
     prefs.scope = "CURRENT"
     prefs.hide_ui = True
@@ -110,6 +116,7 @@ def tick():
                 after = snapshot()
                 if after != state["before"]:
                     fail(f"state mismatch: {state['before']} != {after}")
+                png_content.check_capture(OUTPUT, PADDING)
                 print(json.dumps({
                     "result": "PASS",
                     "size": size,

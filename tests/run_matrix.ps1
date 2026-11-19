@@ -8,8 +8,9 @@ param(
 
 # Tiered test matrix for Windows.
 #
-#   smoke  - the seven cheap cross-cutting tests (export, trees, texture,
-#            selected, repeat, estimate, group). Use this after every change.
+#   smoke  - the eight cheap cross-cutting tests (export, trees, texture,
+#            selected, repeat, estimate, group, UI options). Use this after
+#            every change.
 #   full   - every source GUI test plus the 120 dpi and maximized variants.
 #            Use this for a release and record the result in QA_REPORT.md.
 #
@@ -53,7 +54,8 @@ $smokeNames = @(
     'test_selected.py',
     'test_repeat.py',
     'test_estimate.py',
-    'test_group.py'
+    'test_group.py',
+    'test_ui_options.py'
 )
 
 $fullNames = @(
@@ -80,6 +82,7 @@ $fullNames = @(
     'test_estimate.py',
     'test_estimate_selected.py',
     'test_group.py',
+    'test_ui_options.py',
     'test_boost.py',
     'test_naming.py',
     'test_clipboard.py',

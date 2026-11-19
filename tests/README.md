@@ -53,6 +53,7 @@ blender --factory-startup --python tests/gui/test_arealost.py
 blender --factory-startup --python tests/gui/test_estimate.py
 blender --factory-startup --python tests/gui/test_estimate_selected.py
 blender --factory-startup --python tests/gui/test_group.py
+blender --factory-startup --python tests/gui/test_ui_options.py
 blender --factory-startup --python tests/gui/test_boost.py
 blender --factory-startup --python tests/gui/test_naming.py
 blender --factory-startup --python tests/gui/test_clipboard.py
@@ -67,9 +68,11 @@ group-editing variant of `test_group.py`.
 
 Tree coverage: Shader Node Tree is the default in most tests; `test_trees.py` covers
 Geometry Nodes and the Compositor (the Compositor case is skipped below Blender 5.2 by
-the add-on guard); `test_texture.py` covers the Texture Node Editor. The commands above
-are for debugging; they do not run the PNG content check, so use the wrapper or the
-matrix runner when the result is evidence.
+the add-on guard); `test_texture.py` covers the Texture Node Editor. `test_ui_options.py`
+covers `hide_ui` and `restore_ui`; `test_export.py` and `test_large.py` also run
+`png_content.check_capture` for opaque pixels, real padding and non-empty content. The
+commands above are for debugging; they do not run the runner's PNG content check, so use
+the wrapper or the matrix runner when the result is evidence.
 
 ## Matrix runner
 
@@ -77,19 +80,19 @@ matrix runner when the result is evidence.
 Pass each binary as `version=path`; separate entries with a semicolon:
 
 ```powershell
-# Fast loop: 7 cross-cutting tests on the primary version.
+# Fast loop: 8 cross-cutting tests on the primary version.
 powershell -File tests/run_matrix.ps1 -Tier smoke `
   -Blender '5.3.0=C:\Blender\5.3\blender.exe'
 
-# Release matrix: 27 tests plus the 120 dpi and maximized variants on five versions.
+# Release matrix: 28 tests plus the 120 dpi and maximized variants on five versions.
 powershell -File tests/run_matrix.ps1 -Tier full `
   -Blender '4.2.23=C:\Blender\4.2\blender.exe;4.5.9=C:\Blender\4.5\blender.exe;5.1.2=C:\Blender\5.1\blender.exe;5.2.4=C:\Blender\5.2\blender.exe;5.3.0=C:\Blender\5.3\blender.exe'
 ```
 
 `-Tier smoke` runs `test_export.py`, `test_trees.py`, `test_texture.py`,
-`test_selected.py`, `test_repeat.py`, `test_estimate.py` and `test_group.py`.
-`-Tier full` runs every source GUI test plus the two variants. The unit suite is not
-included; run it with `run_blender.ps1 -Background` or directly.
+`test_selected.py`, `test_repeat.py`, `test_estimate.py`, `test_group.py` and
+`test_ui_options.py`. `-Tier full` runs every source GUI test plus the two variants. The
+unit suite is not included; run it with `run_blender.ps1 -Background` or directly.
 
 `-Parallel` starts one child matrix per version. This cuts wall-clock time but lets GUI
 windows overlap; treat the first parallel run as an experiment. `-IncludeArtifact` adds

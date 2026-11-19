@@ -22,9 +22,15 @@ import bpy
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
+HERE = os.path.dirname(os.path.abspath(__file__))
+if HERE not in sys.path:
+    sys.path.insert(0, HERE)
+
+import png_content
 
 OUT = tempfile.mkdtemp(prefix="nodeatlas_gui_")
 FIXTURE = os.path.join(ROOT, "tests", "fixtures", "scene_both.blend")
+PADDING = 20
 state = {"ticks": 0, "started": False, "error": None}
 
 
@@ -97,7 +103,7 @@ def setup():
     prefs.default_dir = OUT + os.sep
     prefs.filename_pattern = "test_export.png"
     prefs.output_dpi = 96
-    prefs.padding = 20
+    prefs.padding = PADDING
     prefs.max_mp = 100.0
     prefs.scope = "CURRENT"
     prefs.hide_ui = True
@@ -160,6 +166,7 @@ def check_undo():
 
 def finish():
     width, height = check_png()
+    png_content.check_capture(state["output"], PADDING)
     check_state(state["before"], None)
     check_undo()
     print(json.dumps({
