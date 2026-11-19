@@ -14,7 +14,10 @@
 >
 > **Post-1.3.6 source fix.** The compositor pin crash is solved by leaving the compositor
 > tree unpinned on Blender 4.2/4.5. The source suite now runs the Compositor on all five
-> versions and passes 30/30 on each. The released 1.3.6 artifact still blocks it.
+> versions and passes 31/31 on each. Selected-only compositor export needs 5.1+ and is
+> refused with a clear error on 4.2/4.5. The node outline now gets a visual margin
+> (`VIS`), so it no longer lands in the padding. The released 1.3.6 artifact still blocks
+> the Compositor on 4.2-5.1.
 
 ## Environment
 
@@ -107,8 +110,10 @@ Re-run for 1.3.6: **29/29 source GUI runs passed on each of the five versions**,
 `test_1000.py` at 120 dpi and `test_group.py` with `NODEATLAS_TEST_MAXIMIZE=1`.
 The 1.3.6 artifact runs Geometry Nodes and then skips the Compositor on 4.2.23, 4.5.9 and
 5.1.2 because the add-on guards it against a native crash. The post-1.3.6 source fix
-removes that guard: `test_trees.py` now exports the Compositor on all five and the source
-matrix is **30/30 per version**. `test_artifact.py` passed via classic install on all
+removes that guard: `test_trees.py` now exports the Compositor on all five,
+`test_selected_comp.py` covers selected-only compositor export (5.1+ exports, 4.2/4.5
+refuse with a clear error), and the source matrix is **31/31 per version**.
+`test_artifact.py` passed via classic install on all
 five and via extension export on all five. The official installer was used on 4.2.23 and
 5.3.0; on 4.5.9, 5.1.2 and 5.2.4 the local installer subprocess cannot start Python, so
 the same payload was extracted into a local repository and loaded as
@@ -184,17 +189,21 @@ without a clamp warning.
    Measured on 4.2.23 and 4.5.9: `pin = False` exports correctly and the minimal
    `screenshot_area` path works; 5.1.2 accepts `pin = True`. The released 1.3.6 artifact
    conservatively blocks every Compositor export below 5.2. The post-1.3.6 source leaves
-   the compositor tree unpinned on 4.2/4.5, removes the guard, and passes 30/30 on all
+   the compositor tree unpinned on 4.2/4.5, removes the guard, and passes 31/31 on all
    five versions.
-2. **macOS/Retina and Linux/X11** were not tested.
-3. View restoration is nearest-pixel (`View2D.cur` is not exposed); UI/tree/selection
+2. **Selected-only Compositor export needs 5.1+.** A filtered copy cannot be shown
+   without pin, pinning a compositor tree crashes 4.2/4.5 when the area is rebuilt, and
+   `Scene.node_tree` is read-only there. NodeAtlas raises a clear error instead of
+   crashing or exporting the whole tree.
+3. **macOS/Retina and Linux/X11** were not tested.
+4. View restoration is nearest-pixel (`View2D.cur` is not exposed); UI/tree/selection
    restoration is exact.
-4. Long links may fade; Blender exposes no public setting to disable link LOD.
-5. Per-run setting overrides and transparent background are not in 0.7.0.
-6. If Blender hard-crashes mid-export, the in-memory `view.ui_scale` cannot be restored
+5. Long links may fade; Blender exposes no public setting to disable link LOD.
+6. Per-run setting overrides and transparent background are not in 0.7.0.
+7. If Blender hard-crashes mid-export, the in-memory `view.ui_scale` cannot be restored
    by the add-on. Blender saves preferences only on a normal quit; NodeAtlas never calls
    `save_userpref`.
-7. **Copy to Clipboard** relies on Blender's image clipboard operator. Very large images
+8. **Copy to Clipboard** relies on Blender's image clipboard operator. Very large images
    may be refused by the OS or take a long time to paste; normal file exports are
    unaffected.
 

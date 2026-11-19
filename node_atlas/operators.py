@@ -267,6 +267,18 @@ class ExportJob:
         self.tree_type = space.tree_type
         self.tree = tree
 
+        # Selected-only needs a pinned temporary tree; pinning a compositor
+        # tree crashes Blender 4.2/4.5 and the scene tree is read-only there.
+        if (
+            self.settings.scope == "SELECTED"
+            and self.tree_type == "CompositorNodeTree"
+            and bpy.app.version < (5, 1, 0)
+        ):
+            raise RuntimeError(
+                "Selected-only compositor export requires Blender 5.1 or newer; "
+                "export the whole compositor tree instead"
+            )
+
         if self.settings.scope == "SELECTED":
             self.tree, count = bounds.build_selected_copy(tree)
             self.snapshot.temp_tree = self.tree
@@ -335,7 +347,8 @@ class ExportJob:
             self.warnings.append(f"Zoom error {abs(achieved / target - 1.0) * 100:.2f}%")
 
         metrics = bounds.measure_view(region.view2d, effective_scale)
-        rects = bounds.collect_rects(self.tree.nodes, metrics)
+        vis = bounds.visual_margin(view_scale)
+        rects = bounds.collect_rects(self.tree.nodes, metrics, vis)
         content = bounds.union_rects(rects)
         layout = bounds.compute_layout(
             content, region.width, height, self.settings.padding, view_scale
@@ -347,7 +360,7 @@ class ExportJob:
             )
 
         capture.anchor_first_tile(
-            window, area, region, space, self.tree, layout, effective_scale
+            window, area, region, space, self.tree, layout, effective_scale, vis
         )
         self.layout = layout
         self.region_width = region.width

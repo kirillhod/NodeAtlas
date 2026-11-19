@@ -95,26 +95,36 @@ def absolute_location(node):
     return x, y
 
 
-def node_rect(node, metrics: ViewMetrics) -> Rect:
+def visual_margin(view_ui_scale: float) -> float:
+    """Pixels drawn outside ``Node.dimensions`` (outline, glow).
+
+    Report 5.6: ``VIS = ceil(2.5 * view.ui_scale)``. Measured on the
+    selected-only compositor path, where the node outline otherwise lands in
+    the padding band.
+    """
+    return float(math.ceil(2.5 * max(float(view_ui_scale), 0.0)))
+
+
+def node_rect(node, metrics: ViewMetrics, vis: float = 0.0) -> Rect:
     width = node.dimensions.x
     height = node.dimensions.y
     absolute_x, absolute_y = absolute_location(node)
     left = metrics.ox + metrics.s * absolute_x
     top = metrics.oy + metrics.s * absolute_y
     return Rect(
-        left=left,
-        top=top,
-        right=left + width * metrics.k,
-        bottom=top - height * metrics.k,
+        left=left - vis,
+        top=top + vis,
+        right=left + width * metrics.k + vis,
+        bottom=top - height * metrics.k - vis,
     )
 
 
-def collect_rects(nodes, metrics: ViewMetrics) -> list[Rect]:
+def collect_rects(nodes, metrics: ViewMetrics, vis: float = 0.0) -> list[Rect]:
     rects = []
     for node in nodes:
         if node.dimensions.x <= 0 or node.dimensions.y <= 0:
             continue
-        rects.append(node_rect(node, metrics))
+        rects.append(node_rect(node, metrics, vis))
     return rects
 
 

@@ -137,9 +137,10 @@ def take_snapshot(window, area, space, region, tree) -> EditorSnapshot:
 def effective_pin(tree_type: str, pin: bool) -> bool:
     """Avoid the Blender 4.2-4.5 compositor pin crash.
 
-    Pinning a CompositorNodeTree on 4.2/4.5 crashes the next
-    ``node_area_refresh``; 5.1 fixed the native bug. The compositor tree is
-    scene-owned, so pin=False still displays it.
+    Pinning any CompositorNodeTree on 4.2/4.5 crashes the next
+    ``node_area_refresh`` when the area is rebuilt (hide UI, maximize);
+    5.1 fixed the native bug. The scene tree is still displayed without pin
+    because it is scene-owned.
     """
     if tree_type == "CompositorNodeTree" and bpy.app.version < (5, 1, 0):
         return False
@@ -306,11 +307,11 @@ def leave_maximize(window, snapshot: EditorSnapshot):
 
 def anchor_first_tile(
     window, area, region, space, tree, layout: Layout,
-    ui_scale: float,
+    ui_scale: float, vis: float = 0.0,
 ) -> ViewMetrics:
     for _ in range(12):
         metrics = measure_view(region.view2d, ui_scale)
-        rects = [node_rect(node, metrics) for node in tree.nodes
+        rects = [node_rect(node, metrics, vis) for node in tree.nodes
                  if node.dimensions.x > 0 and node.dimensions.y > 0]
         if not rects:
             raise RuntimeError("No drawable nodes after view normalization")

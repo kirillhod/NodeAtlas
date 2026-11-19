@@ -44,7 +44,7 @@ def _estimate(context, prefs):
         view = context.preferences.view.ui_scale
         ui_prop = context.preferences.view.bl_rna.properties["ui_scale"]
         max_view = float(getattr(ui_prop, "hard_max", 6.0))
-        effective, _planned_view, _max_effective = bounds.planned_scale(
+        effective, planned_view, _max_effective = bounds.planned_scale(
             prefs.output_dpi, system, view, max_view
         )
         target, _used_dpi, _dpi_max = bounds.target_upp(prefs.output_dpi, effective)
@@ -55,7 +55,7 @@ def _estimate(context, prefs):
         if prefs.scope == "SELECTED":
             keep = bounds.selected_node_names(tree)
             nodes = [node for node in tree.nodes if node.name in keep]
-        rects = bounds.collect_rects(nodes, metrics)
+        rects = bounds.collect_rects(nodes, metrics, bounds.visual_margin(planned_view))
         content = bounds.union_rects(rects)
         return bounds.compute_layout(
             content, region.width, height, prefs.padding,

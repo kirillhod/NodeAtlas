@@ -5,6 +5,10 @@
 - Enable Compositor export on Blender 4.2–5.1. Pinning a compositor tree on 4.2/4.5
   crashes the next area refresh; NodeAtlas now leaves it unpinned there and removes the
   version guard. Verified on Blender 4.2.23, 4.5.9, 5.1.2, 5.2.4 and 5.3.0.
+- Selected-only compositor export requires Blender 5.1 or newer; 4.2/4.5 show a clear
+  error instead of a crash or capturing the whole tree.
+- Reserve `VIS = ceil(2.5 * view.ui_scale)` around the node bounds so the node outline
+  no longer lands in the padding band; output grows by a few pixels.
 
 ## 1.3.6
 

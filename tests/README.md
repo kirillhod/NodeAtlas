@@ -33,6 +33,7 @@ Then run the GUI tests:
 blender --factory-startup --python tests/gui/test_export.py
 blender --factory-startup --python tests/gui/test_legacy.py
 blender --factory-startup --python tests/gui/test_selected.py
+blender --factory-startup --python tests/gui/test_selected_comp.py
 blender --factory-startup --python tests/gui/test_trees.py
 blender --factory-startup --python tests/gui/test_texture.py
 blender --factory-startup --python tests/gui/test_repeat.py
@@ -68,8 +69,10 @@ group-editing variant of `test_group.py`.
 
 Tree coverage: Shader Node Tree is the default in most tests; `test_trees.py` covers
 Geometry Nodes and the Compositor on every version. On Blender 4.2/4.5 the test leaves
-the compositor tree unpinned because pinning it crashes the next area refresh;
-`test_texture.py` covers the Texture Node Editor. `test_ui_options.py` covers
+the compositor tree unpinned because pinning it crashes the next area refresh.
+`test_selected_comp.py` exports selected compositor nodes on 5.1+ and asserts the clear
+refusal on 4.2/4.5 (a filtered copy cannot be pinned there and `Scene.node_tree` is
+read-only). `test_texture.py` covers the Texture Node Editor. `test_ui_options.py` covers
 `hide_ui` and `restore_ui`; `test_export.py` and `test_large.py` also run
 `png_content.check_capture` for opaque pixels, real padding and non-empty content. The
 commands above are for debugging; they do not run the runner's PNG content check, so use
@@ -85,7 +88,7 @@ Pass each binary as `version=path`; separate entries with a semicolon:
 powershell -File tests/run_matrix.ps1 -Tier smoke `
   -Blender '5.3.0=C:\Blender\5.3\blender.exe'
 
-# Release matrix: 28 tests plus the 120 dpi and maximized variants on five versions.
+# Release matrix: 29 tests plus the 120 dpi and maximized variants on five versions.
 powershell -File tests/run_matrix.ps1 -Tier full `
   -Blender '4.2.23=C:\Blender\4.2\blender.exe;4.5.9=C:\Blender\4.5\blender.exe;5.1.2=C:\Blender\5.1\blender.exe;5.2.4=C:\Blender\5.2\blender.exe;5.3.0=C:\Blender\5.3\blender.exe'
 ```
