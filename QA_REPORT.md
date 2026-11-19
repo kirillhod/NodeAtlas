@@ -6,9 +6,9 @@
 
 > 1.3.6 changes only the extension manifest and removes an unused import and an unused
 > preference. The full matrix below was re-run for 1.3.6 on Blender 4.2.23, 4.5.9, 5.1.2,
-> 5.2.4 and 5.3.0: 18/18 unit tests and 29/29 GUI runs per version. Extension
-> install/export passed on 4.2.23 and 5.3.0; the other three versions keep the local
-> `--command extension` limitation and were validated through the classic path.
+> 5.2.4 and 5.3.0: 18/18 unit tests and 29/29 source GUI runs per version (27 tests plus
+> the 120 dpi and maximized-group variants). `test_artifact.py` passed separately: classic
+> install on all five versions, extension install on 4.2.23 and 5.3.0.
 
 ## Environment
 
@@ -97,8 +97,10 @@ window, exports a fixture, validates the PNG and editor restoration, then exits.
 | `test_clipboard.py` | PASS, OS clipboard checked | PASS | PASS | PASS | PASS |
 | `test_path.py` | PASS, empty dir refused | PASS | PASS | PASS | PASS |
 
-Re-run for 1.3.6: **29/29 GUI runs passed on each of the five versions**, including
+Re-run for 1.3.6: **29/29 source GUI runs passed on each of the five versions**, including
 `test_1000.py` at 120 dpi and `test_group.py` with `NODEATLAS_TEST_MAXIMIZE=1`.
+`test_artifact.py` passed via classic install on all five and via extension install on
+4.2.23 and 5.3.0; the other three keep the local `--command extension` limitation.
 
 All GUI tests validate that the editor state is restored and that failed/cancelled
 exports leave no PNG. The 1000-node test forces the memmap path and ~75.8 MP (118 MP at
