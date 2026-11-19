@@ -138,10 +138,12 @@ Verified on Blender 5.3.0. Violating them yields plausible-looking but wrong ima
    `OVERLAP_eff = max(120, 2 * PAD_eff + 32)`. Overlap mismatch means a geometry bug —
    investigate, do not feather over it.
 
-6. **Padding is captured, never painted.** `M = padding + PAD_eff`; the band is real
+6. **Padding is captured, never painted.** The setting is stored in density-independent
+   units (`padding_px = round(units * used_dpi / 96)`, 1 unit = 1 px at 96 DPI), so the
+   band keeps its proportion to the graph; `M = padding_px + PAD_eff`, the band is real
    theme background, the outer `PAD_eff` is cropped. Final size is
-   `ceil(content) + 2 * padding`. Add `VIS ≈ ceil(2.5 * view.ui_scale)` for the
-   active-node glow, which lies outside `Node.dimensions`.
+   `ceil(content) + 2 * padding_px`. Add `VIS ≈ ceil(2.5 * view.ui_scale)` for the
+   active-node glow and node outline, which lie outside `Node.dimensions`.
 
 7. **Switch tree and maximize.** Switch with `pin = False` → `tree_type` →
    `show_backdrop` → `pin = True` → `node_tree`, then verify `edit_tree`. Call

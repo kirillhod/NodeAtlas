@@ -47,7 +47,7 @@ def _estimate(context, prefs):
         effective, planned_view, _max_effective = bounds.planned_scale(
             prefs.output_dpi, system, view, max_view
         )
-        target, _used_dpi, _dpi_max = bounds.target_upp(prefs.output_dpi, effective)
+        target, used_dpi, _dpi_max = bounds.target_upp(prefs.output_dpi, effective)
         metrics = bounds.ViewMetrics(
             upp=target, k=1.0 / target, s=effective / target, ox=0.0, oy=0.0
         )
@@ -58,7 +58,8 @@ def _estimate(context, prefs):
         rects = bounds.collect_rects(nodes, metrics, bounds.visual_margin(planned_view))
         content = bounds.union_rects(rects)
         return bounds.compute_layout(
-            content, region.width, height, prefs.padding,
+            content, region.width, height,
+            bounds.padding_px(prefs.padding, used_dpi),
             context.preferences.view.ui_scale,
         )
     except (ValueError, RuntimeError):

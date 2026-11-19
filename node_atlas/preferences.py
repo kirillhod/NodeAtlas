@@ -64,8 +64,11 @@ class NodeAtlasPreferences(bpy.types.AddonPreferences):
         max=2000,
     )
     padding: bpy.props.IntProperty(
-        name="Padding (px)",
-        description="Margin around the graph in final-image pixels; real background is captured",
+        name="Padding (units)",
+        description=(
+            "Margin around the graph; 1 unit is 1 px at 96 DPI and scales with "
+            "Output DPI, so the margin looks the same at any density"
+        ),
         default=20,
         min=0,
         max=4000,

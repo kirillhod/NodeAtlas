@@ -63,7 +63,9 @@ Settings live in the sidebar and in **Edit → Preferences → Add-ons → Node 
 - **Output DPI — 128.** 96 is 1:1 with node pixels; 128 gives a 33% larger image.
   The result does not depend on your monitor or current zoom. Values above the current
   limit temporarily raise Blender's Resolution Scale and restore it afterwards.
-- **Padding — 20 px.** Background margin around the graph.
+- **Padding - 20 units.** Background margin around the graph. The margin scales with
+  Output DPI (20 units is 20 px at 96 DPI, 27 px at the default 128 DPI), so it keeps the
+  same proportion at any density.
 - **Max Megapixels — 200.** A safety limit, not a target: the export stops before
   capturing if the image would exceed it. 200 MP is about 16000 × 12500 px.
 - **Scope — Current Tree.** Export the whole tree or only selected nodes.

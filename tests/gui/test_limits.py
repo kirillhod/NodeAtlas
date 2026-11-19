@@ -95,11 +95,15 @@ def tick():
                     size = tuple(image.size)
                 finally:
                     bpy.data.images.remove(image)
-                if size[0] <= 2 * PADDING or size[1] <= 2 * PADDING:
-                    fail(f"output is too small for padding {PADDING}: {size}")
                 result = operators.last_result
                 if not result or not result["ok"]:
                     fail(f"export did not succeed: {result}")
+                padding_px = round(PADDING * result["dpi"] / 96)
+                if size[0] <= 2 * padding_px or size[1] <= 2 * padding_px:
+                    fail(
+                        f"output is too small for padding {PADDING} units "
+                        f"({padding_px} px at {result['dpi']:.1f} dpi): {size}"
+                    )
                 if not any("DPI clamped" in item for item in result["warnings"]):
                     fail(f"D_min clamp was not reported: {result['warnings']}")
                 after = snapshot()
@@ -108,7 +112,8 @@ def tick():
                 print(json.dumps({
                     "result": "PASS",
                     "size": size,
-                    "padding": PADDING,
+                    "padding_units": PADDING,
+                    "padding_px": padding_px,
                     "warnings": result["warnings"],
                 }, indent=2))
                 sys.stdout.flush()

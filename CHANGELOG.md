@@ -9,6 +9,9 @@
   error instead of a crash or capturing the whole tree.
 - Reserve `VIS = ceil(2.5 * view.ui_scale)` around the node bounds so the node outline
   no longer lands in the padding band; output grows by a few pixels.
+- Express Padding in density-independent units (1 unit = 1 px at 96 DPI) and convert it
+  with the effective DPI, so the margin keeps the same proportion at any Output DPI. The
+  default 20 is now 27 px at the default 128 DPI.
 
 ## 1.3.6
 

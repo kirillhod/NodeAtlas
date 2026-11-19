@@ -198,6 +198,7 @@ class ExportJob:
         self.output_size = (0, 0)
         self.saved_path = None
         self.used_dpi = float(settings.output_dpi)
+        self.padding_px = int(settings.padding)
         self.error = None
         self.warnings = []
         self.cancelled = False
@@ -329,6 +330,7 @@ class ExportJob:
             self.settings.output_dpi, effective_scale
         )
         self.used_dpi = used_dpi
+        self.padding_px = bounds.padding_px(self.settings.padding, used_dpi)
         if abs(used_dpi - self.settings.output_dpi) > 0.5:
             self.warnings.append(
                 f"DPI clamped from {self.settings.output_dpi:g} to {used_dpi:.0f} "
@@ -351,7 +353,7 @@ class ExportJob:
         rects = bounds.collect_rects(self.tree.nodes, metrics, vis)
         content = bounds.union_rects(rects)
         layout = bounds.compute_layout(
-            content, region.width, height, self.settings.padding, view_scale
+            content, region.width, height, self.padding_px, view_scale
         )
         if layout.megapixels > self.settings.max_mp:
             raise RuntimeError(
@@ -393,7 +395,7 @@ class ExportJob:
         self._status("NodeAtlas: stitching…")
         self.final, _holes = stitch.stitch_tiles(
             self.tiles, self.layout, self.region_width, self.region_height,
-            self.settings.padding,
+            self.padding_px,
         )
         self.output_size = (self.final.shape[1], self.final.shape[0])
         self.tiles = {}
@@ -559,6 +561,7 @@ def _job_tick():
         "error": job.error,
         "warnings": list(job.warnings),
         "size": tuple(job.output_size),
+        "dpi": job.used_dpi,
         "elapsed": job.elapsed,
         "message": job.message,
     }

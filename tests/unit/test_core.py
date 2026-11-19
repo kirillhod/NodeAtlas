@@ -76,6 +76,14 @@ def test_rect_and_layout():
     check(layout.canvas_w == 1480 and layout.canvas_h == 600, "canvas")
 
 
+def test_padding_unit():
+    check(bounds.padding_px(20, 96) == 20, "padding at 96 dpi")
+    check(bounds.padding_px(20, 192) == 40, "padding at 192 dpi")
+    check(bounds.padding_px(20, 48) == 10, "padding at 48 dpi")
+    check(bounds.padding_px(20, 128) == 27, "padding at 128 dpi")
+    check(bounds.padding_px(0, 192) == 0, "zero padding")
+
+
 def test_density():
     upp, used, dpi_max = bounds.target_upp(96, 1.25)
     check(abs(upp - 1.25) < 1e-9, "D=1 upp")
@@ -515,6 +523,7 @@ def main():
     tests = [
         test_view_metrics,
         test_rect_and_layout,
+        test_padding_unit,
         test_density,
         test_stitch_single_tile,
         test_png_writer,

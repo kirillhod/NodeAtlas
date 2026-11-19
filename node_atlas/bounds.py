@@ -95,6 +95,17 @@ def absolute_location(node):
     return x, y
 
 
+def padding_px(units: float, used_dpi: float) -> int:
+    """Convert the padding preference to final-image pixels.
+
+    The stored value is density-independent (1 unit = 1 px at 96 DPI), so the
+    band keeps the same proportion to the graph at any Output DPI: content
+    scales with ``D = used_dpi / 96``, therefore so must the margin (report
+    11.21). Using ``k`` here would shrink the margin on high-UI-scale screens.
+    """
+    return max(0, int(round(float(units) * max(float(used_dpi), 0.0) / 96.0)))
+
+
 def visual_margin(view_ui_scale: float) -> float:
     """Pixels drawn outside ``Node.dimensions`` (outline, glow).
 

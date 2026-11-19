@@ -84,7 +84,8 @@ $image.Dispose()
 
 For a capture or stitch change also confirm:
 
-- size `ceil(content) + 2 * padding`;
+- size `ceil(content) + 2 * padding_px`, where
+  `padding_px = round(padding_units * used_dpi / 96)`;
 - `holes = 0`;
 - the outer padding is real background with no frame or scrollbar strip;
 - overlap mean absolute difference below 0.1;

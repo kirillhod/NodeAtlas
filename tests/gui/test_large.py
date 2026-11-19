@@ -24,6 +24,7 @@ OUT = tempfile.mkdtemp(prefix="nodeatlas_large_")
 FIXTURE = os.path.join(ROOT, "tests", "fixtures", "scene_both.blend")
 OUTPUT = os.path.join(OUT, "large.png")
 PADDING = 20
+PADDING_PX = round(PADDING * 48 / 96)  # the test exports at 48 dpi (D=0.5)
 state = {"ticks": 0, "found": None}
 
 
@@ -116,7 +117,7 @@ def tick():
                 after = snapshot()
                 if after != state["before"]:
                     fail(f"state mismatch: {state['before']} != {after}")
-                png_content.check_capture(OUTPUT, PADDING)
+                png_content.check_capture(OUTPUT, PADDING_PX)
                 print(json.dumps({
                     "result": "PASS",
                     "size": size,

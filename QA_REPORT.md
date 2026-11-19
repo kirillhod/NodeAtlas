@@ -14,10 +14,11 @@
 >
 > **Post-1.3.6 source fix.** The compositor pin crash is solved by leaving the compositor
 > tree unpinned on Blender 4.2/4.5. The source suite now runs the Compositor on all five
-> versions and passes 31/31 on each. Selected-only compositor export needs 5.1+ and is
+> versions and passes 32/32 on each. Selected-only compositor export needs 5.1+ and is
 > refused with a clear error on 4.2/4.5. The node outline now gets a visual margin
-> (`VIS`), so it no longer lands in the padding. The released 1.3.6 artifact still blocks
-> the Compositor on 4.2-5.1.
+> (`VIS`), so it no longer lands in the padding. Padding is stored in density-independent
+> units and converted with the effective DPI; `test_padding.py` verifies 20 units become
+> 40 px at 192 DPI. The released 1.3.6 artifact still blocks the Compositor on 4.2-5.1.
 
 ## Environment
 
@@ -112,7 +113,8 @@ The 1.3.6 artifact runs Geometry Nodes and then skips the Compositor on 4.2.23, 
 5.1.2 because the add-on guards it against a native crash. The post-1.3.6 source fix
 removes that guard: `test_trees.py` now exports the Compositor on all five,
 `test_selected_comp.py` covers selected-only compositor export (5.1+ exports, 4.2/4.5
-refuse with a clear error), and the source matrix is **31/31 per version**.
+refuse with a clear error), `test_padding.py` checks the density-independent padding
+unit, and the source matrix is **32/32 per version**.
 `test_artifact.py` passed via classic install on all
 five and via extension export on all five. The official installer was used on 4.2.23 and
 5.3.0; on 4.5.9, 5.1.2 and 5.2.4 the local installer subprocess cannot start Python, so
