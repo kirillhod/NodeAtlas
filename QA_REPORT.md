@@ -8,7 +8,9 @@
 > preference. The full matrix below was re-run for 1.3.6 on Blender 4.2.23, 4.5.9, 5.1.2,
 > 5.2.4 and 5.3.0: 18/18 unit tests and 29/29 source GUI runs per version (27 tests plus
 > the 120 dpi and maximized-group variants). `test_artifact.py` passed separately: classic
-> install on all five versions, extension install on 4.2.23 and 5.3.0.
+> install on all five versions; extension export on all five, using the official installer
+> on 4.2.23 and 5.3.0 and manual repository extraction on 4.5.9, 5.1.2 and 5.2.4 because
+> their local installer subprocess cannot start Python.
 
 ## Environment
 
@@ -99,8 +101,10 @@ window, exports a fixture, validates the PNG and editor restoration, then exits.
 
 Re-run for 1.3.6: **29/29 source GUI runs passed on each of the five versions**, including
 `test_1000.py` at 120 dpi and `test_group.py` with `NODEATLAS_TEST_MAXIMIZE=1`.
-`test_artifact.py` passed via classic install on all five and via extension install on
-4.2.23 and 5.3.0; the other three keep the local `--command extension` limitation.
+`test_artifact.py` passed via classic install on all five and via extension export on all
+five. The official installer was used on 4.2.23 and 5.3.0; on 4.5.9, 5.1.2 and 5.2.4 the
+local installer subprocess cannot start Python, so the same payload was extracted into a
+local repository and loaded as `bl_ext.nodeatlas_test.node_atlas`.
 
 All GUI tests validate that the editor state is restored and that failed/cancelled
 exports leave no PNG. The 1000-node test forces the memmap path and ~75.8 MP (118 MP at
@@ -126,10 +130,12 @@ without a clamp warning.
 - `blender --command extension build --source-dir node_atlas --output-dir dist`:
   produces `node_atlas-1.3.6.zip` with the manifest and package modules.
 - 1.3.6 manifest and artifact: `extension validate` PASS; classic install/export PASS on
-  all five versions; extension install/export PASS on 4.2.23 and 5.3.0. On 4.5.9, 5.1.2
-  and 5.2.4 the local `--command extension` runtime still cannot load `bl_ext`, so the
-  same zip was validated through the classic path. The zip contains only the manifest
-  and seven package modules, with no `__pycache__`.
+  all five versions; extension export PASS on all five. The official extension installer
+  was used on 4.2.23 and 5.3.0. On 4.5.9, 5.1.2 and 5.2.4 the local installer subprocess
+  cannot start Python (`No module named 'encodings'`), so the same zip was extracted into
+  a local repository and loaded as `bl_ext.nodeatlas_test.node_atlas`; the payload
+  exported successfully. The zip contains only the manifest and seven package modules,
+  with no `__pycache__`.
 - `node_atlas-1.3.6.zip` SHA256:
   `481C071BEA155893E9CCDD6580F6976831B13751ED0A29E8738D1A6C68E6785E`.
 - Classic add-on clean-profile install: PASS on Blender 4.2.23, 4.5.9, 5.1.2, 5.2.4
