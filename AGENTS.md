@@ -18,8 +18,10 @@ as one high-resolution PNG. It captures the
 **Status:** 1.3.6. M0–M8 are complete (Shader/Geometry Nodes/Compositor/Texture),
 the legacy 4.2–5.1 path is validated for Shader/GN/Texture on Blender 4.2.23, 4.5.9
 and 5.1.2, and hardening (limits, fault injection, read-only/full-disk output, scaling)
-is tested on 4.2–5.3. Compositor on 4.2–5.1 is guarded due to a native crash. Packaging
-and docs are complete for Windows; Linux, macOS and a second monitor are untested.
+is tested on 4.2–5.3. The 1.3.6 artifact guards the Compositor on 4.2–5.1; the current
+source leaves the compositor tree unpinned on 4.2/4.5, removes the guard and passes the
+full matrix (release pending). Packaging and docs are complete for Windows; Linux, macOS
+and a second monitor are untested.
 
 **Agreed identifiers** (do not rename without approval):
 
@@ -71,8 +73,10 @@ and as an extension. Do not commit generated artifacts.
 
 - **Blender 4.2+ target**, primary development on **5.3.0 / Windows**; Blender 4.2.23,
   4.5.9, 5.1.2, 5.2.4 and 5.3.0 are validated for the Shader/GN/Texture paths. The
-  Compositor on 4.2–5.1 is guarded because of a native crash; Linux/macOS QA is
-  pending. Test 4.2 LTS, 4.5 LTS, 5.1, 5.2, 5.3 on Windows/macOS/Linux.
+  Compositor works in source on 4.2–5.3; leave the compositor tree unpinned on 4.2/4.5
+  because pinning it crashes the next area refresh. The 1.3.6 artifact still guards
+  Compositor there; Linux/macOS QA is pending. Test 4.2 LTS, 4.5 LTS, 5.1, 5.2, 5.3 on
+  Windows/macOS/Linux.
 - **[Python 3.11](https://www.python.org/)** is bundled with 4.2+; NumPy is available
   inside Blender. No third-party dependencies (no [Pillow](https://python-pillow.org/),
   no wheels).
@@ -153,7 +157,9 @@ Verified on Blender 5.3.0. Violating them yields plausible-looking but wrong ima
    (5.3; deprecated in 6.0), `show_backdrop = False`, output
    [`NodeGroupOutput`](https://docs.blender.org/api/current/bpy.types.NodeGroupOutput.html).
    Detect and crop the asset-shelf regions **after** switching tree type
-   (≈102 px on Compositor; `show_region_asset_shelf` is read-only).
+   (≈102 px on Compositor; `show_region_asset_shelf` is read-only). **Do not set
+   `space.pin = True` on a compositor tree on Blender 4.2–4.5:** it crashes the next
+   `node_area_refresh`; leave the scene tree unpinned there and pin on 5.1+.
 
 9. **Selected-only = temporary filtered copy.**
    [`nt.copy()`](https://docs.blender.org/api/current/bpy.types.ID.html#bpy.types.ID.copy)

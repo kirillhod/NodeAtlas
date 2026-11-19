@@ -80,14 +80,13 @@ Settings live in the sidebar and in **Edit → Preferences → Add-ons → Node 
 ## Supported versions
 
 Validated on Windows with Blender **4.2.23 LTS, 4.5.9 LTS, 5.1.2, 5.2.4 LTS and 5.3.0**.
-The Compositor requires Blender 5.2 or newer. Linux and macOS are untested.
+The Compositor works on all validated versions. The 1.3.6 artifact still blocks it on
+Blender 4.2-5.1; the next patch removes that guard. Linux and macOS are untested.
 
 ## Good to know
 
 - This is a GUI add-on; it cannot capture the interface with `--background`.
 - Keep the Blender window visible and unobstructed while exporting.
-- Compositor export on Blender 4.2–5.1 is blocked by a Blender crash and shows a clear
-  error instead.
 - The view is restored to the nearest pixel; very long links may fade.
 - Transparent backgrounds and batch export are planned for later versions.
 

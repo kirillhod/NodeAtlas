@@ -25,7 +25,7 @@ the release notes; screenshots are intentionally omitted.
 | M3 Stitch/save | 0.4.0 | Done |
 | M4 Operator/UI MVP | 0.5.0 | Done; per-run overrides and popups deferred |
 | M5 Tree types | 0.6.0 | Done for Shader/GN/Compositor/Texture; 6.0 adapter open |
-| M6 Legacy adapter | 0.6.0 | Done for Shader/GN/Texture on 4.2.23/4.5.9/5.1.2; Compositor 4.2–5.1 is guarded |
+| M6 Legacy adapter | 0.6.0 | Done for Shader/GN/Texture on 4.2.23/4.5.9/5.1.2; Compositor 4.2-5.1 fixed via `pin=False` in source; 1.3.6 artifact guarded |
 | M7 Hardening | 0.7.0 | Done: limits, fault injection and output-path guards pass on Windows 4.2–5.3 |
 | M8 Packaging/QA | 0.8.0 | Done for Windows; Linux/macOS and a second monitor are documented as untested |
 | M9 Release | 1.0.0 | Done: artifact regression passed, local annotated tag `v1.0.0` |
