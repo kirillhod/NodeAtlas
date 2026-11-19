@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3.6
+
+- Declare the `files` and `clipboard` permissions in the extension manifest for the
+  Blender Extensions platform.
+- Add copyright, website, support and tag metadata to the manifest.
+- Remove an unused import and an unused background preference; export behavior is
+  unchanged.
+
 ## 1.3.5
 
 - Rebuild unpinned nested group paths after redraw, so export leaves the user in the

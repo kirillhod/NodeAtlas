@@ -1,13 +1,21 @@
-# NodeAtlas 1.3.5 release notes
+# NodeAtlas 1.3.6 release notes
 
-**Release date:** 13 November 2026
-**Artifact:** `node_atlas-1.3.5.zip` (Blender extension) and the same package as a
+**Release date:** 19 November 2026
+**Artifact:** `node_atlas-1.3.6.zip` (Blender extension) and the same package as a
 classic add-on.
 
 NodeAtlas exports any Blender node tree as one high-resolution PNG with real editor
 background padding, selected-nodes support, `Esc` cancellation and full UI restoration.
 It captures the Node Editor in overlapping tiles and stitches them with
 [NumPy](https://numpy.org/doc/stable/); no re-rendering and no external dependencies.
+
+## Changes since 1.3.5
+
+- Declare the `files` and `clipboard` permissions in the extension manifest, as required
+  by the Blender Extensions platform.
+- Add copyright, website, support and tag metadata for the platform listing.
+- Remove an unused import and an unused background preference; export behavior is
+  unchanged.
 
 ## Changes since 1.3.4
 

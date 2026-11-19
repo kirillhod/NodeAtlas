@@ -1,8 +1,13 @@
 # NodeAtlas QA report
 
-**Version:** 1.3.5
-**Date:** 12 November 2026  
+**Version:** 1.3.6<br>
+**Date:** 19 November 2026<br>
 **Platforms:** Windows, GUI sessions only
+
+> 1.3.6 changes only the extension manifest and removes an unused import and an unused
+> preference. The five-version matrix below was recorded for 1.3.5 and still covers the
+> unchanged capture, stitching and restore code. The 1.3.6 manifest and artifact were
+> validated and installed on Blender 5.3.0.
 
 ## Environment
 
@@ -113,7 +118,13 @@ without a clamp warning.
 
 - `blender --command extension validate node_atlas`: PASS.
 - `blender --command extension build --source-dir node_atlas --output-dir dist`:
-  produces `node_atlas-1.3.5.zip` with the manifest and package modules.
+  produces `node_atlas-1.3.6.zip` with the manifest and package modules.
+- 1.3.6 manifest and artifact: `extension validate` PASS; `test_artifact.py` exported a
+  PNG through the extension module `bl_ext.user_default.node_atlas` and through the
+  classic module `node_atlas` on Blender 5.3.0; the unit suite passed 18/18. The zip
+  contains only the manifest and seven package modules, with no `__pycache__`.
+- `node_atlas-1.3.6.zip` SHA256:
+  `481C071BEA155893E9CCDD6580F6976831B13751ED0A29E8738D1A6C68E6785E`.
 - Classic add-on clean-profile install: PASS on Blender 4.2.23, 4.5.9, 5.1.2, 5.2.4
   and 5.3.0 in isolated `BLENDER_USER_SCRIPTS/scripts/addons` profiles (0.6.1); the
   0.6.2, 0.7.0, 0.8.0 and 1.0.0 packages were re-validated on 5.3.0. The 1.1.0, 1.2.0,

@@ -2,8 +2,16 @@ schema_version = "1.0.0"
 id = "node_atlas"
 name = "Node Atlas"
 tagline = "Export any node tree as one high-resolution PNG"
-version = "1.3.5"
+version = "1.3.6"
 maintainer = "kirillhod"
 type = "add-on"
 blender_version_min = "4.2.0"
 license = ["SPDX:GPL-3.0-or-later"]
+copyright = ["2026 kirillhod"]
+website = "https://github.com/kirillhod/NodeAtlas"
+support = "https://github.com/kirillhod/NodeAtlas/issues"
+tags = ["Node", "Material", "Geometry Nodes", "Compositing", "User Interface"]
+
+[permissions]
+files = "Save exported PNG files and open the last export"
+clipboard = "Copy the exported node graph image to the clipboard"

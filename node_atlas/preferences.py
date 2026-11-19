@@ -88,11 +88,6 @@ class NodeAtlasPreferences(bpy.types.AddonPreferences):
         ),
         default="CURRENT",
     )
-    background: bpy.props.EnumProperty(
-        name="Background",
-        items=(("THEME", "Theme", "Keep the current editor background"),),
-        default="THEME",
-    )
     default_dir: bpy.props.StringProperty(
         name="Default Directory",
         description="Folder for quick exports; clear it to ask for a path every time",
