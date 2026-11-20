@@ -72,16 +72,8 @@ From source: `blender --command extension build --source-dir node_atlas`.
 | Node Editor is too small for export | Enlarge the Node Editor |
 | Clipboard copy failed | Lower Output DPI or save to a file |
 
-## Development
-
-Tests: [`tests/README.md`](tests/README.md), [`QA_REPORT.md`](QA_REPORT.md). Specification:
-[`NodeGraph_Export_Report.md`](NodeGraph_Export_Report.md). Roadmap:
-[`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md). Changes: [`CHANGELOG.md`](CHANGELOG.md).
-
-The panel screenshot and a demo export come from
-`blender --factory-startup --python docs/make_images.py`.
-
 ---
 
+[Changelog](CHANGELOG.md) ·
 [GPL-3.0](https://www.gnu.org/licenses/gpl-3.0.html) ·
 [Issues](https://github.com/kirillhod/NodeAtlas/issues)
