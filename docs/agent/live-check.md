@@ -14,9 +14,62 @@ $env:BLENDER = 'blender'      # or the full path to blender.exe
 ```
 
 Windows is the validated platform; 4.2.23 LTS, 4.5.9 LTS, 5.1.2, 5.2.4 LTS and 5.3.0 are
-the matrix. Linux and macOS are untested. The Compositor is guarded on 4.2-5.1.
+the matrix. Linux and macOS are untested; a new platform starts with §2. The Compositor is
+guarded on 4.2-5.1.
 
-## 2. Fast loop
+## 2. First run on a new platform
+
+A new OS becomes supported only after this section passes and the run is recorded in
+[`QA_REPORT.md`](../../QA_REPORT.md). The package has exactly two platform branches, both
+in `preferences.py`: the XDG desktop file on Linux and the OneDrive desktop on Windows.
+Everything else is Blender or Python API, so a failure here is about pixels, scale or
+window management, not about file paths. The open questions behind the list are report §7
+items 3 and 16.
+
+The wrappers in `tests/` are Windows convenience scripts; the tests do not depend on them.
+On Linux or macOS run Blender directly, as every GUI test documents in its docstring. On
+macOS the binary is inside the app bundle:
+
+```bash
+blender --factory-startup --python tests/gui/test_export.py
+```
+
+Work in this order and stop at the first failure:
+
+1. **Install and export once.** The zip installs as an extension and the folder as a classic
+   add-on; the panel appears and one Shader export finishes with a PNG.
+2. **Screenshot size.** `capture.py` rejects a frame whose length is not
+   `width * height * 4` for the `WINDOW` region (`Screenshot has N bytes, expected M`); the
+   4.2-5.1 path compares `image.size` instead (`screenshot_area width ... != WINDOW width`).
+   A Retina backing buffer at 2x the logical region would trip the first check. Do not relax
+   it: print both sizes and treat the mismatch as the finding.
+3. **Effective UI scale.** `operators.py` reads `system.ui_scale` after a redraw and assumes
+   it already includes `view.ui_scale`. `system.ui_scale` cannot be changed from RNA, so set
+   the OS scaling, restart Blender, then export the same fixture at two scales and check
+   that the node corners stay within 2 px and `D` stays constant. On macOS the Retina factor
+   may live outside `system.ui_scale`, which would move every position by that factor; this
+   is the check that catches it.
+4. **Edge decorations.** `bounds.py` crops `max(16, ceil(8 * view.ui_scale))` per side and
+   keeps an overlap of `max(120, 2 * pad + 32)`, both capped by the region's short side and
+   sized for the scrollbar and frame measured in report §5 items 3 and 24. A theme with
+   thicker edges puts them into the overlap: the seam difference rises above 0.1 and a band
+   appears at the outer padding. Re-measure before changing the constants; the numbers
+   belong in the report.
+5. **Window management.** A capture needs a visible, unoccluded window, and maximizing
+   through `screen_full_area`, leaving it, and retrying with a fresh area are all
+   window-manager behaviour. Confirm that the layout, view and selection are restored after
+   success, cancel and an injected exception, and that the window is not left maximized.
+6. **Clipboard.** Copy is its own action (`copy_only`, plus the separate Copy operator) and
+   goes through `bpy.ops.image.clipboard_copy`, which needs a clipboard owner and can fail
+   on Wayland or a minimal session. A failure must surface as a reported error with the UI
+   restored, and a normal file export on the same machine must stay unaffected.
+
+Record the platform as its own row in [`QA_REPORT.md`](../../QA_REPORT.md): Blender version,
+OS and its scaling, `WINDOW` region size, `D`, `padding_px`, grid, tile size, and the
+invariants in §6. A new platform does not inherit the Windows results. Then continue with
+the normal procedure from §3.
+
+## 3. Fast loop
 
 One GUI test with a wall-clock limit and an isolated `TEMP`:
 
@@ -47,7 +100,7 @@ and exits 2 for a blank or single-colour image; see
 Fixtures are generated, not committed. Generate them with Blender 4.2 first so later
 versions can open them; see [`tests/fixtures/README.md`](../../tests/fixtures/README.md).
 
-## 3. Which test
+## 4. Which test
 
 Use the task map in [`context-map.md`](context-map.md). Run the focused GUI test while
 iterating, then the unit suite plus every affected GUI test before claiming a change is
@@ -57,7 +110,7 @@ copy the list into a new file.
 `-UserConfig` is only for installed-artifact tests (`test_artifact.py`), which must run
 without `--factory-startup` so the add-on or extension is enabled from a clean profile.
 
-## 4. Reading a result
+## 5. Reading a result
 
 The wrapper writes the full log to `%TEMP%\nodeatlas_logs`. Filter it:
 
@@ -70,7 +123,7 @@ not a pass; the wrapper enforces this and exits 3 with `NO PASS VERDICT` when Bl
 exits 0 without a test result. Paste the command, the Blender version, and the verdict;
 do not paste the whole log.
 
-## 5. Geometry and artifact checks
+## 6. Geometry and artifact checks
 
 The tests assert the report invariants. When you need the numbers yourself, print them
 instead of opening the image:
@@ -101,7 +154,7 @@ final PNG through `tests/gui/png_content.py`; `test_ui_options.py` covers the
 Only view an image when a visual decision (padding, feather, theme, text) depends on it;
 an image costs thousands of tokens.
 
-## 6. Before claiming done
+## 7. Before claiming done
 
 - Unit suite passes.
 - The smoke matrix passes on the primary Blender version.
