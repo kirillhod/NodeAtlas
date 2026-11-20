@@ -441,7 +441,8 @@ Tasks:
       (GUI-only, link LOD, view restore to nearest pixel), troubleshooting, license.
 - [x] Add 2–3 small screenshots and one example output; keep them compressed and
       committed intentionally. Skipped by decision on 12 November 2026: the README is
-      text-only and no binary assets are committed.
+      text-only and no binary assets are committed. Reversed for 1.4.0: the README uses a
+      real export, a panel screenshot and the listing banner.
 - [ ] CHANGELOG, version bump, SPDX/license headers, remove debug code.
       Changelog, SPDX headers and debug cleanup are done; the 0.8.0 bump happens at
       release.
@@ -472,7 +473,8 @@ Tasks:
 - [ ] Confirm manifest/version/license/metadata; rebuild from a clean tree.
 - [ ] Create annotated tag `v1.0.0` on the version-bump commit; verify the tag matches
       `blender_manifest.toml` and `__version__`.
-- [ ] Write release notes with validated platforms and limitations.
+- [ ] Write user-facing release notes: what's new, features, supported versions,
+      limitations.
 - [ ] Publish to the [Blender extensions platform](https://extensions.blender.org/)
       (or attach both artifacts) only with explicit user approval.
 
@@ -607,6 +609,6 @@ builds and hardware and are the most likely source of calendar variance.
 - [x] No debug prints, no temp files, no saved preferences.
 - [x] Annotated tag `v1.0.0` points at the version-bump commit; tag, manifest and
       `__version__` agree.
-- [x] Tag `v1.0.0` is local (not pushed); the built artifact and
-      [`RELEASE_NOTES.md`](RELEASE_NOTES.md) are ready, publishing awaits explicit
-      approval.
+- [x] Tag `v1.0.0` was local at the time and is now pushed with every later tag; the
+      built artifact and [`RELEASE_NOTES.md`](RELEASE_NOTES.md) are ready, publishing
+      awaits explicit approval.

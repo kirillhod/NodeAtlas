@@ -11,7 +11,8 @@ The version lives in three places and all must match in the tagged commit:
    `(1, 3, 6)` for `1.3.6`.
 3. Update the records in the same change:
    - `CHANGELOG.md`: a new top section with user-visible changes only.
-   - `RELEASE_NOTES.md`: title, date, artifact, and changes since the previous release.
+   - `RELEASE_NOTES.md`: title, date, what's new, features and known limitations, written
+     for users. Verification counts and capture paths belong in `QA_REPORT.md`.
    - `AGENTS.md` §1 status line and `QA_REPORT.md` when the matrix or counts changed.
    - `README.md` only when user-facing behavior changed.
    - `IMPLEMENTATION_PLAN.md` only when a milestone or scope changed; it is a roadmap,
@@ -53,8 +54,9 @@ The version lives in three places and all must match in the tagged commit:
 - Never move, delete, or reuse a tag; ship a new patch version instead.
 - Never push, publish a release, upload to an extension platform, or create a PR.
 - `dist/` is ignored; never commit the zip or a hash file.
-- Release notes stay simple: changes, UI, validated platforms, known limitations. No
-  Install section, no asset name/hash, no marketing.
+- Release notes are for users: what's new, features, supported versions, known
+  limitations. No test matrix, capture paths, hashes or publishing status — those belong
+  in `QA_REPORT.md`. No Install section, no marketing.
 - Be honest in the notes: GUI-only capture, Compositor on all validated versions
   (selected-only 5.1+), Linux/macOS untested, temporary DPI boost, nearest-pixel view
   restore.
