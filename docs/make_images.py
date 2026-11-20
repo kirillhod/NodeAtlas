@@ -1,5 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Generate the README screenshots with a demo shader graph.
+"""Generate the panel screenshot and a demo export with a demo shader graph.
+
+The example export in the README is a real capture, not this demo, so the script writes
+``example-demo.png`` and never overwrites it.
 
 Run on a GUI Blender 5.x:
     blender --factory-startup --python docs/make_images.py
@@ -19,7 +22,7 @@ if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
 IMAGES = os.path.join(ROOT, "docs", "images")
-EXAMPLE = os.path.join(IMAGES, "example-export.png")
+EXAMPLE = os.path.join(IMAGES, "example-demo.png")
 PANEL = os.path.join(IMAGES, "panel.png")
 state = {"phase": "export", "ticks": 0, "found": None}
 
@@ -124,7 +127,7 @@ def setup():
 
     prefs = bpy.context.preferences.addons["node_atlas"].preferences
     prefs.default_dir = IMAGES + os.sep
-    prefs.filename_pattern = "example-export.png"
+    prefs.filename_pattern = "example-demo.png"
     prefs.output_dpi = 96
     prefs.padding = 48
     prefs.max_mp = 100.0
