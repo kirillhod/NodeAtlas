@@ -1,6 +1,10 @@
 # NodeAtlas — Implementation Plan to 1.0.0
 
-**Status:** in progress; 0.5.0 MVP implemented (see below).
+**Archived.** All milestones are complete and 1.0.0 shipped; this file is kept as the
+record of how the project got there. Current scope and next work live in
+[`ROADMAP.md`](ROADMAP.md). The checkboxes in §5 were written as a task specification and
+were never ticked; the live tracker was §10.
+
 **Based on:** [`NodeGraph_Export_Report.md`](NodeGraph_Export_Report.md) (validated on Blender 5.3.0)
 and [`AGENTS.md`](AGENTS.md) (non-negotiable rules).  
 **Target:** `node_atlas` 1.0.0 — a stable, documented extension for
@@ -28,13 +32,17 @@ the release notes; screenshots are intentionally omitted.
 | M6 Legacy adapter | 0.6.0 | Done for Shader/GN/Texture on 4.2.23/4.5.9/5.1.2; Compositor 4.2-5.1 works via `pin=False`, shipped in 1.4.0 |
 | M7 Hardening | 0.7.0 | Done: limits, fault injection and output-path guards pass on Windows 4.2–5.3 |
 | M8 Packaging/QA | 0.8.0 | Done for Windows; Linux/macOS and a second monitor are documented as untested |
-| M9 Release | 1.0.0 | Done: artifact regression passed, local annotated tag `v1.0.0` |
+| M9 Release | 1.0.0 | Done: artifact regression passed; `v1.0.0` tagged and pushed |
 
 **Post-release (1.3.5):** header export buttons, an inline collapsible Advanced section,
 Desktop paths, configurable shortcut, settings in the Export As dialog, DPI 128 with
 Resolution Scale boosting, restored unpinned group paths, a compact Open Last Export
 icon and clearer Max Megapixels documentation. See
 [`CHANGELOG.md`](CHANGELOG.md) and [`RELEASE_NOTES.md`](RELEASE_NOTES.md).
+
+**Post-release (1.4.0):** Compositor export on Blender 4.2–5.1, a visual margin for the
+node outline, padding in density-independent units, and selected-only compositor export
+gated to 5.1+. See [`CHANGELOG.md`](CHANGELOG.md).
 
 This plan is a dependency-ordered roadmap, not a promise of dates. Estimates are focused
 development days and exclude waiting for Blender builds, OS/hardware access and review.

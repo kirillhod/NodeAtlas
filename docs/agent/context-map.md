@@ -9,7 +9,8 @@ what the task needs; the research report alone is about 27k tokens.
 | File | Approx. tokens | Read instead |
 | --- | ---: | --- |
 | `NodeGraph_Export_Report.md` | 27k | one section with `python tools/doc.py NodeGraph_Export_Report.md 4.6`; chapter 4 is 4k, chapter 11 is 9k |
-| `IMPLEMENTATION_PLAN.md` | 8k | one milestone with `python tools/doc.py IMPLEMENTATION_PLAN.md M7`; it is a roadmap, not current status |
+| `IMPLEMENTATION_PLAN.md` | 8k | archived 1.0.0 record; one milestone with `python tools/doc.py IMPLEMENTATION_PLAN.md M7` |
+| `ROADMAP.md` | 0.5k | read whole for scope; `Now` gates everything below |
 | `QA_REPORT.md` | 3k | grep the version or test name; open the Packaging section for artifacts |
 | `CHANGELOG.md` | 2k | grep the version; older entries are history, not behavior |
 | `RELEASE_NOTES.md` | 2k | the first release block only |
@@ -50,7 +51,7 @@ matches a heading prefix (`M7`). Use `--max-lines N` when a section is still too
 | Extension manifest and packaging | `node_atlas/blender_manifest.toml` | report §4.7; `QA_REPORT.md` Packaging | `blender --command extension validate` |
 | README images | `docs/make_images.py` | - | GUI run; print dimensions, do not view |
 | Release, version, tag | [`release.md`](release.md) | - | full matrix recorded in `QA_REPORT.md` |
-| Extension platform submission | [`publish.md`](publish.md) | - | owner-only; assets, listing text, review gates |
+| Extension platform submission | - | - | owner-only; no agent file, the agent prepares files and stops |
 | Transparent background (not shipped) | `reference/prototypes/matte_*` | report §11.14 | prototype only; do not wire into the pipeline |
 
 ## Reading recipe

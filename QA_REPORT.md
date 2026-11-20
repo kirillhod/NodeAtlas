@@ -213,4 +213,4 @@ without a clamp warning.
 ## Not in scope for 1.0.0
 
 Batch export of all groups, transparent background, SVG/JSON/HTML, headless capture
-and AI upscaling are deferred; see [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md).
+and AI upscaling are deferred; see [`ROADMAP.md`](ROADMAP.md).

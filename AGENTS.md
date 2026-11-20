@@ -44,7 +44,8 @@ If implementation diverges, say why and update the report.
 Do not read the report end to end (about 27k tokens). Locate a section with
 `python tools/doc.py --list NodeGraph_Export_Report.md`, then print only that section, for
 example `python tools/doc.py NodeGraph_Export_Report.md 4.6`. The same tool prints one
-milestone from `IMPLEMENTATION_PLAN.md`, for example `M7`. The task-to-file map is
+milestone from the archived `IMPLEMENTATION_PLAN.md`, for example `M7`. Current scope is
+[`ROADMAP.md`](ROADMAP.md). The task-to-file map is
 [`docs/agent/context-map.md`](docs/agent/context-map.md).
 
 ## 3. Layout
@@ -234,9 +235,10 @@ grid. Full matrix: report §8 and plan §6. The concrete runner and evidence ste
   only makes sense to someone who has seen the repository is a developer sentence, and it
   goes to a developer document.
 - **Each fact has one home.** Measurements → `NodeGraph_Export_Report.md`; test counts and
-  inventory → `tests/README.md` and `QA_REPORT.md`; workflow → `docs/agent/`; repository
-  state (tags, releases, submissions) → no document, check it on demand. `README.md`,
-  `RELEASE_NOTES.md` and the platform listing link to these homes and never restate them.
+  inventory → `tests/README.md` and `QA_REPORT.md`; workflow → `docs/agent/`; scope and
+  next work → [`ROADMAP.md`](ROADMAP.md); repository state (tags, releases, submissions)
+  → no document, check it on demand. `README.md`, `RELEASE_NOTES.md` and the platform
+  listing link to these homes and never restate them.
 - External references must be clickable Markdown links to canonical sources on first
   mention in a document/major section — not every repetition, and never bare URLs.
   Internal references use relative links. The rule applies to prose, not code.
