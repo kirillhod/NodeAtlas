@@ -225,6 +225,14 @@ grid. Full matrix: report §8 and plan §6. The concrete runner and evidence ste
 
 - Update the report with the measurement when a fact changes; keep this file and
   `README.md` in sync (README is user-facing).
+- **User-facing documents contain no process evidence.** `README.md`, `RELEASE_NOTES.md`,
+  `CHANGELOG.md` and the platform listing are read by people who installed the add-on:
+  say what it does, what changed, how to install it, what does not work and what to do on
+  an error. Keep test counts, capture paths, Blender API names, host hardware, file
+  hashes, tag/push/approval state and pending tasks out of them; those belong in
+  `QA_REPORT.md`, commit bodies or `docs/agent/`. The test is the reader: a sentence that
+  only makes sense to someone who has seen the repository is a developer sentence, and it
+  goes to a developer document.
 - External references must be clickable Markdown links to canonical sources on first
   mention in a document/major section — not every repetition, and never bare URLs.
   Internal references use relative links. The rule applies to prose, not code.
