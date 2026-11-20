@@ -233,6 +233,10 @@ grid. Full matrix: report §8 and plan §6. The concrete runner and evidence ste
   `QA_REPORT.md`, commit bodies or `docs/agent/`. The test is the reader: a sentence that
   only makes sense to someone who has seen the repository is a developer sentence, and it
   goes to a developer document.
+- **Each fact has one home.** Measurements → `NodeGraph_Export_Report.md`; test counts and
+  inventory → `tests/README.md` and `QA_REPORT.md`; workflow → `docs/agent/`; repository
+  state (tags, releases, submissions) → no document, check it on demand. `README.md`,
+  `RELEASE_NOTES.md` and the platform listing link to these homes and never restate them.
 - External references must be clickable Markdown links to canonical sources on first
   mention in a document/major section — not every repetition, and never bare URLs.
   Internal references use relative links. The rule applies to prose, not code.

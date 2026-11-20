@@ -17,6 +17,13 @@ The version lives in three places and all must match in the tagged commit:
    - `README.md` only when user-facing behavior changed.
    - `IMPLEMENTATION_PLAN.md` only when a milestone or scope changed; it is a roadmap,
      not the release log.
+   - Before tagging, search the user-facing documents for stale claims, and the listing
+     text the same way. Every hit is a copy to delete or a statement to verify:
+
+     ```powershell
+     Select-String -Path README.md, RELEASE_NOTES.md `
+       -Pattern 'PASS|32/32|19/19|pushed|committed|approval'
+     ```
 4. Run the unit suite, then `tests/run_matrix.ps1 -Tier smoke` on the primary version.
    A release claim needs `-Tier full` on the five-version matrix recorded in
    `QA_REPORT.md`; do not infer Linux or macOS support. The procedure is
