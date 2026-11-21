@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.6.0
+
+- Add a capture-area preview. The Node Editor draws a dashed rectangle around the graph
+  area that will be exported, with the estimated size, megapixels, density, padding and
+  selected-node count above it. The numbers come from the same estimate as the sidebar, so
+  they cannot disagree.
+- **Show Capture Area** toggles the preview and is on by default. The export hides it for
+  the whole run, so the outline and the label never appear in a PNG.
+- The frame follows node changes, zoom and pan, and stays correct at any interface scale.
+
 ## 1.5.1
 
 - Fix reroute nodes near a tile edge being exported with the white selection outline in

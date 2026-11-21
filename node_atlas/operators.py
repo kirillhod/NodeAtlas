@@ -13,7 +13,7 @@ from datetime import datetime
 import bpy
 from bpy_extras.io_utils import ExportHelper
 
-from . import bounds, capture, stitch
+from . import bounds, capture, preview, stitch
 from .log import get_logger
 from .preferences import get_prefs
 
@@ -237,6 +237,9 @@ class ExportJob:
 
     # -- stages ---------------------------------------------------------
     def _prepare(self) -> None:
+        # The overlay is drawn into the region and would be captured with the
+        # tiles; hide it before the first redraw and restore it after.
+        preview.suppress = True
         self._status("NodeAtlas: preparing…")
         parts = None
         if self.initial:
@@ -506,6 +509,10 @@ class ExportJob:
                 self.stage = "restore"
             else:
                 self.stage = "done"
+        if self.stage == "done":
+            # Also covers a failure before the snapshot exists, where there is
+            # no restore stage to clear the overlay suppression.
+            preview.suppress = False
         return self.stage == "done"
 
     def finish(self, operator=None) -> bool:

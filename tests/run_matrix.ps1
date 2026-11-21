@@ -110,6 +110,7 @@ $fullNames = @(
     'test_arealost.py',
     'test_estimate.py',
     'test_estimate_selected.py',
+    'test_preview.py',
     'test_group.py',
     'test_ui_options.py',
     'test_boost.py',

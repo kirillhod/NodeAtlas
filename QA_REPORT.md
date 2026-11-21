@@ -1,21 +1,20 @@
 # NodeAtlas QA report
 
-**Version:** 1.5.1<br>
+**Version:** 1.6.0<br>
 **Date:** 21 November 2026<br>
 **Platforms:** Windows, GUI sessions only
 
-> **1.5.1.** Fixes a reroute near a tile edge being captured with the white selection
-> outline in Selected Nodes: the per-tile box now comes from the anchored layout instead of
-> the lagging `View2D.region_to_view` mapping. Selected Nodes can keep the links to directly
-> connected nodes (1.5.0), and the Compositor works on 4.2–5.3 with the tree left unpinned
-> on 4.2/4.5.
+> **1.6.0.** Adds the capture-area preview: the Node Editor draws the exported rectangle
+> with a label for the estimated size, density and padding, from the same estimate as the
+> sidebar, and the overlay is suppressed for the whole export. Selected Nodes keeps its
+> links to connected nodes (1.5.0) and the tile selection fix (1.5.1).
 >
-> Full source matrix for 1.5.1: **34/34 GUI runs and 21/21 unit tests on each of
+> Full source matrix for 1.6.0: **35/35 GUI runs and 24/24 unit tests on each of
 > Blender 4.2.23, 4.5.9, 5.1.2, 5.2.4 and 5.3.0**. `test_artifact.py` results and the
 > artifact hash are in [Packaging](#packaging).
 >
 > The detailed tables below are the 1.3.6 baseline; 1.4.0 changed sizes only by the
-> `VIS` margin and the padding unit.
+> `VIS` margin and the padding unit, and later versions added cases.
 
 ## Environment
 
@@ -65,7 +64,8 @@ blender --background --factory-startup --python tests/unit/test_core.py
 | Shortcut keymap / customization | PASS | PASS | PASS | PASS | PASS |
 | Manifest/`__version__` consistency | PASS | PASS | PASS | PASS | PASS |
 
-Result: **18/18 PASS on all five versions.**
+Result: **18/18 categories PASS on all five versions** (1.3.6 baseline; the 1.6.0 suite is
+24/24, see the version notes above).
 
 ## GUI tests
 
@@ -98,11 +98,20 @@ window, exports a fixture, validates the PNG and editor restoration, then exits.
 | `test_artifact.py` | PASS, extension install | PASS | PASS | PASS | PASS |
 | `test_estimate.py` | PASS, zoom-invariant | PASS | PASS | PASS | PASS |
 | `test_estimate_selected.py` | PASS, selected subgraph | PASS | PASS | PASS | PASS |
+| `test_preview.py` | PASS, 0 differing px | PASS, 0 differing px | PASS, 0 differing px | PASS, 0 differing px | PASS, 0 differing px |
 | `test_group.py` | PASS, nested groups + maximized | PASS | PASS | PASS | PASS |
 | `test_boost.py` | PASS, DPI 300 via scale boost | PASS | PASS | PASS | PASS |
 | `test_naming.py` | PASS, owner name + 96 dpi | PASS | PASS | PASS | PASS |
 | `test_clipboard.py` | PASS, OS clipboard checked | PASS | PASS | PASS | PASS |
 | `test_path.py` | PASS, empty dir refused | PASS | PASS | PASS | PASS |
+
+1.6.0: **35/35 source GUI runs passed on each of the five versions** (175/175 total), and
+the unit suite is 24/24 on each version. `test_preview.py` is the new case: it zooms until
+the overlay is visible, requires equal padding on all four sides of the live graph bounds,
+counts the frame's pixels in a screenshot (4407 on 5.3.0, 4531 on 4.2.23; 0 with the toggle
+off), and exports the same tree with the overlay on and off with 0 differing pixels. Three
+unit cases cover the frame geometry and padding, the dash/label text, and the handler
+lifecycle.
 
 1.5.1: **34/34 source GUI runs passed on each of the five versions** (170/170 total), and
 the unit suite is 21/21 on each version. The new unit case,
@@ -156,7 +165,16 @@ without a clamp warning.
 
 - `blender --command extension validate node_atlas`: PASS.
 - `blender --command extension build --source-dir node_atlas --output-dir dist`:
-  produces `node_atlas-1.5.1.zip` with the manifest and the seven package modules.
+  produces `node_atlas-1.6.0.zip` with the manifest and the eight package modules.
+- **1.6.0 artifact:** build and `extension validate` PASS; the zip contains only the
+  manifest and the eight package modules (`preview.py` included), with no `__pycache__`.
+  The official installer (`install-file -r user_default -e`) installed it into an isolated
+  `BLENDER_USER_EXTENSIONS` profile on 4.2.23, 4.5.9, 5.1.2, 5.2.4 and 5.3.0, and
+  `test_artifact.py` exported a PNG from `bl_ext.user_default.node_atlas` on each. The
+  classic folder copied into an isolated `scripts/addons` profile enabled `node_atlas` and
+  exported on all five.
+- `node_atlas-1.6.0.zip` SHA256:
+  `733ECD77A9480B09A2DBD72882DAE3A1C1A825D36A42955F333E15614A7132F6`.
 - **1.5.1 artifact:** build and `extension validate` PASS; the zip contains only the
   manifest and the seven package modules, with no `__pycache__`. The official installer
   (`install-file -r user_default -e`) installed it into an isolated `BLENDER_USER_EXTENSIONS`

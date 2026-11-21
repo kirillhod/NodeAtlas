@@ -14,6 +14,7 @@ Compositor or Texture, the whole graph, on the real editor background.
 | **Whole graph** | Captures the editor in tiles and stitches them; nodes outside the view are included |
 | **Density** | Output DPI sets the size (96 = 1:1, default 128); monitor DPI and zoom do not matter |
 | **Padding** | Captured, not painted, in units: 1 unit = 1 px at 96 DPI, so 20 units = 27 px at 128 DPI |
+| **Preview** | A dashed rectangle and its size label show exactly what will be captured; the export hides them automatically |
 | **Scope** | Current tree, or selected nodes through a temporary copy that leaves your file intact; links to directly connected nodes can stay visible |
 | **Output** | PNG file or clipboard; `Esc` cancels; the sidebar reopens the last export |
 | **Safety** | Max Megapixels 200 stops before capture; DPI clamps are reported |
@@ -26,7 +27,8 @@ Compositor or Texture, the whole graph, on the real editor background.
 ## Use
 
 Press `N` in a Node Editor → **Node Atlas** → **Export Current Tree**, **Export As…** or
-**Copy to Clipboard**.
+**Copy to Clipboard**. The dashed frame over the graph is the exported rectangle, with its
+estimated size and padding above it; uncheck **Show Capture Area** to hide the frame.
 
 <p align="center"><img src="docs/images/panel.png" alt="Node Atlas panel" width="240"></p>
 
@@ -56,6 +58,7 @@ From source: `blender --command extension build --source-dir node_atlas`.
 | Max Megapixels | `200` |
 | Scope | Current Tree |
 | Keep Links to Connected Nodes | Off (Selected Nodes scope only) |
+| Show Capture Area | On |
 | Default Directory | Desktop |
 | Filename Pattern | `{blend}_{tree}_{date}.png`, plus `{datablock}` and `{type}` |
 | Hide UI, Restore UI, Deterministic View | On |

@@ -1,4 +1,4 @@
-# NodeAtlas 1.5.1
+# NodeAtlas 1.6.0
 
 **Released:** 21 November 2026
 
@@ -8,18 +8,23 @@ It captures the Node Editor in overlapping tiles and stitches them with
 [NumPy](https://numpy.org/doc/stable/); nothing is re-rendered and no external
 dependencies are needed.
 
-## What's new in 1.5.1
+## What's new in 1.6.0
 
-- **Reroute nodes near a tile edge no longer look selected.** A node that was already in
-  the frame could be marked as outside the view for one tile and drawn with the white
-  selection outline; the small reroute dots made it easy to see. The tile selection now
-  uses the anchored tile position, so the outline appears only on nodes that are really
-  outside the image. Connections that cross tiles keep full strength.
+- **See the capture before it starts.** The Node Editor draws a dashed rectangle around
+  the area that will be exported and labels it with the estimated size, megapixels,
+  density and padding. For Selected Nodes it also shows the node count. The rectangle
+  follows the graph when nodes move and stays correct when you zoom.
+- **The label matches the file.** Both the outline and its numbers use the same estimate
+  as the sidebar, so the PNG is the size the frame promised.
+- **Never in the image.** The preview disappears for the whole export, so no outline or
+  text can land in a tile. **Show Capture Area** in the sidebar turns it off if you prefer
+  a clean editor.
 
 ## Features
 
 - Current-tree or selected-nodes export for Shader, Geometry Nodes, Compositor and
   Texture trees.
+- Capture-area preview with the estimated size, density and padding before the export.
 - Optional links to the nodes directly connected to the selection.
 - Output density independent of monitor DPI and current zoom: 96 DPI is 1:1 with node
   pixels.

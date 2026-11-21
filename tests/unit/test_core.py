@@ -593,6 +593,119 @@ def test_select_outside_tiles():
     check(not tree.nodes[1].select, "lower-right node is inside its tile")
 
 
+def test_preview_geometry():
+    from node_atlas import preview
+
+    content = bounds.Rect(left=0, top=500, right=1000, bottom=0)
+
+    def estimate(padding):
+        layout = bounds.compute_layout(content, 800, 600, padding, 1.0)
+        return preview.Estimate(
+            content=content, layout=layout, used_dpi=48.0, nodes=1,
+            scope="CURRENT", upp=1.25,
+        )
+
+    # The frame is the on-screen graph bounds widened by the export padding:
+    # 500 screen px of a 1000 px export is half scale, so 20 px becomes 10.
+    union = bounds.Rect(left=100, top=600, right=600, bottom=100)
+    rect = preview.screen_rect(union, estimate(20))
+    check(rect == (90, 610, 610, 90), f"padded rect {rect}")
+    check(rect[0] - union.left == union.right - rect[2], "horizontal padding")
+    check(rect[1] - union.top == union.bottom - rect[3], "vertical padding")
+    check(union.left - rect[0] == 10, "padding follows the screen scale")
+
+    # live_union uses the same rects and visual margin as the export.
+    metrics = bounds.ViewMetrics(upp=1.0, k=1.0, s=1.0, ox=10, oy=20)
+    nodes = [FakeNode(0, 0, 100, 50), FakeNode(300, 200, 100, 50)]
+    union = preview.live_union(nodes, metrics, 1.0)
+    check(union == bounds.Rect(7, 223, 413, -33), f"live union {union}")
+
+    # The label is only drawn while the frame top is inside the view.
+    check(preview.intersects((10, 10, 100, 0), 200, 100), "rect inside")
+    check(not preview.intersects((-200, 10, -10, 0), 200, 100), "rect left of view")
+    check(not preview.intersects((0, 300, 100, 200), 200, 100), "rect above view")
+    check(preview.top_edge_visible((0, 100, 100, 0), 100), "top on the border")
+    check(not preview.top_edge_visible((0, 100.5, 100, 0), 100), "top outside")
+
+
+def test_preview_dashes_and_label():
+    from types import SimpleNamespace
+
+    from node_atlas import preview
+
+    dashes = preview.dash_quads((0, 100, 100, 0), dash=10, gap=5, width=2)
+    solid = preview.dash_quads((0, 100, 100, 0), dash=1000, gap=0, width=2)
+    check(len(dashes) % 6 == 0, "each dash is two triangles")
+    check(len(solid) % 6 == 0, "solid quads are triangles too")
+    check(len(dashes) == 28 * 6, f"dash count for 400 px perimeter: {len(dashes)}")
+    check(len(solid) < len(dashes), "gaps create more quads than a solid edge")
+    check(all(vertex[2] == 0.0 for vertex in dashes), "flat overlay geometry")
+    xs = [vertex[0] for vertex in dashes]
+    ys = [vertex[1] for vertex in dashes]
+    check(min(xs) >= -1 and max(xs) <= 101, "x stays on the outline")
+    check(min(ys) >= -1 and max(ys) <= 101, "y stays on the outline")
+
+    content = bounds.Rect(left=0, top=500, right=1000, bottom=0)
+    layout = bounds.compute_layout(content, 800, 600, 20, 1.0)
+    base = preview.Estimate(
+        content=content, layout=layout, used_dpi=48.0, nodes=7,
+        scope="CURRENT", upp=0.5,
+    )
+    prefs = SimpleNamespace(output_dpi=48, scope="CURRENT")
+    check(
+        preview.label(base, prefs)
+        == "≈ 1040 × 540 px · 0.6 MP · 48 DPI · padding 20 px",
+        "label numbers come from the layout",
+    )
+    check(
+        preview.size_text(base) == "1040 × 540 px · 0.6 MP", "size fragment"
+    )
+
+    clamped = preview.Estimate(
+        content=content, layout=bounds.compute_layout(content, 800, 600, 0, 1.0),
+        used_dpi=48.0, nodes=7, scope="SELECTED", upp=0.5,
+    )
+    prefs = SimpleNamespace(output_dpi=128, scope="SELECTED")
+    check(
+        preview.label(clamped, prefs)
+        == "≈ 1000 × 500 px · 0.5 MP · 48 DPI (clamped) · 7 nodes",
+        "clamped DPI and the selected count are shown",
+    )
+    clamped_one = preview.Estimate(
+        content=content, layout=clamped.layout, used_dpi=96.0, nodes=1,
+        scope="SELECTED", upp=0.5,
+    )
+    check(
+        preview.label(clamped_one, SimpleNamespace(output_dpi=96, scope="SELECTED"))
+        == "≈ 1000 × 500 px · 0.5 MP · 96 DPI · 1 node",
+        "singular node count",
+    )
+
+
+def test_preview_registration():
+    import bpy
+
+    from node_atlas import preview
+
+    check(preview._handle is None, "no handler before enable")
+    bpy.ops.preferences.addon_enable(module="node_atlas")
+    try:
+        check(preview._handle is not None, "preview handler registered")
+        content = bounds.Rect(0, 10, 10, 0)
+        est = preview.Estimate(
+            content=content,
+            layout=bounds.compute_layout(content, 800, 600, 0, 1.0),
+            used_dpi=96.0, nodes=0, scope="CURRENT", upp=1.0,
+        )
+        check(
+            preview.screen_rect(bounds.Rect(0, 10, 10, 0), est) is not None,
+            "geometry works without a view",
+        )
+    finally:
+        bpy.ops.preferences.addon_disable(module="node_atlas")
+    check(preview._handle is None, "preview handler removed on disable")
+
+
 def main():
     tests = [
         test_view_metrics,
@@ -609,10 +722,13 @@ def main():
         test_selected_node_names,
         test_link_neighbour_names,
         test_select_outside_tiles,
+        test_preview_geometry,
+        test_preview_dashes_and_label,
         test_filename_sanitization,
         test_render_filename,
         test_tree_owner_name,
         test_quick_filepath,
+        test_preview_registration,
         test_registration,
         test_shortcut_keymap,
         test_version_consistency,

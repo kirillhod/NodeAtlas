@@ -47,7 +47,8 @@ matches a heading prefix (`M7`). Use `--max-lines N` when a section is still too
 | Timer job, progress, cancel | `operators.py` (`ExportJob`, `_job_tick`, `start_job`) | report §6.2, §11.13 | `test_cancel.py`, `test_fail.py` |
 | Clipboard and Open Last Export | `operators.py` (`_copy_result`, `NODE_ATLAS_OT_open_last_export`) | - | `test_clipboard.py` |
 | Filename pattern and tokens | `operators.py` (`render_filename`, `_filename_fields`) | - | `test_naming.py`, `test_path.py` |
-| Preferences, panel, estimate, menus, keymap | `preferences.py`, `node_atlas/__init__.py` (`_estimate`) | report §6.5 | `test_core.py`, `test_estimate.py`, `test_artifact.py`, manual GUI |
+| Preferences, panel, preview, estimate, menus, keymap | `preferences.py`, `preview.py`, `node_atlas/__init__.py` (`preview.estimate`) | report §5 item 39 | `test_core.py`, `test_estimate.py`, `test_preview.py`, `test_artifact.py`, manual GUI |
+| Capture-area preview (outline, label) | `preview.py` (`estimate`, `live_union`, `screen_rect`, `dash_quads`, `suppress`) | report §5 item 39 | `test_preview.py`, `test_core.py` |
 | Undo neutrality | every pipeline module | report §11.16 | unit + `test_export.py`, `test_fail.py` |
 | Extension manifest and packaging | `node_atlas/blender_manifest.toml` | report §4.7; `QA_REPORT.md` Packaging | `blender --command extension validate` |
 | New OS or display scaling | `preferences.py` (desktop branches), `capture.py` (`capture_tile`) | report §7 items 3 and 16 | [`live-check.md`](live-check.md) §2 |

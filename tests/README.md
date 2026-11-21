@@ -15,7 +15,8 @@ blender --background --factory-startup --python tests/unit/test_core.py
 
 Covers view metrics, layout/bounds, density clamping, stitching and memmap spill, PNG
 writing and `pHYs` metadata, save errors, output-path checks, selected-node filtering,
-tile selection geometry, filename tokens and registration.
+tile selection geometry, capture-area geometry and label, filename tokens and
+registration.
 
 ## Fixtures and GUI tests
 
@@ -56,6 +57,7 @@ blender --factory-startup --python tests/gui/test_diskfull.py
 blender --factory-startup --python tests/gui/test_arealost.py
 blender --factory-startup --python tests/gui/test_estimate.py
 blender --factory-startup --python tests/gui/test_estimate_selected.py
+blender --factory-startup --python tests/gui/test_preview.py
 blender --factory-startup --python tests/gui/test_group.py
 blender --factory-startup --python tests/gui/test_ui_options.py
 blender --factory-startup --python tests/gui/test_boost.py
@@ -86,9 +88,13 @@ peak, with selection, the theme `wire_select` alpha and undo restored.
 and `test_padding.py` also run `png_content.check_capture` for opaque pixels, real padding
 and non-empty content. A link may cross a padding band, so a bright strip counts as a leak
 only when it covers most of the band; the outermost 2 px are always checked.
-`test_padding.py` exports at 192 DPI and requires the 20-unit padding to become 40 px. The
-commands above are for debugging; they do not run the runner's PNG content check, so use
-the wrapper or the matrix runner when the result is evidence.
+`test_padding.py` exports at 192 DPI and requires the 20-unit padding to become 40 px.
+`test_preview.py` zooms until the capture-area overlay is visible, requires equal padding
+on all four sides of the live graph bounds, checks that the drawn rectangle equals the
+computed one, counts the frame's pixels in a screenshot, and then exports the same tree
+with the overlay on and off and requires identical pixels: the overlay must never reach a
+tile. The commands above are for debugging; they do not run the runner's PNG content
+check, so use the wrapper or the matrix runner when the result is evidence.
 
 ## Matrix runner
 
@@ -100,7 +106,7 @@ Pass each binary as `version=path`; separate entries with a semicolon:
 powershell -File tests/run_matrix.ps1 -Tier smoke `
   -Blender '5.3.0=C:\Blender\5.3\blender.exe'
 
-# Release matrix: 32 tests plus the 120 dpi and maximized variants on five versions.
+# Release matrix: 33 tests plus the 120 dpi and maximized variants on five versions.
 powershell -File tests/run_matrix.ps1 -Tier full `
   -Blender '4.2.23=C:\Blender\4.2\blender.exe;4.5.9=C:\Blender\4.5\blender.exe;5.1.2=C:\Blender\5.1\blender.exe;5.2.4=C:\Blender\5.2\blender.exe;5.3.0=C:\Blender\5.3\blender.exe'
 ```

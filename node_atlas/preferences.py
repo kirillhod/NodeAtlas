@@ -39,6 +39,16 @@ def default_output_dir() -> str:
     return os.path.abspath(home)
 
 
+def _node_redraw(self, context):
+    """Redraw the Node Editors so the overlay follows a preference change."""
+    screen = getattr(context, "screen", None)
+    if screen is None:
+        return
+    for area in screen.areas:
+        if area.type == "NODE_EDITOR":
+            area.tag_redraw()
+
+
 def _shortcut_updated(self, context):
     from . import refresh_keymap
 
@@ -99,6 +109,15 @@ class NodeAtlasPreferences(bpy.types.AddonPreferences):
             "only the selected nodes"
         ),
         default=False,
+    )
+    show_capture_area: bpy.props.BoolProperty(
+        name="Show Capture Area",
+        description=(
+            "Draw the exported rectangle and its estimated size over the Node "
+            "Editor; the export hides the overlay automatically"
+        ),
+        default=True,
+        update=_node_redraw,
     )
     default_dir: bpy.props.StringProperty(
         name="Default Directory",

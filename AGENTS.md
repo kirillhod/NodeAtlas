@@ -15,15 +15,17 @@ as one high-resolution PNG. It captures the
 [NumPy](https://numpy.org/doc/stable/), and saves through
 [`imbuf`](https://docs.blender.org/api/current/imbuf.html). No re-rendering.
 
-**Status:** 1.5.1. M0–M8 are complete (Shader/Geometry Nodes/Compositor/Texture),
+**Status:** 1.6.0. M0–M8 are complete (Shader/Geometry Nodes/Compositor/Texture),
 the legacy 4.2–5.1 path is validated on Blender 4.2.23, 4.5.9 and 5.1.2, and hardening
 (limits, fault injection, read-only/full-disk output, scaling) is tested on 4.2–5.3.
 The Compositor works on 4.2–5.3: the compositor tree stays unpinned on 4.2/4.5, where
 pinning crashes the next area refresh, and selected-only compositor export needs 5.1+.
 Connections that cross tile boundaries keep full strength since 1.4.1, and Selected Nodes
-can keep its links to directly connected nodes since 1.5.0. The 1.5.1 artifact
-ships that behavior and passes 34/34 per version. Packaging and docs are complete for
-Windows; Linux, macOS and a second monitor are untested.
+can keep its links to directly connected nodes since 1.5.0. Since 1.6.0 the Node Editor
+draws the capture-area outline and its size label from the same estimate the export uses,
+and the overlay is suppressed for the whole job. The 1.6.0 artifact ships that behavior and
+passes the five-version matrix. Packaging and docs are complete for Windows; Linux, macOS
+and a second monitor are untested.
 
 **Agreed identifiers** (do not rename without approval):
 
@@ -58,6 +60,7 @@ node_atlas/              # extension/add-on root
 ├─ operators.py          # timer job, progress, cancel, file dialog
 ├─ capture.py            # snapshot/restore, tree switch, tiles, adapters
 ├─ bounds.py             # view metrics, bounds, layout, selected-only copy
+├─ preview.py            # capture-area outline and size label (draw handler)
 ├─ stitch.py             # canvas, feathering, top crop, PNG save
 ├─ preferences.py        # global defaults
 ├─ log.py                # namespaced logger
@@ -201,6 +204,17 @@ Verified on Blender 5.3.0. Violating them yields plausible-looking but wrong ima
 14. **Memory:** RGBA uint8 ≈4 B/px; float accumulator ≈16 B/px. Enforce `max_mp`, use
     [`np.memmap`](https://numpy.org/doc/stable/reference/generated/numpy.memmap.html)
     or split output for huge graphs, warn near `D_max`.
+
+15. **Overlays are captured.** Both screenshot paths include draw handlers, so the
+    capture-area preview sets `preview.suppress` before the first prepare redraw and
+    clears it when the job reaches `done`, including a failure before the snapshot exists
+    (report §5 item 39). Draw in `POST_PIXEL` with the region pixel matrix; `POST_VIEW`
+    inherits the node canvas transform. Base the outline on the live
+    `collect_rects`/`measure_view` union, not on a rebuilt export rect. Draw dashes as
+    quads, not `LINE_STRIP`, and give `batch_for_shader` one tuple per vertex: a flat float
+    list becomes a scalar attribute and the overlay silently disappears.
+    [`blf.size`](https://docs.blender.org/api/current/blf.html) takes `(font, size)` on 5.x
+    and `(font, size, dpi)` on 4.2–5.1; probe the signature once.
 
 ## 6. Coding conventions
 

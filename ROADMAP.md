@@ -14,29 +14,12 @@ restate them.
 
 ## Now
 
-### Capture-area preview — feature, `1.6.0`
-
-**Goal:** see exactly what will be captured, including padding, before a long export starts.
-
-**Why now:** the bounds and pixel estimate are already computed for the panel, so the change
-is presentation only, and a mis-framed run costs minutes and a second run.
-
-**Exit:**
-
-- the outline matches the exported rectangle for both scopes and for zero and non-zero
-  padding: the drawn rect equals the computed bounds, and the PNG is
-  `ceil(content) + 2 * padding`;
-- the overlay never reaches the captured pixels: exports with the toggle on and off are
-  identical, with `holes = 0` in both;
-- the draw handler is removed on unregister and does not leak across areas or exports;
-- state restore and undo neutrality are unchanged.
-
-**Cost:** a draw handler, a toggle and its restore, and a geometry test; the pixel maths does
-not change.
+Empty. The 1.6.0 capture-area preview shipped; the next unit is chosen from `Backlog`
+when it earns a goal and a checkable exit.
 
 ## Next
 
-Empty. The unit after the preview is chosen from `Backlog` when the preview ships.
+Empty. The unit after the preview is chosen from `Backlog` when it earns a slot.
 
 ## Backlog
 

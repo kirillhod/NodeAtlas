@@ -5,18 +5,18 @@ from __future__ import annotations
 
 import bpy
 
-from . import bounds, capture, operators, preferences
+from . import bounds, capture, operators, preferences, preview
 from .log import get_logger
 
 log = get_logger()
 
-__version__ = "1.5.1"
+__version__ = "1.6.0"
 __author__ = "kirillhod"
 
 bl_info = {
     "name": "Node Atlas",
     "author": "kirillhod",
-    "version": (1, 5, 1),
+    "version": (1, 6, 0),
     "blender": (4, 2, 0),
     "location": "Node Editor > Sidebar > Node Atlas",
     "description": "Export any node tree as one high-resolution PNG",
@@ -28,42 +28,8 @@ _keymaps: list[tuple[object, object]] = []
 
 
 def _estimate(context, prefs):
-    parts = capture.get_node_context(context)
-    if parts is None:
-        return None
-    _window, area, space, region = parts
-    tree = space.edit_tree
-    if tree is None:
-        return None
-    bottom = capture.bottom_ui_height(area)
-    height = capture.effective_height(region, bottom)
-    if height < 64:
-        return None
-    try:
-        system = context.preferences.system.ui_scale
-        view = context.preferences.view.ui_scale
-        ui_prop = context.preferences.view.bl_rna.properties["ui_scale"]
-        max_view = float(getattr(ui_prop, "hard_max", 6.0))
-        effective, planned_view, _max_effective = bounds.planned_scale(
-            prefs.output_dpi, system, view, max_view
-        )
-        target, used_dpi, _dpi_max = bounds.target_upp(prefs.output_dpi, effective)
-        metrics = bounds.ViewMetrics(
-            upp=target, k=1.0 / target, s=effective / target, ox=0.0, oy=0.0
-        )
-        nodes = tree.nodes
-        if prefs.scope == "SELECTED":
-            keep = bounds.selected_node_names(tree)
-            nodes = [node for node in tree.nodes if node.name in keep]
-        rects = bounds.collect_rects(nodes, metrics, bounds.visual_margin(planned_view))
-        content = bounds.union_rects(rects)
-        return bounds.compute_layout(
-            content, region.width, height,
-            bounds.padding_px(prefs.padding, used_dpi),
-            context.preferences.view.ui_scale,
-        )
-    except (ValueError, RuntimeError):
-        return None
+    """Return the shared panel/overlay estimate (see ``preview.estimate``)."""
+    return preview.estimate(context, prefs)
 
 
 class NODE_PT_node_atlas(bpy.types.Panel):
@@ -110,6 +76,7 @@ class NODE_PT_node_atlas(bpy.types.Panel):
         box.prop(prefs, "scope", expand=True)
         if prefs.scope == "SELECTED":
             box.prop(prefs, "keep_links")
+        box.prop(prefs, "show_capture_area")
 
         parts = capture.get_node_context(context)
         if parts is not None:
@@ -244,9 +211,11 @@ def register():
     bpy.types.TOPBAR_MT_file_export.append(_draw_menu)
     bpy.types.NODE_HT_header.append(_draw_header)
     _register_keymap()
+    preview.register()
 
 
 def unregister():
+    preview.unregister()
     _unregister_keymap()
     bpy.types.NODE_HT_header.remove(_draw_header)
     bpy.types.TOPBAR_MT_file_export.remove(_draw_menu)
