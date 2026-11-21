@@ -133,21 +133,20 @@ def setup():
     prefs.max_mp = 100.0
     prefs.scope = "CURRENT"
     prefs.hide_ui = True
-    prefs.restore_ui = True
     prefs.deterministic = True
 
 
 def save_panel():
     window, area, region = node_area()
     prefs = bpy.context.preferences.addons["node_atlas"].preferences
-    prefs.default_dir = ""
+    prefs.default_dir = r"D:\Exports" + os.sep
     prefs.filename_pattern = "{blend}_{tree}_{date}.png"
     prefs.output_dpi = 128
     prefs.padding = 20
     prefs.max_mp = 200.0
     prefs.scope = "CURRENT"
     prefs.enable_shortcut = False
-    prefs.show_advanced = False
+    prefs.show_advanced = True
     with bpy.context.temp_override(window=window, area=area, region=region):
         bpy.ops.screen.screen_full_area(use_hide_panels=False)
     window, area, region = node_area()
@@ -164,6 +163,9 @@ def save_panel():
     capture.redraw(window, area, region)
     bpy.context.preferences.view.ui_scale = 1.0
     capture.node_view_all(window, area, region, space)
+    from node_atlas import preview
+
+    preview.suppress = True
     with bpy.context.temp_override(window=window, area=area, region=region):
         bpy.ops.wm.redraw_timer(type="DRAW_WIN_SWAP", iterations=1)
 
@@ -184,12 +186,12 @@ def save_panel():
     if array.size != width * height * 4:
         fail(f"unexpected panel screenshot size: {array.size}")
 
-    # Bottom-up screenshot: keep the top of the window and the Node Atlas
-    # sidebar at native resolution so the controls stay legible in the README.
-    left = max(0, ui_region.x - 10)
+    # Bottom-up screenshot: keep the top of the sidebar and the Node Atlas
+    # controls at native resolution so the controls stay legible in the README.
+    left = max(0, ui_region.x)
     right = min(width, ui_region.x + ui_region.width)
-    top = height
-    bottom = max(0, height - 620)
+    top = min(height, ui_region.y + ui_region.height)
+    bottom = max(0, top - 700)
     crop = array.reshape(height, width, 4)[bottom:top, left:right]
     from node_atlas import stitch
 

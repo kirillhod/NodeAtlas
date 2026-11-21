@@ -75,7 +75,6 @@ def setup():
     prefs.max_mp = 100.0
     prefs.scope = "CURRENT"
     prefs.hide_ui = True
-    prefs.restore_ui = True
     prefs.deterministic = True
     bpy.context.preferences.view.ui_scale = 6.0
     with bpy.context.temp_override(window=window, area=area, region=region):

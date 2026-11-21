@@ -150,10 +150,11 @@ For a capture or stitch change also confirm:
 - the undo sentinel is unchanged.
 
 `test_export.py` and `test_large.py` check the padding and opaque pixels from the
-final PNG through `tests/gui/png_content.py`; `test_ui_options.py` covers the
-`hide_ui`/`restore_ui` branches. For the capture-area preview, `test_preview.py` requires
-the drawn rectangle to equal the computed bounds and compares two exports with the overlay
-on and off: they must match pixel for pixel.
+final PNG through `tests/gui/png_content.py`; `test_ui_options.py` covers the `hide_ui`
+branch, and both visible and hidden exports must restore the full editor state. For the
+capture-area preview, `test_preview.py` requires the drawn rectangle to equal the computed
+bounds and compares two exports with the overlay on and off: they must match pixel for
+pixel.
 
 Only view an image when a visual decision (padding, feather, theme, text) depends on it;
 an image costs thousands of tokens.

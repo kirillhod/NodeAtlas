@@ -72,7 +72,6 @@ def setup():
     prefs.max_mp = 100.0
     prefs.scope = "CURRENT"
     prefs.hide_ui = True
-    prefs.restore_ui = True
     prefs.deterministic = True
     prefs.show_capture_area = True
 

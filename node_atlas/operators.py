@@ -39,7 +39,6 @@ class ExportSettings:
     max_mp: float
     scope: str
     hide_ui: bool
-    restore_ui: bool
     deterministic: bool
     copy_only: bool = False
     keep_links: bool = False
@@ -136,7 +135,6 @@ def settings_from_prefs(prefs, filepath, copy_only: bool = False) -> ExportSetti
         max_mp=float(prefs.max_mp),
         scope=prefs.scope,
         hide_ui=bool(prefs.hide_ui),
-        restore_ui=bool(prefs.restore_ui),
         deterministic=bool(prefs.deterministic),
         copy_only=copy_only,
         keep_links=bool(prefs.keep_links),
@@ -452,15 +450,13 @@ class ExportJob:
         self._status("NodeAtlas: restoring UI…")
         if self.snapshot is not None:
             snapshot = self.snapshot
-            # Drop the per-tile selection before restoring, so a run with
-            # restore_ui off leaves the tree cleared instead of half-selected.
+            # Clear the per-tile selection first; restore_snapshot then
+            # reapplies the saved selection.
             try:
                 capture.clear_selection(self.tree)
             except Exception:
                 log.warning("Could not clear the capture selection", exc_info=True)
-            errors, warnings = capture.restore_snapshot(
-                snapshot, restore_ui=self.settings.restore_ui
-            )
+            errors, warnings = capture.restore_snapshot(snapshot)
             self.warnings.extend(warnings)
             if errors:
                 self.error = (self.error + "\n" if self.error else "") + "\n".join(errors)
@@ -760,7 +756,6 @@ class NODE_ATLAS_OT_export_as(bpy.types.Operator, ExportHelper):
         box.prop(prefs, "max_mp")
         box.prop(prefs, "scope", expand=True)
         box.prop(prefs, "hide_ui")
-        box.prop(prefs, "restore_ui")
         box.prop(prefs, "deterministic")
 
     def execute(self, context):

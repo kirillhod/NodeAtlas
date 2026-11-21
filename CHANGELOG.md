@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Remove the **Restore UI** preference. Every export now restores the editor flags and
+  selection, including runs that hide the UI during capture, so the editor can no longer
+  be left with hidden panels or a cleared selection.
+
 ## 1.6.0
 
 - Add a capture-area preview. The Node Editor draws a dashed rectangle around the graph

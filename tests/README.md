@@ -84,9 +84,10 @@ without the option must leave the right padding empty, and the run with it must 
 link into that band. `test_texture.py` covers the Texture Node Editor. `test_longlink.py` exports a
 link that spans five tiles and requires its median brightness to stay within 10 % of its
 peak, with selection, the theme `wire_select` alpha and undo restored.
-`test_ui_options.py` covers `hide_ui` and `restore_ui`; `test_export.py`, `test_large.py`
-and `test_padding.py` also run `png_content.check_capture` for opaque pixels, real padding
-and non-empty content. A link may cross a padding band, so a bright strip counts as a leak
+`test_ui_options.py` covers `hide_ui`: both the visible and hidden exports must restore the
+full editor state. `test_export.py`, `test_large.py` and `test_padding.py` also run
+`png_content.check_capture` for opaque pixels, real padding and non-empty content.
+A link may cross a padding band, so a bright strip counts as a leak
 only when it covers most of the band; the outermost 2 px are always checked.
 `test_padding.py` exports at 192 DPI and requires the 20-unit padding to become 40 px.
 `test_preview.py` zooms until the capture-area overlay is visible, requires equal padding

@@ -1,13 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Hide UI / restore UI option GUI test.
+"""Hide UI option GUI test.
 
-Two cases in one session:
-
-1. ``hide_ui=False`` with ``restore_ui=True``: the editor flags and selection
-   must be unchanged after the export.
-2. ``hide_ui=True`` with ``restore_ui=False``: the tree, pin, scale and view are
-   restored, but the UI flags and selection are deliberately left in the export
-   state.
+Two cases in one session: ``hide_ui=False`` and ``hide_ui=True``. Both must
+restore the editor flags, selection, active node, tree and view; the second
+case must also call ``capture.hide_ui`` at least once.
 """
 
 from __future__ import annotations
@@ -32,7 +28,6 @@ import png_content
 OUT = tempfile.mkdtemp(prefix="nodeatlas_ui_")
 FIXTURE = os.path.join(ROOT, "tests", "fixtures", "scene_both.blend")
 PADDING = 20
-UI_KEYS = ("gizmo", "context_path", "backdrop")
 state = {"ticks": 0, "case": 0, "before": None, "output": None, "found": None,
          "hide_calls": 0, "expect_hide": False, "results": {}}
 
@@ -91,7 +86,7 @@ def set_ui(space):
         space.show_backdrop = True
 
 
-def configure(hide_ui, restore_ui, name):
+def configure(hide_ui, name):
     area, region = node_area()
     window = bpy.context.window_manager.windows[0]
     if area is None:
@@ -123,7 +118,6 @@ def configure(hide_ui, restore_ui, name):
     prefs.max_mp = 100.0
     prefs.scope = "CURRENT"
     prefs.hide_ui = hide_ui
-    prefs.restore_ui = restore_ui
     prefs.deterministic = True
     state["expect_hide"] = hide_ui
     state["hide_calls"] = 0
@@ -159,25 +153,13 @@ def finish_case():
         fail(f"hide_ui=False still called capture.hide_ui {state['hide_calls']} times")
     after = snapshot()
     before = state["before"]
-
-    if state["case"] == 0:
-        if after != before:
-            fail(f"hide_ui=False changed the editor state: {before} != {after}")
-        state["results"] = {"visible": {"size": size, "state": "unchanged"}}
-    else:
-        for key in ("areas", "tree", "tree_type", "pin", "ui_scale", "smooth_view"):
-            if after[key] != before[key]:
-                fail(f"restore_ui=False changed {key}: {before[key]!r} != {after[key]!r}")
-        if after["selected"]:
-            fail(f"restore_ui=False restored the selection: {after['selected']}")
-        if after["active"] is not None:
-            fail(f"restore_ui=False restored the active node: {after['active']}")
-        if all(after[key] == before[key] for key in UI_KEYS):
-            fail("restore_ui=False restored the UI flags")
-        state["results"]["hidden"] = {
-            "size": size,
-            "state": "tree restored, UI left hidden",
-        }
+    if after != before:
+        fail(
+            f"hide_ui={state['expect_hide']} changed the editor state: "
+            f"{before} != {after}"
+        )
+    key = "hidden" if state["expect_hide"] else "visible"
+    state["results"][key] = {"size": size, "state": "restored"}
     return state["case"]
 
 
@@ -194,7 +176,7 @@ def tick():
                 state["found"] = None
                 if state["case"] == 1:
                     state["before"], state["output"] = configure(
-                        True, False, "ui_hidden.png"
+                        True, "ui_hidden.png"
                     )
                     start_export()
                     return 0.1
@@ -226,7 +208,7 @@ try:
 
     capture.hide_ui = tracked_hide_ui
     bpy.ops.wm.open_mainfile(filepath=FIXTURE)
-    state["before"], state["output"] = configure(False, True, "ui_visible.png")
+    state["before"], state["output"] = configure(False, "ui_visible.png")
     start_export()
 except Exception:
     fail("could not start the hide_ui=False export:\n" + traceback.format_exc())

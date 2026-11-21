@@ -622,7 +622,7 @@ def _restore_tree_path(
     )
 
 
-def restore_snapshot(snapshot: EditorSnapshot, restore_ui: bool = True):
+def restore_snapshot(snapshot: EditorSnapshot):
     """Best-effort restoration. Returns (errors, warnings)."""
     restore_link_highlight(snapshot.link_highlight_alpha)
     errors: list[str] = []
@@ -647,8 +647,6 @@ def restore_snapshot(snapshot: EditorSnapshot, restore_ui: bool = True):
         errors.append(f"tree/pin restore failed: {exc}")
 
     def restore_ui_state(target_space):
-        if not restore_ui:
-            return
         with bpy.context.temp_override(window=snapshot.window):
             _restore_attr(target_space, "show_region_header", snapshot.header)
             _restore_attr(target_space, "show_region_ui", snapshot.ui)
@@ -658,7 +656,7 @@ def restore_snapshot(snapshot: EditorSnapshot, restore_ui: bool = True):
             _restore_attr(target_space, "show_backdrop", snapshot.backdrop)
 
     def restore_selection():
-        if not restore_ui or snapshot.tree is None:
+        if snapshot.tree is None:
             return
         try:
             for node in snapshot.tree.nodes:

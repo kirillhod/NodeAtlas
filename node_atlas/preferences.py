@@ -138,11 +138,6 @@ class NodeAtlasPreferences(bpy.types.AddonPreferences):
         description="Hide headers, toolbars, gizmos and the context path",
         default=True,
     )
-    restore_ui: bpy.props.BoolProperty(
-        name="Restore UI",
-        description="Restore the editor state after export (recommended)",
-        default=True,
-    )
     deterministic: bpy.props.BoolProperty(
         name="Deterministic View",
         description="Prime the view with View All before zooming; makes repeated exports identical",

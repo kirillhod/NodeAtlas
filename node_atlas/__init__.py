@@ -116,10 +116,9 @@ class NODE_PT_node_atlas(bpy.types.Panel):
             icon="TRIA_DOWN" if prefs.show_advanced else "TRIA_RIGHT",
         )
         if prefs.show_advanced:
-            box.prop(prefs, "default_dir")
-            box.prop(prefs, "filename_pattern")
+            box.prop(prefs, "default_dir", text="Folder")
+            box.prop(prefs, "filename_pattern", text="Filename")
             box.prop(prefs, "hide_ui")
-            box.prop(prefs, "restore_ui")
             box.prop(prefs, "deterministic")
             box.prop(prefs, "show_header_button")
             box.prop(prefs, "enable_shortcut")

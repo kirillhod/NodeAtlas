@@ -84,7 +84,6 @@ def setup():
     prefs.max_mp = 150.0
     prefs.scope = "CURRENT"
     prefs.hide_ui = True
-    prefs.restore_ui = True
     prefs.deterministic = True
     return snapshot()
 

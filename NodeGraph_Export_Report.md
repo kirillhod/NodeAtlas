@@ -421,7 +421,7 @@ class NODE_PT_node_atlas(bpy.types.Panel):
   - **Export As…** — file browser (`ExportHelper`);
   - compact settings: **Output DPI** (96 = `D 1.0`), **Padding (px)**, **Max MP**, **Scope** (current tree / selected nodes), **Background** (theme / solid color);
   - an estimated output size line, and a warning when `output_dpi` exceeds `D_max = S/0.43311`;
-  - an expandable **Advanced** section: `PAD`/`OVERLAP` scaling, deterministic mode (`view_all`), hide/restore UI, save current view, default directory, filename pattern.
+  - an expandable **Advanced** section: `PAD`/`OVERLAP` scaling, deterministic mode (`view_all`), hide UI during capture, save current view, default directory, filename pattern.
 - The panel `poll()` returns true only when `context.space_data` is a `SpaceNodeEditor` with an `edit_tree`, so it never appears in unrelated editors.
 - The user opens it with `N` (standard sidebar shortcut); the tab name “Node Atlas” is visible next to Item/Tool.
 
@@ -435,7 +435,7 @@ class NODE_PT_node_atlas(bpy.types.Panel):
 
 **4. Keyboard shortcut.** Register `Ctrl+Shift+E` in the `Node Editor` keymap for the quick export, with a preference to enable/disable it and to choose another shortcut later. The keymap entry is added on `register()` and removed on `unregister()` so it does not leak.
 
-**5. Global defaults (AddonPreferences).** `Edit > Preferences > Add-ons > Node Atlas` stores `output_dpi` (96), `padding` (20), `max_mp`, a default output directory (empty asks for a path on every quick export), filename pattern (`{blend}_{tree}_{date}.png`; `{tree}` resolves to the owning material/world/object/scene/texture, `{datablock}` to the tree name, `{type}` to the tree type), `hide_ui`, `restore_ui`, `deterministic`, `copy_to_clipboard`, `background`, and whether to show the header button. The panel shows these values and can override them for one run; a “Use defaults” button resets the overrides.
+**5. Global defaults (AddonPreferences).** `Edit > Preferences > Add-ons > Node Atlas` stores `output_dpi` (96), `padding` (20), `max_mp`, a default output directory (empty asks for a path on every quick export), filename pattern (`{blend}_{tree}_{date}.png`; `{tree}` resolves to the owning material/world/object/scene/texture, `{datablock}` to the tree name, `{type}` to the tree type), `hide_ui`, `deterministic`, `copy_to_clipboard`, `background`, and whether to show the header button. The panel shows these values and can override them for one run; a “Use defaults” button resets the overrides.
 
 **6. Progress, cancel, result.** The operator runs as a timer-driven modal job: the status bar shows “Capturing tile i/n”, `Esc` sets a cancel flag, and the `finally` block restores the UI. On success, report the output path, pixel size, and elapsed time; optionally open the PNG in the Image Editor. On error, show a popup with the exception and confirm that the UI was restored.
 
