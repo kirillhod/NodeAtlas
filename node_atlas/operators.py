@@ -194,6 +194,9 @@ class ExportJob:
         self.region_width = 0
         self.region_height = 0
         self.selection_margin_px = 0.0
+        self.content_left = 0.0
+        self.content_top = 0.0
+        self.content_k = 1.0
         self.link_selection_fix = False
         self.layout = None
         self.tiles = {}
@@ -383,6 +386,9 @@ class ExportJob:
         self.layout = layout
         self.region_width = region.width
         self.region_height = height
+        self.content_left = min(bounds.absolute_location(node)[0] for node in nodes)
+        self.content_top = max(bounds.absolute_location(node)[1] for node in nodes)
+        self.content_k = metrics.k
         self.selection_margin_px = layout.pad + bounds.visual_margin(view_scale)
         self.tiles = {}
         self.index = 0
@@ -402,7 +408,11 @@ class ExportJob:
         if self.link_selection_fix:
             capture.select_outside_view(
                 self.tree,
-                self.region.view2d,
+                self.content_left,
+                self.content_top,
+                self.content_k,
+                self.layout,
+                (i, j),
                 self.region_width,
                 self.region_height,
                 self.selection_margin_px,

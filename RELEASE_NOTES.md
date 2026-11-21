@@ -1,4 +1,4 @@
-# NodeAtlas 1.5.0
+# NodeAtlas 1.5.1
 
 **Released:** 21 November 2026
 
@@ -8,14 +8,13 @@ It captures the Node Editor in overlapping tiles and stitches them with
 [NumPy](https://numpy.org/doc/stable/); nothing is re-rendered and no external
 dependencies are needed.
 
-## What's new in 1.5.0
+## What's new in 1.5.1
 
-- **Selected nodes keep their connections.** A new **Keep Links to Connected Nodes** toggle
-  keeps the links between the selection and the nodes directly attached to it, so the
-  export shows where the selection is fed from and where it feeds instead of links that
-  end at the selection's edge. Only the selected nodes define the image area; the
-  connected nodes outside it are cropped. The toggle is shown only in the Selected Nodes
-  scope, is off by default, and leaves the original tree untouched.
+- **Reroute nodes near a tile edge no longer look selected.** A node that was already in
+  the frame could be marked as outside the view for one tile and drawn with the white
+  selection outline; the small reroute dots made it easy to see. The tile selection now
+  uses the anchored tile position, so the outline appears only on nodes that are really
+  outside the image. Connections that cross tiles keep full strength.
 
 ## Features
 

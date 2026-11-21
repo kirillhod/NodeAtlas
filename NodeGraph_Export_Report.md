@@ -289,6 +289,10 @@ Only items verified on a live Blender 5.3.0 or hard platform constraints are lis
     endpoint node is selected, so the add-on selects every node outside the current tile
     (a node outside the view cannot change its pixels) and mutes the `wire_select` alpha,
     which Blender otherwise blends into selected links (160→227 RGB without the mute).
+    1.5.1 derives the per-tile box from the anchored layout (`margin`, `step_x`,
+    `step_y`) instead of `View2D.region_to_view`, which can lag one pan: a node already
+    inside a tile was selected and captured with its white selection outline.
+    `test_select_outside_tiles` covers the tile geometry; the long-link ratio stays 1.000.
     Result on 5.3: ratio 1.000; the fixed and unfixed exports differ only inside the link
     band (7806 px, rows 80-108 of a 56-136 band) and no node pixel changes. On 4.2.23 and
     4.5.9 a 1-px link's peak pixel varies by up to 16 % along its length from sub-pixel AA

@@ -1,15 +1,16 @@
 # NodeAtlas QA report
 
-**Version:** 1.5.0<br>
+**Version:** 1.5.1<br>
 **Date:** 21 November 2026<br>
 **Platforms:** Windows, GUI sessions only
 
-> **1.5.0.** Selected Nodes can keep the links to directly connected nodes: the filtered
-> copy also holds the immediate neighbours, while the captured rectangle still comes from
-> the selection only. The Compositor works on Blender 4.2–5.3 with the tree left unpinned
-> on 4.2/4.5, and selected-only compositor export needs 5.1+.
+> **1.5.1.** Fixes a reroute near a tile edge being captured with the white selection
+> outline in Selected Nodes: the per-tile box now comes from the anchored layout instead of
+> the lagging `View2D.region_to_view` mapping. Selected Nodes can keep the links to directly
+> connected nodes (1.5.0), and the Compositor works on 4.2–5.3 with the tree left unpinned
+> on 4.2/4.5.
 >
-> Full source matrix for 1.5.0: **34/34 GUI runs and 20/20 unit tests on each of
+> Full source matrix for 1.5.1: **34/34 GUI runs and 21/21 unit tests on each of
 > Blender 4.2.23, 4.5.9, 5.1.2, 5.2.4 and 5.3.0**. `test_artifact.py` results and the
 > artifact hash are in [Packaging](#packaging).
 >
@@ -103,6 +104,12 @@ window, exports a fixture, validates the PNG and editor restoration, then exits.
 | `test_clipboard.py` | PASS, OS clipboard checked | PASS | PASS | PASS | PASS |
 | `test_path.py` | PASS, empty dir refused | PASS | PASS | PASS | PASS |
 
+1.5.1: **34/34 source GUI runs passed on each of the five versions** (170/170 total), and
+the unit suite is 21/21 on each version. The new unit case,
+`test_select_outside_tiles`, checks the tile geometry used by the per-tile link selection;
+`test_large.py` gained a wider band threshold because a full-strength link may cross the
+padding band. `test_longlink.py` still reports 1.000, so the fade fix is unchanged.
+
 1.5.0: **34/34 source GUI runs passed on each of the five versions** (170/170 total), and
 the unit suite is 20/20. `test_selected_links.py` is the new case: it exports one selection
 with and without Keep Links to Connected Nodes, requires the frame to stay within 2 px of
@@ -149,7 +156,15 @@ without a clamp warning.
 
 - `blender --command extension validate node_atlas`: PASS.
 - `blender --command extension build --source-dir node_atlas --output-dir dist`:
-  produces `node_atlas-1.5.0.zip` with the manifest and the seven package modules.
+  produces `node_atlas-1.5.1.zip` with the manifest and the seven package modules.
+- **1.5.1 artifact:** build and `extension validate` PASS; the zip contains only the
+  manifest and the seven package modules, with no `__pycache__`. The official installer
+  (`install-file -r user_default -e`) installed it into an isolated `BLENDER_USER_EXTENSIONS`
+  profile on 4.2.23, 4.5.9, 5.1.2, 5.2.4 and 5.3.0, and `test_artifact.py` exported a PNG
+  from `bl_ext.user_default.node_atlas` on each. The classic folder copied into an isolated
+  `scripts/addons` profile enabled `node_atlas` and exported on all five.
+- `node_atlas-1.5.1.zip` SHA256:
+  `60585F4B766FE5124835A3E099A7A369C5C47928D977DCFFA9F288D8BA2F12DA`.
 - **1.5.0 artifact:** build and `extension validate` PASS; the zip contains only the
   manifest and the seven package modules, with no `__pycache__`. The official installer
   (`install-file -r user_default -e`) installed it into an isolated `BLENDER_USER_EXTENSIONS`
@@ -242,6 +257,12 @@ without a clamp warning.
 8. **Copy to Clipboard** relies on Blender's image clipboard operator. Very large images
    may be refused by the OS or take a long time to paste; normal file exports are
    unaffected.
+9. **Selected outline on edge nodes (fixed in 1.5.1).** The per-tile selection used
+   `View2D.region_to_view`, which could lag one pan behind; a reroute already inside a tile
+   was marked selected and captured with the white selection outline, most visible on the
+   small reroute dots. The selection now derives the tile box from the anchored layout;
+   `test_select_outside_tiles` checks the geometry and the long-link test still reports
+   1.000 after the change.
 
 ## Not in scope for 1.0.0
 

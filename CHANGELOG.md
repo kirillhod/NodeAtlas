@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5.1
+
+- Fix reroute nodes near a tile edge being exported with the white selection outline in
+  Selected Nodes. The per-tile selection now takes the tile position from the anchored
+  layout instead of the editor's view mapping, which could lag one pan behind and mark an
+  already visible node as selected. Connections that cross tiles keep full strength.
+
 ## 1.5.0
 
 - Add **Keep Links to Connected Nodes** for the Selected Nodes scope. The export keeps the

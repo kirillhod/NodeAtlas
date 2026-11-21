@@ -225,8 +225,11 @@ def clear_selection(tree) -> None:
         pass
 
 
-def select_outside_view(tree, v2d, width: int, height: int, margin_px: float) -> None:
-    """Select every node that cannot contribute pixels to the current view.
+def select_outside_view(
+    tree, content_left: float, content_top: float, k: float, layout,
+    tile: tuple[int, int], width: int, height: int, margin_px: float,
+) -> None:
+    """Select every node that cannot contribute pixels to the current tile.
 
     Blender fades a connection to 5 % once the nearer of its two sockets is
     about a tenth of the view width away from the view (report §5 item 17), so
@@ -236,26 +239,30 @@ def select_outside_view(tree, v2d, width: int, height: int, margin_px: float) ->
     own outline, its draw order and the tint of its links, which the export
     mutes with :func:`mute_link_highlight`.
 
+    The tile position comes from the anchored layout, not from
+    ``View2D.region_to_view``: that mapping can lag one pan behind, which
+    selected a node near a tile edge while it was already captured and drew the
+    white selection outline. The anchor places the content top-left
+    ``layout.margin`` pixels inside the region, and :func:`pan` moves it by exact
+    integer steps, so this geometry is stable.
+
     *margin_px* covers PAD and the outline drawn outside ``Node.dimensions``,
     so a node that could leave any pixel in the captured tile stays unselected.
     """
-    upp = measure_upp(v2d)
-    margin = max(0.0, float(margin_px)) / upp
-    x0, y0 = v2d.region_to_view(0, 0)
-    x1, y1 = v2d.region_to_view(width, height)
-    left = min(x0, x1) - margin
-    right = max(x0, x1) + margin
-    bottom = min(y0, y1) - margin
-    top = max(y0, y1) + margin
+    margin = max(0.0, float(margin_px))
+    step_x = layout.step_x
+    step_y = layout.step_y
     for node in tree.nodes:
         x, y = absolute_location(node)
-        node_width = node.dimensions.x
-        node_height = node.dimensions.y
+        left = layout.margin + (x - content_left) * k - tile[0] * step_x
+        top = height - layout.margin - (content_top - y) * k + tile[1] * step_y
+        right = left + node.dimensions.x * k
+        bottom = top - node.dimensions.y * k
         visible = (
-            x + node_width >= left
-            and x <= right
-            and y >= bottom
-            and y - node_height <= top
+            right >= -margin
+            and left <= width + margin
+            and top >= -margin
+            and bottom <= height + margin
         )
         selected = not visible
         if node.select != selected:

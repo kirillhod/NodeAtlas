@@ -552,6 +552,47 @@ def test_link_neighbour_names():
     )
 
 
+def test_select_outside_tiles():
+    from types import SimpleNamespace
+
+    from node_atlas import capture
+
+    class Dim:
+        def __init__(self, x, y):
+            self.x = x
+            self.y = y
+
+    class Node:
+        def __init__(self, name, x, y, width=100, height=50):
+            self.name = name
+            self.location = (x, y)
+            self.parent = None
+            self.dimensions = Dim(width, height)
+            self.select = False
+
+    class Tree:
+        pass
+
+    tree = Tree()
+    inside = Node("inside", 0, 0)
+    near = Node("near", -120, 0)
+    far = Node("far", -300, 0)
+    low = Node("low", 0, -900)
+    tree.nodes = [inside, near, far, low]
+    layout = SimpleNamespace(margin=20, step_x=800, step_y=600)
+
+    capture.select_outside_view(tree, 0.0, 0.0, 1.0, layout, (0, 0), 1000, 800, 20)
+    check(not inside.select, "node inside the first tile stays unselected")
+    check(not near.select, "node within the margin stays unselected")
+    check(far.select, "node beyond the margin is selected")
+    check(low.select, "node below the first tile is selected")
+
+    tree.nodes = [Node("inside", 0, 0), Node("visible", 900, -900)]
+    capture.select_outside_view(tree, 0.0, 0.0, 1.0, layout, (1, 1), 1000, 800, 20)
+    check(tree.nodes[0].select, "top node is outside the lower-right tile")
+    check(not tree.nodes[1].select, "lower-right node is inside its tile")
+
+
 def main():
     tests = [
         test_view_metrics,
@@ -567,6 +608,7 @@ def main():
         test_disk_full,
         test_selected_node_names,
         test_link_neighbour_names,
+        test_select_outside_tiles,
         test_filename_sanitization,
         test_render_filename,
         test_tree_owner_name,

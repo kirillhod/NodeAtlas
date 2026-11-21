@@ -15,7 +15,7 @@ blender --background --factory-startup --python tests/unit/test_core.py
 
 Covers view metrics, layout/bounds, density clamping, stitching and memmap spill, PNG
 writing and `pHYs` metadata, save errors, output-path checks, selected-node filtering,
-filename tokens and registration.
+tile selection geometry, filename tokens and registration.
 
 ## Fixtures and GUI tests
 
@@ -84,7 +84,8 @@ link that spans five tiles and requires its median brightness to stay within 10 
 peak, with selection, the theme `wire_select` alpha and undo restored.
 `test_ui_options.py` covers `hide_ui` and `restore_ui`; `test_export.py`, `test_large.py`
 and `test_padding.py` also run `png_content.check_capture` for opaque pixels, real padding
-and non-empty content.
+and non-empty content. A link may cross a padding band, so a bright strip counts as a leak
+only when it covers most of the band; the outermost 2 px are always checked.
 `test_padding.py` exports at 192 DPI and requires the 20-unit padding to become 40 px. The
 commands above are for debugging; they do not run the runner's PNG content check, so use
 the wrapper or the matrix runner when the result is evidence.
