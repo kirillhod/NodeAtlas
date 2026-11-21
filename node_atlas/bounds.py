@@ -48,8 +48,6 @@ class Layout:
     pad: int
     overlap: int
     margin: int
-    content_w: float
-    content_h: float
     grid_x: int
     grid_y: int
     step_x: int
@@ -82,7 +80,11 @@ def measure_view(v2d, ui_scale: float) -> ViewMetrics:
 
 
 def absolute_location(node):
-    """Return frame-aware node position across Blender versions."""
+    """Return the frame-aware node position across Blender versions.
+
+    ``location_absolute`` is missing on some 4.2 node types, so derive the
+    position from ``location`` and the parent chain there (report §4.3).
+    """
     location = getattr(node, "location_absolute", None)
     if location is not None:
         return location.x, location.y
@@ -217,8 +219,6 @@ def compute_layout(
         pad=pad,
         overlap=overlap,
         margin=margin,
-        content_w=content.width,
-        content_h=content.height,
         grid_x=grid_x,
         grid_y=grid_y,
         step_x=step_x,

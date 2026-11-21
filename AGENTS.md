@@ -109,7 +109,8 @@ Verified on Blender 5.3.0. Violating them yields plausible-looking but wrong ima
    right, bottom = left + node.dimensions.x * k, top - node.dimensions.y * k
    ```
 
-   Use `location_absolute` and `dimensions` (not `height`); bounds are zero before the
+   Use `location_absolute` (some 4.2 node types lack it; fall back to summing
+   `location` up the parent chain) and `dimensions` (not `height`); bounds are zero before the
    first draw.
 
 2. **Never assume zoom.** `view2d.reset()` is non-deterministic. Prime with

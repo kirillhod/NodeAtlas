@@ -355,9 +355,7 @@ class ExportJob:
                 f"(limit {dpi_max:.0f})"
             )
 
-        if self.settings.deterministic:
-            pass  # set_zoom primes with View All
-        else:
+        if not self.settings.deterministic:
             capture.view_op(window, area, region, "reset")
         achieved = capture.set_zoom(
             window, area, region, space, target, region.width, height,
@@ -431,9 +429,8 @@ class ExportJob:
 
     def _stitch(self) -> None:
         self._status("NodeAtlas: stitching…")
-        self.final, _holes = stitch.stitch_tiles(
+        self.final = stitch.stitch_tiles(
             self.tiles, self.layout, self.region_width, self.region_height,
-            self.padding_px,
         )
         self.output_size = (self.final.shape[1], self.final.shape[0])
         self.tiles = {}
@@ -477,13 +474,6 @@ class ExportJob:
         self.cancelled = True
         self.stage = "restore" if self.snapshot is not None else "done"
 
-    def fail(self, text: str) -> None:
-        self.error = text
-        if self.snapshot is not None and self.stage not in {"restore", "done"}:
-            self.stage = "restore"
-        elif self.stage not in {"restore", "done"}:
-            self.stage = "done"
-
     def step(self) -> bool:
         handlers = {
             "prepare": self._prepare,
@@ -515,7 +505,7 @@ class ExportJob:
             preview.suppress = False
         return self.stage == "done"
 
-    def finish(self, operator=None) -> bool:
+    def finish(self) -> bool:
         self._status(None)
         if self.error:
             last = self.error.strip().splitlines()[-1] if self.error.strip() else "unknown error"
@@ -543,8 +533,6 @@ class ExportJob:
                 self.message += ". " + "; ".join(self.warnings)
             ok = True
 
-        if operator is not None:
-            operator.report({level}, self.message)
         if level == "ERROR":
             log.error("%s", self.message)
         elif level == "WARNING":
@@ -587,12 +575,7 @@ def _job_tick():
     job = _current_job
     if job is None:
         return None
-    try:
-        done = job.step()
-    except Exception:
-        job.fail(traceback.format_exc())
-        done = job.step()
-    if not done:
+    if not job.step():
         return 0.01
 
     try:
@@ -701,8 +684,6 @@ class NODE_ATLAS_OT_export_png(bpy.types.Operator):
         if prefs is None:
             self.report({"ERROR"}, "NodeAtlas preferences are unavailable")
             return {"CANCELLED"}
-        if not prefs.default_dir.strip():
-            return bpy.ops.node_atlas.export_as("INVOKE_DEFAULT")
         path = quick_filepath(context, prefs)
         if path is None:
             return bpy.ops.node_atlas.export_as("INVOKE_DEFAULT")

@@ -47,22 +47,15 @@ def _probe_writable(directory: str) -> None:
     """
     import uuid
 
-    for _ in range(16):
-        probe = os.path.join(
-            directory, f".nodeatlas_probe_{os.getpid()}_{uuid.uuid4().hex}"
-        )
-        try:
-            descriptor = os.open(probe, os.O_RDWR | os.O_CREAT | os.O_EXCL, 0o600)
-        except FileExistsError:
-            continue
-        else:
-            os.close(descriptor)
-            try:
-                os.remove(probe)
-            except OSError:
-                pass
-            return
-    raise OSError(errno.EEXIST, "Could not create a probe file", directory)
+    probe = os.path.join(
+        directory, f".nodeatlas_probe_{os.getpid()}_{uuid.uuid4().hex}"
+    )
+    descriptor = os.open(probe, os.O_RDWR | os.O_CREAT | os.O_EXCL, 0o600)
+    os.close(descriptor)
+    try:
+        os.remove(probe)
+    except OSError:
+        pass
 
 
 def check_output_path(filepath: str) -> None:
@@ -125,10 +118,10 @@ def _release_canvas(acc, weights, paths) -> None:
 
 
 def stitch_tiles(
-    tiles, layout, region_w: int, region_h: int, padding: int,
+    tiles, layout, region_w: int, region_h: int,
     memory_limit: int | None = None,
 ):
-    """Stitch cropped bottom-up tiles into final RGBA, returning (image, holes).
+    """Stitch cropped bottom-up tiles into the final RGBA image.
 
     Large canvases spill the float32 accumulator and weights to temporary
     memmaps instead of holding them in RAM.
@@ -181,7 +174,7 @@ def stitch_tiles(
         rgba = np.empty((final_h, final_w, 4), dtype=np.uint8)
         rgba[:, :, :3] = rgb8
         rgba[:, :, 3] = 255
-        return rgba, holes
+        return rgba
     finally:
         _release_canvas(acc, weights, paths)
 
@@ -221,60 +214,40 @@ def _phys_chunk(dpi: float) -> bytes:
     return _png_chunk(b"pHYs", struct.pack(">IIB", ppm, ppm, 1))
 
 
-def _png_has_phys(filepath: str) -> bool:
-    import struct
-
-    with open(filepath, "rb") as handle:
-        if handle.read(8) != b"\x89PNG\r\n\x1a\n":
-            raise OutputError("imbuf wrote an unexpected PNG signature")
-        while True:
-            header = handle.read(8)
-            if len(header) < 8:
-                return False
-            length = struct.unpack(">I", header[:4])[0]
-            tag = header[4:8]
-            if tag == b"pHYs":
-                return True
-            handle.seek(length + 4, 1)
-            if tag == b"IEND":
-                return False
-
-
 def _insert_png_phys(filepath: str, dpi: float) -> None:
     """Set pHYs on a PNG written by imbuf and drop its 72-dpi EXIF block.
 
     imbuf writes a fixed 72-dpi ``pHYs`` and an EXIF resolution block, which
     viewers show instead of the requested density. Rewrite the chunks in a
-    streaming pass so large images are not loaded into memory.
+    streaming pass so large images are not loaded into memory: write one pHYs
+    directly after IHDR and skip every original pHYs and eXIf chunk.
     """
     import struct
 
     if not dpi or dpi <= 0:
         return
-    has_phys = _png_has_phys(filepath)
 
     temp_path = filepath + ".phys"
     try:
         with open(filepath, "rb") as source, open(temp_path, "wb") as target:
-            target.write(source.read(8))
+            signature = source.read(8)
+            if signature != b"\x89PNG\r\n\x1a\n":
+                raise OutputError("imbuf wrote an unexpected PNG signature")
+            target.write(signature)
             while True:
                 header = source.read(8)
                 if len(header) < 8:
                     break
                 length = struct.unpack(">I", header[:4])[0]
                 tag = header[4:8]
-                data = source.read(length)
-                crc = source.read(4)
-                if tag == b"eXIf":
+                if tag in (b"eXIf", b"pHYs"):
+                    source.seek(length + 4, 1)
                     continue
-                if tag == b"pHYs":
+                target.write(header)
+                target.write(source.read(length))
+                target.write(source.read(4))
+                if tag == b"IHDR":
                     target.write(_phys_chunk(dpi))
-                else:
-                    target.write(header)
-                    target.write(data)
-                    target.write(crc)
-                    if tag == b"IHDR" and not has_phys:
-                        target.write(_phys_chunk(dpi))
                 if tag == b"IEND":
                     break
         os.replace(temp_path, filepath)

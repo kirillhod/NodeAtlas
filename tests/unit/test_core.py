@@ -101,7 +101,6 @@ def test_stitch_single_tile():
     content_h = region_h - 2 * (padding + pad)
     layout = bounds.Layout(
         pad=pad, overlap=120, margin=padding + pad,
-        content_w=content_w, content_h=content_h,
         grid_x=1, grid_y=1, step_x=region_w - 120, step_y=region_h - 120,
         canvas_w=region_w, canvas_h=region_h,
         final_w=math.ceil(content_w) + 2 * padding,
@@ -113,18 +112,16 @@ def test_stitch_single_tile():
     tile[:, :, 2] = 30
     tile[:, :, 3] = 255
     tiles = {(0, 0): tile}
-    image, holes = stitch.stitch_tiles(
-        tiles, layout, region_w, region_h, padding
+    image = stitch.stitch_tiles(
+        tiles, layout, region_w, region_h
     )
-    check(holes == 0, "holes")
     check(image.shape == (layout.final_h, layout.final_w, 4), "shape")
     check(image[0, 0, 0] == 10 and image[0, 0, 1] == 20 and image[0, 0, 2] == 30, "pixels")
     check((image[:, :, 3] == 255).all(), "alpha")
 
-    spilled, spilled_holes = stitch.stitch_tiles(
-        tiles, layout, region_w, region_h, padding, memory_limit=0
+    spilled = stitch.stitch_tiles(
+        tiles, layout, region_w, region_h, memory_limit=0
     )
-    check(spilled_holes == 0, "memmap holes")
     check((spilled == image).all(), "memmap output")
 
 

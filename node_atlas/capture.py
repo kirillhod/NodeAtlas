@@ -14,9 +14,9 @@ from .bounds import (
     Layout,
     ViewMetrics,
     absolute_location,
+    collect_rects,
     measure_upp,
     measure_view,
-    node_rect,
 )
 from .log import get_logger
 
@@ -405,8 +405,7 @@ def anchor_first_tile(
     source = tree.nodes if nodes is None else nodes
     for _ in range(12):
         metrics = measure_view(region.view2d, ui_scale)
-        rects = [node_rect(node, metrics, vis) for node in source
-                 if node.dimensions.x > 0 and node.dimensions.y > 0]
+        rects = collect_rects(source, metrics, vis)
         if not rects:
             raise RuntimeError("No drawable nodes after view normalization")
         left = min(rect.left for rect in rects)
@@ -506,21 +505,20 @@ def _capture_tile_legacy(
     return cropped
 
 
-def restore_view(window, snapshot: EditorSnapshot, prime: bool = True):
+def restore_view(window, snapshot: EditorSnapshot):
     area = find_area_by_bbox(window, snapshot) or find_node_area(window)
     if area is None:
-        return None, None
+        return
     space = area.spaces.active
     region = next((item for item in area.regions if item.type == "WINDOW"), None)
     if region is None:
-        return None, None
+        return
 
     bottom_ui = bottom_ui_height(area)
     height = effective_height(region, bottom_ui)
-    if prime:
-        node_view_all(window, area, region, space)
-        # view_all can reset the node-group path; re-enter before restoring zoom.
-        _restore_tree_path(space, snapshot, window, area, region)
+    node_view_all(window, area, region, space)
+    # view_all can reset the node-group path; re-enter before restoring zoom.
+    _restore_tree_path(space, snapshot, window, area, region)
     set_zoom(
         window, area, region, space, snapshot.upp, region.width, height,
         prime=False,
@@ -535,12 +533,6 @@ def restore_view(window, snapshot: EditorSnapshot, prime: bool = True):
             break
         pan(window, area, region, dx, dy)
 
-    achieved_upp = measure_upp(region.view2d)
-    achieved_center = tuple(
-        region.view2d.region_to_view(region.width / 2, region.height / 2)
-    )
-    return achieved_upp, achieved_center
-
 
 def _restore_attr(obj, attr: str, value) -> None:
     if hasattr(obj, attr):
@@ -552,7 +544,7 @@ def _restore_attr(obj, attr: str, value) -> None:
 
 def apply_tree_path(
     space, root_tree, path_trees, pin, tree, tree_type,
-    window=None, area=None, region=None,
+    window, area, region,
 ) -> None:
     """Set the root tree, pin flag and nested group edit path."""
     pin = effective_pin(tree_type, pin)
@@ -562,7 +554,7 @@ def apply_tree_path(
     if root is not None:
         space.node_tree = root
     groups = [group for group in path_trees if group is not root]
-    if groups and window is not None and area is not None and region is not None:
+    if groups:
         # Let the editor switch to the root context before entering groups.
         redraw(window, area, region)
         area = find_node_area(window) or area
@@ -596,10 +588,6 @@ def apply_tree_path(
                 break
             current_tree = space.edit_tree or group
         space.pin = pin
-    elif groups:
-        for group in groups:
-            space.path.append(group)
-        space.pin = pin
     else:
         space.pin = pin
     if pin and space.edit_tree is not tree:
@@ -607,7 +595,7 @@ def apply_tree_path(
 
 
 def _restore_tree_path(
-    space, snapshot: EditorSnapshot, window=None, area=None, region=None,
+    space, snapshot: EditorSnapshot, window, area, region,
 ) -> None:
     """Restore the root tree, pin flag and the nested group edit path."""
     current_path = tuple(
