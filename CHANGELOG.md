@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4.1
+
+- Long connections no longer fade in the middle of a tiled export. Blender dims a link to
+  5 % of its colour when both of its sockets are outside the view, which hit any connection
+  spanning three or more tiles; the export now selects the nodes outside each tile so their
+  links keep full strength, and neutralises the selected-link tint for the run.
+- The selection and the theme tint return to their previous state after the export, and the
+  export still adds no undo step.
+
 ## 1.4.0
 
 - Enable Compositor export on Blender 4.2–5.1. Pinning a compositor tree on 4.2/4.5

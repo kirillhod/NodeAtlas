@@ -89,5 +89,5 @@ The version lives in three places and all must match in the tagged commit:
   (selected-only 5.1+), Linux/macOS untested, temporary DPI boost, nearest-pixel view
   restore.
 - The listing describes the shipped version only: no planned features, no donation links,
-  no Blender branding. Differentiate from Node Tree Screenshot by the tiled
-  high-resolution output and the restoration guarantees.
+  no Blender branding. Name the tiled high-resolution output and the restoration
+  guarantees, not other products.

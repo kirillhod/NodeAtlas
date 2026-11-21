@@ -103,9 +103,9 @@ window, exports a fixture, validates the PNG and editor restoration, then exits.
 | `test_clipboard.py` | PASS, OS clipboard checked | PASS | PASS | PASS | PASS |
 | `test_path.py` | PASS, empty dir refused | PASS | PASS | PASS | PASS |
 
-`test_longlink.py` was added in 1.4.1 and passes on all five versions (median/peak 0.977 on
-4.2.23 and 4.5.9, 1.000 on 5.1.2-5.3.0), at 20000 units on all five, and at 192 DPI on
-5.3.0. The table above is the 1.4.0 matrix.
+1.4.1: **33/33 source GUI runs passed on each of the five versions** (165/165 total).
+`test_longlink.py` is the new case; it also passes at 20000 units on all five and at 192 DPI
+on 5.3.0. The table above is the 1.4.0 matrix.
 
 Re-run for 1.3.6: **29/29 source GUI runs passed on each of the five versions**, including
 `test_1000.py` at 120 dpi and `test_group.py` with `NODEATLAS_TEST_MAXIMIZE=1`.
@@ -150,6 +150,14 @@ without a clamp warning.
   five. Each run used an isolated `BLENDER_USER_CONFIG`/`BLENDER_USER_SCRIPTS`/
   `BLENDER_USER_EXTENSIONS` profile. The zip contains only the manifest and seven package
   modules, with no `__pycache__`.
+- **1.4.1 artifact:** build and `extension validate` PASS; the zip contains only the
+  manifest and the seven package modules, with no `__pycache__`. The official installer
+  (`install-file -r user_default -e`) installed it into an isolated `BLENDER_USER_EXTENSIONS`
+  profile on 4.2.23, 4.5.9, 5.1.2, 5.2.4 and 5.3.0, and `test_artifact.py` exported a PNG
+  from `bl_ext.user_default.node_atlas` on each. The classic folder copied into an isolated
+  `scripts/addons` profile enabled `node_atlas` and exported on all five.
+- `node_atlas-1.4.1.zip` SHA256:
+  `6FD9661FD91B46C79E1C65CE6BB534789FA2727E852C8EBC85F9A8B628F25FE9`.
 - `node_atlas-1.4.0.zip` SHA256:
   `CFEBF1C4BB673A4421A3F19310D60B766482C27EA3D829EE0E7C40CB0B6CDEF8`.
 - 1.3.6 artifact (previous release): `extension validate` PASS; classic install/export

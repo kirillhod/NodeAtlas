@@ -15,13 +15,14 @@ as one high-resolution PNG. It captures the
 [NumPy](https://numpy.org/doc/stable/), and saves through
 [`imbuf`](https://docs.blender.org/api/current/imbuf.html). No re-rendering.
 
-**Status:** 1.4.0. M0–M8 are complete (Shader/Geometry Nodes/Compositor/Texture),
+**Status:** 1.4.1. M0–M8 are complete (Shader/Geometry Nodes/Compositor/Texture),
 the legacy 4.2–5.1 path is validated on Blender 4.2.23, 4.5.9 and 5.1.2, and hardening
 (limits, fault injection, read-only/full-disk output, scaling) is tested on 4.2–5.3.
 The Compositor works on 4.2–5.3: the compositor tree stays unpinned on 4.2/4.5, where
 pinning crashes the next area refresh, and selected-only compositor export needs 5.1+.
-The 1.4.0 artifact ships that behavior and passes 32/32 per version. Packaging and docs
-are complete for Windows; Linux, macOS and a second monitor are untested.
+Connections that cross tile boundaries keep full strength since 1.4.1. The 1.4.1 artifact
+ships that behavior and passes 33/33 per version. Packaging and docs are complete for
+Windows; Linux, macOS and a second monitor are untested.
 
 **Agreed identifiers** (do not rename without approval):
 
@@ -247,7 +248,7 @@ grid. Full matrix: report §8 and plan §6. The concrete runner and evidence ste
   [Blender release notes](https://developer.blender.org/docs/release_notes/),
   [extension docs](https://docs.blender.org/manual/en/dev/advanced/extensions/getting_started.html).
 - Project is [GPL-3.0](https://www.gnu.org/licenses/gpl-3.0.html); write original code
-  and comply with competitor licenses.
+  and comply with third-party licenses.
 
 ## 9. Git
 

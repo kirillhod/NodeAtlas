@@ -14,37 +14,12 @@ restate them.
 
 ## Now
 
-### Long-link visibility — fix, `1.4.1`
-
-**Goal:** a connection that crosses tile boundaries looks the same in the PNG as it does on
-screen — continuous, not faded or missing.
-
-**Why now:** it is the only known defect in the output itself, and `README.md` documents it
-as "long links may fade". It appears on exactly the large graphs the add-on exists for, it
-is cheaper than anything in `Backlog`, and it needs no unreleased Blender build — unlike
-the 6.0 watch item, which cannot start.
-
-**Exit:**
-
-- links spanning two and three tiles are continuous in the final PNG on 4.2 and 5.3 at
-  96 and 128 DPI (the full matrix belongs to the release);
-- overlap difference within tolerance, `holes = 0`, node positions within 2 px (report §8);
-- full state restored after success, cancel and injected failure; undo sentinel passes;
-- `README.md` no longer calls this a limitation, or states the residual Blender limit and
-  the workaround when both sockets are offscreen.
-
-**Cost:** an ordering or draw change in the tile loop plus the usual live check; no new
-control and no panel change.
-
-## Next
-
 ### Capture-area preview — feature, `1.5.0`
 
 **Goal:** see exactly what will be captured, including padding, before a long export starts.
 
-**Why now:** a paid competitor has it, and the bounds and pixel estimate are already
-computed for the panel, so the change is presentation only. A mis-framed run costs minutes
-and a second run.
+**Why now:** the bounds and pixel estimate are already computed for the panel, so the change
+is presentation only, and a mis-framed run costs minutes and a second run.
 
 **Exit:**
 
@@ -58,6 +33,10 @@ and a second run.
 
 **Cost:** a draw handler, a toggle and its restore, and a geometry test; the pixel maths does
 not change.
+
+## Next
+
+Empty. The unit after the preview is chosen from `Backlog` when the preview ships.
 
 ## Backlog
 

@@ -554,7 +554,7 @@ goal, not a release blocker.
 | Scope creep (batch/transparent/SVG) | 1.0.0 delayed | Explicitly out of scope; revisit in 1.1 |
 | Multi-window/area closing | Undefined behavior | Deterministic area selection + guards |
 | Long links fade | Visual limitation | Document; do not attempt to fix |
-| [GPL](https://www.gnu.org/licenses/gpl-3.0.html)/competitor code | License violation | Original code; report references only |
+| [GPL](https://www.gnu.org/licenses/gpl-3.0.html)/third-party code | License violation | Original code; report references only |
 
 ---
 

@@ -1,6 +1,6 @@
-# NodeAtlas 1.4.0
+# NodeAtlas 1.4.1
 
-**Released:** 19 November 2026
+**Released:** 21 November 2026
 
 NodeAtlas exports any Blender node tree as one high-resolution PNG with real editor
 background padding, selected-nodes support, `Esc` cancellation and full UI restoration.
@@ -8,17 +8,12 @@ It captures the Node Editor in overlapping tiles and stitches them with
 [NumPy](https://numpy.org/doc/stable/); nothing is re-rendered and no external
 dependencies are needed.
 
-## What's new in 1.4.0
+## What's new in 1.4.1
 
-- **Compositor export no longer crashes on Blender 4.2–5.1.** All four tree types work on
-  every supported version.
-- **Selected nodes from a Compositor tree need Blender 5.1 or newer.** On 4.2 and 4.5 the
-  export stops with a clear message instead of crashing or exporting the whole tree.
-- **The node outline no longer lands in the padding**, so the background band stays clean
-  at every UI scale.
-- **Padding is set in units** — 1 unit is 1 px at 96 DPI — so the margin keeps the same
-  proportion to the graph at any Output DPI. At 96 DPI the result is unchanged; the
-  default 20 units is 27 px at the default 128 DPI.
+- **Long connections keep their colour across a tiled export.** Blender fades a link to
+  5 % when both of its endpoints are far outside the view, so on a large graph a
+  connection could lose its middle section. Such links now stay at full strength, and the
+  selection and theme return unchanged after the export.
 
 ## Features
 
@@ -47,8 +42,6 @@ installed through the official installer and with the classic add-on.
   work.
 - **Selected nodes from a Compositor tree need Blender 5.1+.** Exporting the whole
   compositor tree works on 4.2 and newer.
-- Very long links may fade; Blender offers no public setting to disable link level of
-  detail.
 - The view returns to the nearest pixel; the tree, the interface and the selection are
   restored exactly.
 - No transparent background, batch export, SVG or JSON output, or headless capture.

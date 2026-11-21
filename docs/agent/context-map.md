@@ -40,6 +40,7 @@ matches a heading prefix (`M7`). Use `--max-lines N` when a section is still too
 | Shader/GN/Compositor/Texture switch | `capture.py` (`assign_tree`, `get_node_context`) | report §11.12; the 4.2-5.1 Compositor guard is in `operators.py` | `test_trees.py`, `test_texture.py` |
 | Nested group path and `pin` | `capture.py` (`apply_tree_path`, `_restore_tree_path`) | report §11.13 | `test_group.py` |
 | Stitching, feather, top crop, holes | `stitch.py` (`stitch_tiles`) | report §4.6, §11.8 | `test_core.py` |
+| Long links crossing tiles | `capture.py` (`select_outside_view`, `mute_link_highlight`), `operators.py` (`_capture_one`) | report §5 item 17 | `test_longlink.py` |
 | PNG save, `pHYs`, EXIF, fallback | `stitch.py` (`save_png`, `_insert_png_phys`, `_write_png_numpy`) | report §4.6, §11.7, §11.9 | `test_core.py`, `test_naming.py`, `test_artifact.py` |
 | Memory cap, memmap, huge graphs | `stitch.py` (`_allocate_canvas`), `operators.py` estimate | report §11.9 | `test_large.py`, `test_maxmp.py`, `test_limits.py` |
 | Output path, read-only, disk full | `stitch.py` (`check_output_path`) | - | `test_readonly.py`, `test_diskfull.py`, `test_path.py` |
