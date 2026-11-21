@@ -269,7 +269,11 @@ grid. Full matrix: report §8 and plan §6. The concrete runner and evidence ste
 ## 9. Git
 
 - **Local commits are allowed and encouraged** after a coherent verified change.
-- **Do not push** or add/change remotes; do not publish branches, tags, releases or PRs.
+- **Never push, publish or create a release without explicit permission for that exact
+  action in the current conversation.** This covers branches, tags, releases, PRs and any
+  other remote change. An earlier push, a general request to release, or permission for a
+  different action is **not** standing permission: ask first, every time. Local commits
+  remain allowed and encouraged.
 - **Commit messages:** English, plain imperative, **no conventional prefixes** such as
   `feat:`, `docs:`, `fix:` or `chore:`. Start with a verb that states the change, e.g.
   `Add ...`, `Remove ...`, `Implement ...`, `Fix ...`, `Update ...`, `Refactor ...`.
