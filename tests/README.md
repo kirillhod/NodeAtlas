@@ -116,6 +116,41 @@ add-on or extension to be installed; it cannot be combined with `-Parallel`. Bef
 case runs, the runner probes every binary with `--background --python-expr` and stops
 with a clear error when its embedded Python cannot start.
 
+## Affected tests only
+
+`tests/run_affected.ps1` turns the current diff into a test list:
+
+```powershell
+# Print the plan for the working tree.
+powershell -File tests/run_affected.ps1 -Blender '5.3.0=C:\Blender\5.3\blender.exe' -DryRun
+
+# Run it.
+powershell -File tests/run_affected.ps1 -Blender '5.3.0=C:\Blender\5.3\blender.exe'
+
+# Everything changed since a release tag or commit.
+powershell -File tests/run_affected.ps1 -Blender '5.3.0=C:\Blender\5.3\blender.exe' -Since v1.5.0
+```
+
+The mapping is [`affected.psd1`](affected.psd1): a changed GUI test runs itself, a changed
+`node_atlas/` module expands to the feature groups that observe it, and package changes
+also run the unit suite. When the affected set reaches 20 tests, the script runs the full
+tier instead of a near-full subset. `-Files` accepts an explicit list and `-DryRun` prints
+the plan without running anything.
+
+The matrix runner accepts the same selection directly:
+
+```powershell
+powershell -File tests/run_matrix.ps1 -Tier full -Blender '5.3.0=...' `
+  -Only test_selected.py,test_selected_links.py
+powershell -File tests/run_matrix.ps1 -Tier full -Blender '5.3.0=...' -Group selected,panel
+powershell -File tests/run_matrix.ps1 -Tier full -List
+```
+
+Groups are `core`, `selected`, `panel`, `state`, `density`, `io` and `repeat`; a test may
+appear in several. Update `affected.psd1` when you add a test or a module, otherwise a new
+`node_atlas/` file falls back to the full tier. These flags shorten the loop between
+edits; the five-version full matrix remains the release check.
+
 ## Hang-safe runner
 
 `tests/run_blender.ps1` runs one GUI test with a wall-clock limit, kills a stuck

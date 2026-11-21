@@ -1,9 +1,12 @@
 param(
     [ValidateSet('smoke', 'full')][string]$Tier = 'smoke',
-    [Parameter(Mandatory = $true)][string[]]$Blender,
+    [string[]]$Blender = @(),
     [int]$TimeoutSec = 180,
     [switch]$Parallel,
-    [switch]$IncludeArtifact
+    [switch]$IncludeArtifact,
+    [string[]]$Only = @(),
+    [string[]]$Group = @(),
+    [switch]$List
 )
 
 # Tiered test matrix for Windows.
@@ -13,6 +16,14 @@ param(
 #            every change.
 #   full   - every source GUI test plus the 120 dpi and maximized variants.
 #            Use this for a release and record the result in QA_REPORT.md.
+#
+# -Only and -Group narrow a run to the tests that a change can affect; use them
+# while iterating. test_selected.py, tests/gui/test_selected.py and a
+# comma-separated list are all accepted. -Group takes a key from
+# tests/affected.psd1. -List prints the resulting cases and exits.
+#
+#   powershell -File tests/run_matrix.ps1 -Tier full -Only test_selected.py `
+#     -Blender '5.3.0=C:\Blender\5.3\blender.exe'
 #
 # Each Blender is passed as "version=path". Separate entries with a semicolon
 # so the command works through powershell.exe -File. Local paths stay in the
@@ -31,6 +42,20 @@ $ErrorActionPreference = 'Stop'
 
 $runner = Join-Path $PSScriptRoot 'run_blender.ps1'
 $guiDir = Join-Path $PSScriptRoot 'gui'
+$affected = Import-PowerShellDataFile (Join-Path $PSScriptRoot 'affected.psd1')
+
+function Split-List {
+    # -File passes "a,b" as one string, so split before matching.
+    param([string[]]$Values)
+    $items = @()
+    foreach ($value in $Values) {
+        foreach ($part in ($value -split '[,;]')) {
+            $part = $part.Trim()
+            if ($part) { $items += $part }
+        }
+    }
+    return $items
+}
 
 function New-Case {
     param(
@@ -93,8 +118,34 @@ $fullNames = @(
     'test_path.py'
 )
 
+$requested = @()
+foreach ($groupName in (Split-List $Group)) {
+    if (-not $affected.Groups.ContainsKey($groupName)) {
+        $known = ($affected.Groups.Keys | Sort-Object) -join ', '
+        throw "Unknown group '$groupName'. Known groups: $known"
+    }
+    $requested += $affected.Groups[$groupName]
+}
+$requested += Split-List $Only
+
+$filtered = $requested.Count -gt 0
+$filteredNames = @()
+if ($filtered) {
+    foreach ($name in $requested) {
+        $candidate = Split-Path $name -Leaf
+        if (-not $candidate.EndsWith('.py')) { $candidate += '.py' }
+        if ($candidate -eq 'test_artifact.py') {
+            throw 'test_artifact.py needs -IncludeArtifact and an installed add-on or extension'
+        }
+        if ($fullNames -notcontains $candidate) {
+            throw "Unknown GUI test '$name'. Known tests: $($fullNames -join ', ')"
+        }
+        if ($filteredNames -notcontains $candidate) { $filteredNames += $candidate }
+    }
+}
+
 $cases = @()
-$names = if ($Tier -eq 'smoke') { $smokeNames } else { $fullNames }
+$names = if ($filtered) { $fullNames } else { if ($Tier -eq 'smoke') { $smokeNames } else { $fullNames } }
 foreach ($name in $names) {
     $cases += New-Case -Script $name
 }
@@ -102,8 +153,20 @@ if ($Tier -eq 'full') {
     $cases += New-Case -Script 'test_1000.py' -Label 'test_1000.py @120' -Env @{ NODEATLAS_TEST_DPI = '120' }
     $cases += New-Case -Script 'test_group.py' -Label 'test_group.py @max' -Env @{ NODEATLAS_TEST_MAXIMIZE = '1' }
 }
+if ($filtered) {
+    $cases = @($cases | Where-Object { $filteredNames -contains $_.Script })
+}
 if ($IncludeArtifact) {
     $cases += New-Case -Script 'test_artifact.py' -Label 'test_artifact.py (installed)' -UserConfig
+}
+
+if ($List) {
+    foreach ($case in $cases) { Write-Output $case.Label }
+    exit 0
+}
+
+if (-not $Blender.Count) {
+    throw 'Pass at least one Blender as version=path'
 }
 
 $versions = @()
@@ -126,7 +189,7 @@ foreach ($entry in $entries) {
     $versions += [pscustomobject]@{ Version = $name; Exe = (Resolve-Path -LiteralPath $exe).Path }
 }
 
-# Fail before a 29-case run when a portable build has lost its Python stdlib.
+# Fail before a long run when a portable build has lost its Python stdlib.
 # Blender can exit 0 in that state, so the per-test verdict check alone would
 # only report the noise after every case.
 foreach ($version in $versions) {
@@ -199,16 +262,21 @@ function Write-CaseResult {
     }
 }
 
+$label = if ($filtered) { 'selected' } else { $Tier }
+
 if ($Parallel) {
     if ($IncludeArtifact) {
         throw '-IncludeArtifact needs the current profile, so it cannot run with -Parallel.'
+    }
+    if ($filtered) {
+        throw '-Only and -Group narrow the run, so they cannot be combined with -Parallel.'
     }
     if ($versions.Count -lt 2) {
         throw '-Parallel needs at least two Blender entries.'
     }
 
     Write-Output ("Parallel {0} matrix: {1} versions, {2} cases each" -f
-        $Tier, $versions.Count, $cases.Count)
+        $label, $versions.Count, $cases.Count)
     $jobs = foreach ($version in $versions) {
         Start-Job -ArgumentList $PSCommandPath, $Tier, $version.Version, $version.Exe, $TimeoutSec -ScriptBlock {
             param($Script, $Tier, $Name, $Exe, $TimeoutSec)
@@ -235,11 +303,11 @@ if ($Parallel) {
     Write-Output ''
     if ($failed.Count) {
         Write-Output ("Parallel {0} matrix FAILED: {1}/{2} versions" -f
-            $Tier, $failed.Count, $results.Count)
+            $label, $failed.Count, $results.Count)
         $failed | ForEach-Object { Write-Output ("  {0}: exit {1}" -f $_.Version, $_.Exit) }
         exit 1
     }
-    Write-Output ("Parallel {0} matrix PASSED: {1}/{1} versions" -f $Tier, $results.Count)
+    Write-Output ("Parallel {0} matrix PASSED: {1}/{1} versions" -f $label, $results.Count)
     exit 0
 }
 
@@ -256,7 +324,7 @@ foreach ($version in $versions) {
 $failed = @($results | Where-Object { -not $_.Ok })
 Write-Output ''
 Write-Output ("{0} matrix summary: {1}/{2} passed" -f
-    $Tier, ($results.Count - $failed.Count), $results.Count)
+    $label, ($results.Count - $failed.Count), $results.Count)
 $results |
     Group-Object Version |
     ForEach-Object {

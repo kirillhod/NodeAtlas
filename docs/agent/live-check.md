@@ -104,8 +104,10 @@ versions can open them; see [`tests/fixtures/README.md`](../../tests/fixtures/RE
 
 Use the task map in [`context-map.md`](context-map.md). Run the focused GUI test while
 iterating, then the unit suite plus every affected GUI test before claiming a change is
-done. The canonical test inventory is [`tests/README.md`](../../tests/README.md); do not
-copy the list into a new file.
+done. `tests/run_affected.ps1` selects the affected set from the diff, and
+`run_matrix.ps1 -Only`/`-Group` run that set explicitly; the full five-version matrix is a
+release check, not an iteration loop. The canonical test inventory is
+[`tests/README.md`](../../tests/README.md); do not copy the list into a new file.
 
 `-UserConfig` is only for installed-artifact tests (`test_artifact.py`), which must run
 without `--factory-startup` so the add-on or extension is enabled from a clean profile.
