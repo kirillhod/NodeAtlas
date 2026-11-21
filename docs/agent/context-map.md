@@ -10,7 +10,7 @@ what the task needs; the research report alone is about 27k tokens.
 | --- | ---: | --- |
 | `NodeGraph_Export_Report.md` | 27k | one section with `python tools/doc.py NodeGraph_Export_Report.md 4.6`; chapter 4 is 4k, chapter 11 is 9k |
 | `IMPLEMENTATION_PLAN.md` | 8k | archived 1.0.0 record; one milestone with `python tools/doc.py IMPLEMENTATION_PLAN.md M7` |
-| `ROADMAP.md` | 0.5k | read whole for scope; `Now` gates everything below |
+| `ROADMAP.md` | 0.5k | read whole for scope; `Now` is the active unit, `Next` the one after |
 | `QA_REPORT.md` | 3k | grep the version or test name; open the Packaging section for artifacts |
 | `CHANGELOG.md` | 2k | grep the version; older entries are history, not behavior |
 | `RELEASE_NOTES.md` | 2k | the first release block only |
