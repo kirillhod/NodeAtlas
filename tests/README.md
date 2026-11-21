@@ -66,8 +66,9 @@ blender --python tests/gui/test_artifact.py
 
 `test_artifact.py` exports with an installed add-on or extension; run it against a
 clean profile without `--factory-startup`. Set `NODEATLAS_TEST_DPI=120` for the 118 MP
-variant of `test_1000.py`, and `NODEATLAS_TEST_MAXIMIZE=1` for the already-maximized
-group-editing variant of `test_group.py`.
+variant of `test_1000.py`, `NODEATLAS_TEST_MAXIMIZE=1` for the already-maximized
+group-editing variant of `test_group.py`, and `NODEATLAS_TEST_SPAN` to change the link
+length of `test_longlink.py` (default 12000 units).
 
 Tree coverage: Shader Node Tree is the default in most tests; `test_trees.py` covers
 Geometry Nodes and the Compositor on every version. On Blender 4.2/4.5 the test leaves

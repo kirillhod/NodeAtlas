@@ -41,7 +41,7 @@ FIXTURE = os.path.join(ROOT, "tests", "fixtures", "scene_both.blend")
 OUTPUT = os.path.join(OUT, "longlink.png")
 PADDING = 20
 DPI = int(os.environ.get("NODEATLAS_TEST_DPI", "96"))
-SPAN = 12000
+SPAN = int(os.environ.get("NODEATLAS_TEST_SPAN", "12000"))
 MIN_WIDTH = 9000
 state = {"ticks": 0, "found": None, "before": None, "tree": None}
 
