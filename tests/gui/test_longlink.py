@@ -169,7 +169,8 @@ def measure():
     row_hi = min(height, max(row_a, row_b) + 7)
 
     samples = []
-    for fraction in (0.05, 0.2, 0.35, 0.5, 0.65, 0.8, 0.95):
+    for index in range(21):
+        fraction = 0.02 + 0.96 * index / 20
         px = int(
             round((start + (end - start) * fraction - left) * upp + padding_px)
         )
@@ -178,6 +179,7 @@ def measure():
 
     peak = max(samples)
     trough = min(samples)
+    median = float(np.median(samples))
     return {
         "size": [width, height],
         "upp": round(upp, 4),
@@ -185,7 +187,9 @@ def measure():
         "samples": samples,
         "peak": peak,
         "trough": trough,
+        "median": median,
         "ratio": round(trough / peak, 3) if peak else 0.0,
+        "median_ratio": round(median / peak, 3) if peak else 0.0,
     }
 
 
@@ -199,9 +203,17 @@ def check_capture(result):
         )
     if result["peak"] < 80:
         fail(f"link is not visible: peak deviation {result['peak']}")
-    if result["ratio"] < 0.9:
+    # A fade covers most of the link, so the median catches it with a wide
+    # margin. The trough alone is weaker evidence: on 4.2/4.5 a 1-px link
+    # varies by up to 16% from sub-pixel anti-aliasing, which is not a fade.
+    if result["median_ratio"] < 0.9:
         fail(
-            "the link fades across the middle tile: "
+            "the link fades across the middle tiles: "
+            f"median/peak = {result['median_ratio']} ({result['samples']})"
+        )
+    if result["ratio"] < 0.75:
+        fail(
+            "the link drops out somewhere along its length: "
             f"trough/peak = {result['ratio']} ({result['samples']})"
         )
 

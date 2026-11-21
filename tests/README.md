@@ -76,8 +76,8 @@ the compositor tree unpinned because pinning it crashes the next area refresh.
 `test_selected_comp.py` exports selected compositor nodes on 5.1+ and asserts the clear
 refusal on 4.2/4.5 (a filtered copy cannot be pinned there and `Scene.node_tree` is
 read-only). `test_texture.py` covers the Texture Node Editor. `test_longlink.py` exports a
-link that spans five tiles and requires its middle segment to keep the same brightness as
-its ends, with selection, the theme `wire_select` alpha and undo restored.
+link that spans five tiles and requires its median brightness to stay within 10 % of its
+peak, with selection, the theme `wire_select` alpha and undo restored.
 `test_ui_options.py` covers `hide_ui` and `restore_ui`; `test_export.py`, `test_large.py`
 and `test_padding.py` also run `png_content.check_capture` for opaque pixels, real padding
 and non-empty content.

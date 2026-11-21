@@ -290,7 +290,10 @@ Only items verified on a live Blender 5.3.0 or hard platform constraints are lis
     (a node outside the view cannot change its pixels) and mutes the `wire_select` alpha,
     which Blender otherwise blends into selected links (160→227 RGB without the mute).
     Result on 5.3: ratio 1.000; the fixed and unfixed exports differ only inside the link
-    band (7806 px, rows 80-108 of a 56-136 band) and no node pixel changes.
+    band (7806 px, rows 80-108 of a 56-136 band) and no node pixel changes. On 4.2.23 and
+    4.5.9 a 1-px link's peak pixel varies by up to 16 % along its length from sub-pixel AA
+    (min/peak 0.84 at spans 3000, 12000 and 20000 alike), so a low trough there is
+    anti-aliasing, not a fade; 5.1.2 and newer are flat.
 18. **License.** Official extensions require a GPL-compatible license; competitors are [GPL-3.0](https://www.gnu.org/licenses/gpl-3.0.html). If code is borrowed, comply with GPL; preferably write original code.
 19. **⚠️ Buffer orientation and crop (verified).** `imbuf`, the `np.frombuffer` screenshot, and the final array are **bottom-up** (row 0 = bottom PNG row; verified with colored bands). Content is at the top of the canvas, so crop `canvas[UH - fh - PAD : ...]` (no `+1`). A naive `canvas[PAD : PAD + fh]` cuts off the top of the graph: on a 3-row test the whole row disappeared, margins became 1005/672 instead of 40/40. The error is invisible without margin/coverage checks and does not break seams. The `+1` variant adds one uncovered row; only a filled padding masks it, so with the real background assert `wsum > 0`.
 20. **Zoom cannot be set with `zoomfacx/zoomfacy`.** Any explicit factor on `zoom_in`/`zoom_out` jumps to the `upp = 0.43311` clamp; the no-argument step is ≈0.925/1.0816. Exact scale requires `zoom_border` (linear, error ≤ 0.2 %), clamped to `upp ∈ [0.43311, 20.01]`. Density limit: `D_max = S/0.43311`, where `S = system.ui_scale * view.ui_scale`: 2.886 at `S=1.25`, 5.77 at view=2, 17.3 at view=6 (D=17 verified).
@@ -443,7 +446,7 @@ Verified on 5.3.0 (see §11): screenshot orientation/coordinates, alpha, `Node.d
 2. `Node.dimensions` accuracy for graphs with preview nodes after a depsgraph update (no previews were used in tests).
 3. OS scaling 150/200% and Retina (physical vs logical pixels), Linux/X11 and macOS/Metal; confirm that `D` stays constant at another `ui_scale` (`system.ui_scale` is read-only in 5.3, so it was not changed).
 4. LOD fading of long links: measured and fixed (§5 item 17). `test_longlink.py` passes on
-   4.2.23, 4.5.9, 5.1.2, 5.2.4 and 5.3.0 (trough/peak 0.955-1.000) and at 192 DPI on 5.3.0.
+   4.2.23, 4.5.9, 5.1.2, 5.2.4 and 5.3.0 at 12000 and 20000 units and at 192 DPI on 5.3.0.
 5. Maximum PNG size and peak memory on 1000+ node graphs; practical limit at `D_max` for different `view.ui_scale`.
 6. Pixel-exact restoration of view/selection/`view.ui_scale`/maximization after export.
 7. All tree types: **Geometry Nodes and Compositor are verified** (§11.12); Texture Nodes, World/Light shader trees, nested Node Groups and group batch remain to be tested.
