@@ -280,7 +280,17 @@ Only items verified on a live Blender 5.3.0 or hard platform constraints are lis
 14. **UI state.** Restore: view (scale + center), regions, gizmo, context path, `smooth_view`, cursor, selection/active node, `preferences.view.ui_scale`, maximization. All in `finally`. [`bpy.ops.wm.read_homefile`](https://docs.blender.org/api/current/bpy.ops.wm.html#bpy.ops.wm.read_homefile) inside a timer caused `EXCEPTION_ACCESS_VIOLATION` — do not do it.
 15. **Version differences.** `Window.screenshot` is 5.2+; `ImBuf.with_buffer` is 5.2+; `imbuf` is 4.2+; theme/region properties change between versions. Add a compatibility layer and feature detection.
 16. **“Any” graph.** The export covers the currently open tree. Exporting all groups in a .blend requires a batch mode (switch the tree in the editor). `SpaceNodeEditor.edit_tree`/`id`/`path` are read-only; `node_tree`, `pin`, `tree_type` are writable (verified).
-17. **Long links fade.** Blender has `node_link_dim_factor`; there is no public setting. Visual breaks on long links remain; the add-on cannot fix them.
+17. **Long links fade (fixed in 1.4.1).** Blender multiplies a link's alpha by
+    `node_link_dim_factor`, which falls to 0.05 once the nearer of the two sockets is about
+    a tenth of the view width outside the view. In a tiled capture a connection spanning
+    three tiles is drawn in a middle tile that contains neither endpoint, so that segment
+    fades: measured deviation from the background 8/255 against 135/255 at the ends (ratio
+    0.059) on a 7000-unit link at 96 DPI. `node_link_is_selected` exempts a link when either
+    endpoint node is selected, so the add-on selects every node outside the current tile
+    (a node outside the view cannot change its pixels) and mutes the `wire_select` alpha,
+    which Blender otherwise blends into selected links (160→227 RGB without the mute).
+    Result on 5.3: ratio 1.000; the fixed and unfixed exports differ only inside the link
+    band (7806 px, rows 80-108 of a 56-136 band) and no node pixel changes.
 18. **License.** Official extensions require a GPL-compatible license; competitors are [GPL-3.0](https://www.gnu.org/licenses/gpl-3.0.html). If code is borrowed, comply with GPL; preferably write original code.
 19. **⚠️ Buffer orientation and crop (verified).** `imbuf`, the `np.frombuffer` screenshot, and the final array are **bottom-up** (row 0 = bottom PNG row; verified with colored bands). Content is at the top of the canvas, so crop `canvas[UH - fh - PAD : ...]` (no `+1`). A naive `canvas[PAD : PAD + fh]` cuts off the top of the graph: on a 3-row test the whole row disappeared, margins became 1005/672 instead of 40/40. The error is invisible without margin/coverage checks and does not break seams. The `+1` variant adds one uncovered row; only a filled padding masks it, so with the real background assert `wsum > 0`.
 20. **Zoom cannot be set with `zoomfacx/zoomfacy`.** Any explicit factor on `zoom_in`/`zoom_out` jumps to the `upp = 0.43311` clamp; the no-argument step is ≈0.925/1.0816. Exact scale requires `zoom_border` (linear, error ≤ 0.2 %), clamped to `upp ∈ [0.43311, 20.01]`. Density limit: `D_max = S/0.43311`, where `S = system.ui_scale * view.ui_scale`: 2.886 at `S=1.25`, 5.77 at view=2, 17.3 at view=6 (D=17 verified).
@@ -432,7 +442,8 @@ Verified on 5.3.0 (see §11): screenshot orientation/coordinates, alpha, `Node.d
 1. `screenshot_area` (4.2–5.1 fallback) in a real 4.x/5.1 build — header crop, output-settings dependency.
 2. `Node.dimensions` accuracy for graphs with preview nodes after a depsgraph update (no previews were used in tests).
 3. OS scaling 150/200% and Retina (physical vs logical pixels), Linux/X11 and macOS/Metal; confirm that `D` stays constant at another `ui_scale` (`system.ui_scale` is read-only in 5.3, so it was not changed).
-4. LOD fading of long links (documented as a limitation).
+4. LOD fading of long links: measured and fixed (§5 item 17). `test_longlink.py` passes on
+   4.2.23, 4.5.9, 5.1.2, 5.2.4 and 5.3.0 (trough/peak 0.955-1.000) and at 192 DPI on 5.3.0.
 5. Maximum PNG size and peak memory on 1000+ node graphs; practical limit at `D_max` for different `view.ui_scale`.
 6. Pixel-exact restoration of view/selection/`view.ui_scale`/maximization after export.
 7. All tree types: **Geometry Nodes and Compositor are verified** (§11.12); Texture Nodes, World/Light shader trees, nested Node Groups and group batch remain to be tested.
@@ -629,7 +640,8 @@ This run used the correct top-anchored crop ([`tiling5_test.py`](reference/proto
 - `preferences.system.ui_scale` and `.dpi` are read-only in 5.3 but readable; assignment raises `AttributeError`.
 - `preferences.view.ui_scale` is writable (0.5–6.0) and affects node/UI sizes live.
 - `SpaceNodeEditor`: `edit_tree`, `id`, `path` are read-only; `node_tree`, `pin`, `tree_type`, `shader_type`, `show_region_ui/toolbar`, `show_gizmo`, `overlay.show_context_path` are writable.
-- Long links still fade (`node_link_dim_factor`); the add-on cannot fix it.
+- Long links fade in middle tiles (`node_link_dim_factor`, §5 item 17); 1.4.1 selects the
+  off-tile nodes and mutes the `wire_select` tint, which restores the full-strength colour.
 
 ### 11.7. Global padding and DPI normalization
 

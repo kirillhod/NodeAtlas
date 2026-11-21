@@ -38,6 +38,7 @@ blender --factory-startup --python tests/gui/test_padding.py
 blender --factory-startup --python tests/gui/test_trees.py
 blender --factory-startup --python tests/gui/test_texture.py
 blender --factory-startup --python tests/gui/test_repeat.py
+blender --factory-startup --python tests/gui/test_longlink.py
 blender --factory-startup --python tests/gui/test_cancel.py
 blender --factory-startup --python tests/gui/test_fail.py
 blender --factory-startup --python tests/gui/test_large.py
@@ -73,9 +74,12 @@ Geometry Nodes and the Compositor on every version. On Blender 4.2/4.5 the test 
 the compositor tree unpinned because pinning it crashes the next area refresh.
 `test_selected_comp.py` exports selected compositor nodes on 5.1+ and asserts the clear
 refusal on 4.2/4.5 (a filtered copy cannot be pinned there and `Scene.node_tree` is
-read-only). `test_texture.py` covers the Texture Node Editor. `test_ui_options.py` covers
-`hide_ui` and `restore_ui`; `test_export.py`, `test_large.py` and `test_padding.py` also run
-`png_content.check_capture` for opaque pixels, real padding and non-empty content.
+read-only). `test_texture.py` covers the Texture Node Editor. `test_longlink.py` exports a
+link that spans five tiles and requires its middle segment to keep the same brightness as
+its ends, with selection, the theme `wire_select` alpha and undo restored.
+`test_ui_options.py` covers `hide_ui` and `restore_ui`; `test_export.py`, `test_large.py`
+and `test_padding.py` also run `png_content.check_capture` for opaque pixels, real padding
+and non-empty content.
 `test_padding.py` exports at 192 DPI and requires the 20-unit padding to become 40 px. The
 commands above are for debugging; they do not run the runner's PNG content check, so use
 the wrapper or the matrix runner when the result is evidence.

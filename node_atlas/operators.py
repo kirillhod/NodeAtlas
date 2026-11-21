@@ -190,6 +190,8 @@ class ExportJob:
         self.bottom_ui = 0
         self.region_width = 0
         self.region_height = 0
+        self.selection_margin_px = 0.0
+        self.link_selection_fix = False
         self.layout = None
         self.tiles = {}
         self.index = 0
@@ -286,6 +288,7 @@ class ExportJob:
             self.warnings.append(f"Exporting {count} selected nodes")
         capture.assign_tree(space, self.tree, self.tree_type)
         capture.clear_selection(self.tree)
+        self.link_selection_fix = capture.mute_link_highlight()
         bpy.context.preferences.view.smooth_view = 0
         if self.settings.hide_ui:
             capture.hide_ui(space)
@@ -367,6 +370,7 @@ class ExportJob:
         self.layout = layout
         self.region_width = region.width
         self.region_height = height
+        self.selection_margin_px = layout.pad + bounds.visual_margin(view_scale)
         self.tiles = {}
         self.index = 0
         self.current_tile = (0, 0)
@@ -382,6 +386,14 @@ class ExportJob:
             dy = (self.current_tile[1] - j) * layout.step_y
             capture.pan(self.window, self.area, self.region, dx, dy)
             self.current_tile = (i, j)
+        if self.link_selection_fix:
+            capture.select_outside_view(
+                self.tree,
+                self.region.view2d,
+                self.region_width,
+                self.region_height,
+                self.selection_margin_px,
+            )
         self._status(f"NodeAtlas: capturing tile {self.index + 1}/{total}…")
         self.tiles[(i, j)] = capture.capture_tile(
             self.window, self.area, self.region,
@@ -417,6 +429,12 @@ class ExportJob:
         self._status("NodeAtlas: restoring UI…")
         if self.snapshot is not None:
             snapshot = self.snapshot
+            # Drop the per-tile selection before restoring, so a run with
+            # restore_ui off leaves the tree cleared instead of half-selected.
+            try:
+                capture.clear_selection(self.tree)
+            except Exception:
+                log.warning("Could not clear the capture selection", exc_info=True)
             errors, warnings = capture.restore_snapshot(
                 snapshot, restore_ui=self.settings.restore_ui
             )

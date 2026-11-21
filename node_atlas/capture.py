@@ -10,7 +10,14 @@ from dataclasses import dataclass, field
 import bpy
 import numpy as np
 
-from .bounds import Layout, ViewMetrics, measure_upp, measure_view, node_rect
+from .bounds import (
+    Layout,
+    ViewMetrics,
+    absolute_location,
+    measure_upp,
+    measure_view,
+    node_rect,
+)
 from .log import get_logger
 
 log = get_logger()
@@ -41,6 +48,7 @@ class EditorSnapshot:
     path_trees: tuple
     maximized: bool = False
     temp_tree: object | None = None
+    link_highlight_alpha: float | None = None
     warnings: list[str] = field(default_factory=list)
 
 
@@ -100,9 +108,49 @@ def current_tree(space):
     return space.edit_tree or space.node_tree
 
 
+def link_highlight_color():
+    """Return the theme colour that tints links of selected nodes, if any."""
+    theme = getattr(bpy.context.preferences.themes[0], "node_editor", None)
+    color = getattr(theme, "wire_select", None) if theme is not None else None
+    if color is None or len(color) < 4:
+        return None
+    return color
+
+
+def mute_link_highlight() -> bool:
+    """Disable the selected-link tint. Returns whether it could be disabled.
+
+    Blender interpolates a link towards ``wire_select`` when either endpoint
+    node is selected (report §5 item 17). The per-tile selection relies on that
+    exemption from the distance fade, so the tint has to be neutral: otherwise
+    the link would change colour instead of fading.
+    """
+    color = link_highlight_color()
+    if color is None:
+        return False
+    try:
+        color[3] = 0.0
+    except Exception:
+        return False
+    return True
+
+
+def restore_link_highlight(alpha: float | None) -> None:
+    if alpha is None:
+        return
+    color = link_highlight_color()
+    if color is None:
+        return
+    try:
+        color[3] = float(alpha)
+    except Exception:
+        log.warning("Could not restore the link highlight alpha", exc_info=True)
+
+
 def take_snapshot(window, area, space, region, tree) -> EditorSnapshot:
     v2d = region.view2d
     prefs = bpy.context.preferences
+    highlight = link_highlight_color()
     return EditorSnapshot(
         window=window,
         tree=tree,
@@ -131,6 +179,7 @@ def take_snapshot(window, area, space, region, tree) -> EditorSnapshot:
             item.node_tree for item in getattr(space, "path", ())
             if item.node_tree is not None
         ),
+        link_highlight_alpha=float(highlight[3]) if highlight is not None else None,
     )
 
 
@@ -174,6 +223,43 @@ def clear_selection(tree) -> None:
         tree.nodes.active = None
     except Exception:
         pass
+
+
+def select_outside_view(tree, v2d, width: int, height: int, margin_px: float) -> None:
+    """Select every node that cannot contribute pixels to the current view.
+
+    Blender fades a connection to 5 % once the nearer of its two sockets is
+    about a tenth of the view width away from the view (report §5 item 17), so
+    a link crossing a middle tile fades although both ends are drawn correctly.
+    A link with a selected endpoint node is exempt from the fade, and a node
+    outside the view cannot change the tile: selection only alters that node's
+    own outline, its draw order and the tint of its links, which the export
+    mutes with :func:`mute_link_highlight`.
+
+    *margin_px* covers PAD and the outline drawn outside ``Node.dimensions``,
+    so a node that could leave any pixel in the captured tile stays unselected.
+    """
+    upp = measure_upp(v2d)
+    margin = max(0.0, float(margin_px)) / upp
+    x0, y0 = v2d.region_to_view(0, 0)
+    x1, y1 = v2d.region_to_view(width, height)
+    left = min(x0, x1) - margin
+    right = max(x0, x1) + margin
+    bottom = min(y0, y1) - margin
+    top = max(y0, y1) + margin
+    for node in tree.nodes:
+        x, y = absolute_location(node)
+        node_width = node.dimensions.x
+        node_height = node.dimensions.y
+        visible = (
+            x + node_width >= left
+            and x <= right
+            and y >= bottom
+            and y - node_height <= top
+        )
+        selected = not visible
+        if node.select != selected:
+            node.select = selected
 
 
 def bottom_ui_height(area) -> int:
@@ -542,6 +628,7 @@ def _restore_tree_path(
 
 def restore_snapshot(snapshot: EditorSnapshot, restore_ui: bool = True):
     """Best-effort restoration. Returns (errors, warnings)."""
+    restore_link_highlight(snapshot.link_highlight_alpha)
     errors: list[str] = []
     warnings: list[str] = list(snapshot.warnings)
     if snapshot.pin and not effective_pin(snapshot.tree_type, snapshot.pin):

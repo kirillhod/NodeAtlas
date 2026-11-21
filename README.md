@@ -45,8 +45,7 @@ From source: `blender --command extension build --source-dir node_atlas`.
 - **No transparent background** and **no batch export**.
 - **Linux and macOS untested.** Windows: 4.2.23, 4.5.9, 5.1.2, 5.2.4, 5.3.0.
 - **Selected Compositor nodes need Blender 5.1+.**
-- **View returns to the nearest pixel;** long links may fade and the clipboard may refuse
-  very large images.
+- **View returns to the nearest pixel;** the clipboard may refuse very large images.
 
 ## Settings and defaults
 
