@@ -63,6 +63,7 @@ $fullNames = @(
     'test_legacy.py',
     'test_selected.py',
     'test_selected_comp.py',
+    'test_selected_links.py',
     'test_padding.py',
     'test_trees.py',
     'test_texture.py',

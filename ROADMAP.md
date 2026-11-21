@@ -5,16 +5,16 @@ Post-1.0 scope. The 1.0.0 plan is complete and kept in
 next.
 
 **Policy:** one unit of work at a time, no dates. A unit is a fix or a feature: fixes ship
-as `1.4.x`, features as `1.5.0`. `Now` holds the unit in progress; `Next` holds the unit
-after it. An entry carries a goal and a checkable exit, or it stays in `Backlog`. When a
-unit ships and its release is tagged, it leaves the file and `Next` moves up. Measurements
-live in the [report](NodeGraph_Export_Report.md), test evidence in
+as the current patch line, features as the next minor. `Now` holds the unit in progress;
+`Next` holds the unit after it. An entry carries a goal and a checkable exit, or it stays in
+`Backlog`. When a unit ships and its release is tagged, it leaves the file and `Next` moves
+up. Measurements live in the [report](NodeGraph_Export_Report.md), test evidence in
 [`QA_REPORT.md`](QA_REPORT.md); this file states intent and links to them, it does not
 restate them.
 
 ## Now
 
-### Capture-area preview — feature, `1.5.0`
+### Capture-area preview — feature, `1.6.0`
 
 **Goal:** see exactly what will be captured, including padding, before a long export starts.
 

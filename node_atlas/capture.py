@@ -393,11 +393,12 @@ def leave_maximize(window, snapshot: EditorSnapshot):
 
 def anchor_first_tile(
     window, area, region, space, tree, layout: Layout,
-    ui_scale: float, vis: float = 0.0,
+    ui_scale: float, vis: float = 0.0, nodes=None,
 ) -> ViewMetrics:
+    source = tree.nodes if nodes is None else nodes
     for _ in range(12):
         metrics = measure_view(region.view2d, ui_scale)
-        rects = [node_rect(node, metrics, vis) for node in tree.nodes
+        rects = [node_rect(node, metrics, vis) for node in source
                  if node.dimensions.x > 0 and node.dimensions.y > 0]
         if not rects:
             raise RuntimeError("No drawable nodes after view normalization")

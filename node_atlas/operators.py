@@ -42,6 +42,7 @@ class ExportSettings:
     restore_ui: bool
     deterministic: bool
     copy_only: bool = False
+    keep_links: bool = False
 
 
 def _safe_name(value: str) -> str:
@@ -138,6 +139,7 @@ def settings_from_prefs(prefs, filepath, copy_only: bool = False) -> ExportSetti
         restore_ui=bool(prefs.restore_ui),
         deterministic=bool(prefs.deterministic),
         copy_only=copy_only,
+        keep_links=bool(prefs.keep_links),
     )
 
 
@@ -186,6 +188,7 @@ class ExportJob:
         self.space = None
         self.region = None
         self.tree = None
+        self.content_names = None
         self.tree_type = ""
         self.bottom_ui = 0
         self.region_width = 0
@@ -283,9 +286,15 @@ class ExportJob:
             )
 
         if self.settings.scope == "SELECTED":
-            self.tree, count = bounds.build_selected_copy(tree)
+            self.tree, self.content_names = bounds.build_selected_copy(
+                tree, keep_links=self.settings.keep_links
+            )
             self.snapshot.temp_tree = self.tree
-            self.warnings.append(f"Exporting {count} selected nodes")
+            text = f"Exporting {len(self.content_names)} selected nodes"
+            extra = len(self.tree.nodes) - len(self.content_names)
+            if extra:
+                text += f" and {extra} linked node{'s' if extra != 1 else ''}"
+            self.warnings.append(text)
         capture.assign_tree(space, self.tree, self.tree_type)
         capture.clear_selection(self.tree)
         self.link_selection_fix = capture.mute_link_highlight()
@@ -353,7 +362,10 @@ class ExportJob:
 
         metrics = bounds.measure_view(region.view2d, effective_scale)
         vis = bounds.visual_margin(view_scale)
-        rects = bounds.collect_rects(self.tree.nodes, metrics, vis)
+        nodes = self.tree.nodes
+        if self.content_names is not None:
+            nodes = [node for node in nodes if node.name in self.content_names]
+        rects = bounds.collect_rects(nodes, metrics, vis)
         content = bounds.union_rects(rects)
         layout = bounds.compute_layout(
             content, region.width, height, self.padding_px, view_scale
@@ -365,7 +377,8 @@ class ExportJob:
             )
 
         capture.anchor_first_tile(
-            window, area, region, space, self.tree, layout, effective_scale, vis
+            window, area, region, space, self.tree, layout, effective_scale, vis,
+            nodes=nodes,
         )
         self.layout = layout
         self.region_width = region.width

@@ -1,4 +1,4 @@
-# NodeAtlas 1.4.1
+# NodeAtlas 1.5.0
 
 **Released:** 21 November 2026
 
@@ -8,17 +8,20 @@ It captures the Node Editor in overlapping tiles and stitches them with
 [NumPy](https://numpy.org/doc/stable/); nothing is re-rendered and no external
 dependencies are needed.
 
-## What's new in 1.4.1
+## What's new in 1.5.0
 
-- **Long connections keep their colour across a tiled export.** Blender fades a link to
-  5 % when both of its endpoints are far outside the view, so on a large graph a
-  connection could lose its middle section. Such links now stay at full strength, and the
-  selection and theme return unchanged after the export.
+- **Selected nodes keep their connections.** A new **Keep Links to Connected Nodes** toggle
+  keeps the links between the selection and the nodes directly attached to it, so the
+  export shows where the selection is fed from and where it feeds instead of links that
+  end at the selection's edge. Only the selected nodes define the image area; the
+  connected nodes outside it are cropped. The toggle is shown only in the Selected Nodes
+  scope, is off by default, and leaves the original tree untouched.
 
 ## Features
 
 - Current-tree or selected-nodes export for Shader, Geometry Nodes, Compositor and
   Texture trees.
+- Optional links to the nodes directly connected to the selection.
 - Output density independent of monitor DPI and current zoom: 96 DPI is 1:1 with node
   pixels.
 - Real background padding captured from the editor, not painted.
@@ -42,6 +45,8 @@ installed through the official installer and with the classic add-on.
   work.
 - **Selected nodes from a Compositor tree need Blender 5.1+.** Exporting the whole
   compositor tree works on 4.2 and newer.
+- A connected node that lies inside the selected area is drawn with its links; the toggle
+  keeps the links to the nearest node only, not the whole connected graph.
 - The view returns to the nearest pixel; the tree, the interface and the selection are
   restored exactly.
 - No transparent background, batch export, SVG or JSON output, or headless capture.

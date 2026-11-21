@@ -246,17 +246,44 @@ def selected_node_names(tree) -> set[str]:
     return keep
 
 
-def build_selected_copy(tree):
-    """Return a filtered orphan/group copy of *tree* and kept node count.
+def link_neighbour_names(tree, keep: set[str]) -> set[str]:
+    """Names of nodes directly linked to a kept node.
+
+    Blender stores a link together with both endpoint nodes, so the far node has
+    to stay in the temporary copy or the connection disappears. Hidden nodes are
+    kept too: the editor still draws them as collapsed blocks, so their links
+    exist (report 5 item 32).
+    """
+    names = set()
+    for link in tree.links:
+        for near, far in (
+            (link.from_node, link.to_node),
+            (link.to_node, link.from_node),
+        ):
+            if near.name in keep and far.name not in keep:
+                names.add(far.name)
+    return names
+
+
+def build_selected_copy(tree, keep_links: bool = False):
+    """Return a filtered orphan/group copy of *tree* and the frame node names.
 
     The original tree is never modified. Selected frames include descendants;
     kept nodes inside unselected frames are unparented with their absolute
     position preserved. Hidden selected nodes are skipped.
+
+    With *keep_links*, the nodes directly linked to the selection stay in the
+    copy so their connections keep an endpoint and stay visible when the far
+    node is cropped by the export area. They are not part of the returned names:
+    the captured rectangle still covers the selection only.
     """
     import bpy  # local import keeps the rest of this module testable
 
     tmp = tree.copy()
-    keep = selected_node_names(tmp)
+    selected = selected_node_names(tmp)
+    keep = selected
+    if keep_links:
+        keep = selected | link_neighbour_names(tmp, selected)
 
     # Preserve absolute placement when the parent frame is not kept.
     for node in tmp.nodes:
@@ -277,4 +304,4 @@ def build_selected_copy(tree):
         tmp.nodes.active = None
     except Exception:
         pass
-    return tmp, len(tmp.nodes)
+    return tmp, selected

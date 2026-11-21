@@ -91,6 +91,15 @@ class NodeAtlasPreferences(bpy.types.AddonPreferences):
         ),
         default="CURRENT",
     )
+    keep_links: bpy.props.BoolProperty(
+        name="Keep Links to Connected Nodes",
+        description=(
+            "In Selected Nodes scope, keep the nodes directly connected to the "
+            "selection so their links stay visible; the export area still covers "
+            "only the selected nodes"
+        ),
+        default=False,
+    )
     default_dir: bpy.props.StringProperty(
         name="Default Directory",
         description="Folder for quick exports; clear it to ask for a path every time",

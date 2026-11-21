@@ -1,15 +1,15 @@
 # NodeAtlas QA report
 
-**Version:** 1.4.0<br>
-**Date:** 19 November 2026<br>
+**Version:** 1.5.0<br>
+**Date:** 21 November 2026<br>
 **Platforms:** Windows, GUI sessions only
 
-> **1.4.0.** The Compositor works on Blender 4.2–5.3: the compositor tree is left
-> unpinned on 4.2/4.5, where pinning crashes the next area refresh, and selected-only
-> compositor export needs 5.1+ (4.2/4.5 refuse with a clear error). The node outline now
-> gets a `VIS` margin, and Padding is stored in density-independent units.
+> **1.5.0.** Selected Nodes can keep the links to directly connected nodes: the filtered
+> copy also holds the immediate neighbours, while the captured rectangle still comes from
+> the selection only. The Compositor works on Blender 4.2–5.3 with the tree left unpinned
+> on 4.2/4.5, and selected-only compositor export needs 5.1+.
 >
-> Full source matrix for 1.4.0: **32/32 GUI runs and 19/19 unit tests on each of
+> Full source matrix for 1.5.0: **34/34 GUI runs and 20/20 unit tests on each of
 > Blender 4.2.23, 4.5.9, 5.1.2, 5.2.4 and 5.3.0**. `test_artifact.py` results and the
 > artifact hash are in [Packaging](#packaging).
 >
@@ -103,9 +103,15 @@ window, exports a fixture, validates the PNG and editor restoration, then exits.
 | `test_clipboard.py` | PASS, OS clipboard checked | PASS | PASS | PASS | PASS |
 | `test_path.py` | PASS, empty dir refused | PASS | PASS | PASS | PASS |
 
+1.5.0: **34/34 source GUI runs passed on each of the five versions** (170/170 total), and
+the unit suite is 20/20. `test_selected_links.py` is the new case: it exports one selection
+with and without Keep Links to Connected Nodes, requires the frame to stay within 2 px of
+the selection, and requires the link to the unselected neighbour to appear in the right
+padding band only when the option is on. The table above is the 1.4.0 matrix.
+
 1.4.1: **33/33 source GUI runs passed on each of the five versions** (165/165 total).
 `test_longlink.py` is the new case; it also passes at 20000 units on all five and at 192 DPI
-on 5.3.0. The table above is the 1.4.0 matrix.
+on 5.3.0.
 
 Re-run for 1.3.6: **29/29 source GUI runs passed on each of the five versions**, including
 `test_1000.py` at 120 dpi and `test_group.py` with `NODEATLAS_TEST_MAXIMIZE=1`.
@@ -143,7 +149,15 @@ without a clamp warning.
 
 - `blender --command extension validate node_atlas`: PASS.
 - `blender --command extension build --source-dir node_atlas --output-dir dist`:
-  produces `node_atlas-1.4.0.zip` with the manifest and the seven package modules.
+  produces `node_atlas-1.5.0.zip` with the manifest and the seven package modules.
+- **1.5.0 artifact:** build and `extension validate` PASS; the zip contains only the
+  manifest and the seven package modules, with no `__pycache__`. The official installer
+  (`install-file -r user_default -e`) installed it into an isolated `BLENDER_USER_EXTENSIONS`
+  profile on 4.2.23, 4.5.9, 5.1.2, 5.2.4 and 5.3.0, and `test_artifact.py` exported a PNG
+  from `bl_ext.user_default.node_atlas` on each. The classic folder copied into an isolated
+  `scripts/addons` profile enabled `node_atlas` and exported on all five.
+- `node_atlas-1.5.0.zip` SHA256:
+  `F616F80A4523DDA5A11D0511481E3DBF2FED4B1DDBC9A1643249AB82E8B92D6D`.
 - **1.4.0 artifact:** `extension validate` PASS; extension install and GUI export PASS on
   all five versions with the official installer (`install-file -r user_default -e`,
   module `bl_ext.user_default.node_atlas`); classic add-on install and export PASS on all

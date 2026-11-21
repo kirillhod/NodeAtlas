@@ -519,6 +519,39 @@ def test_quick_filepath():
     check(os.path.basename(path).endswith(".png"), "png suffix")
 
 
+def test_link_neighbour_names():
+    class Node:
+        def __init__(self, name):
+            self.name = name
+
+    class Link:
+        def __init__(self, a, b):
+            self.from_node = a
+            self.to_node = b
+
+    class Tree:
+        pass
+
+    selected = Node("Selected")
+    neighbour = Node("Neighbour")
+    far = Node("Far")
+    tree = Tree()
+    tree.links = [Link(selected, neighbour), Link(neighbour, far)]
+
+    check(
+        bounds.link_neighbour_names(tree, {"Selected"}) == {"Neighbour"},
+        "direct neighbour only",
+    )
+    check(
+        bounds.link_neighbour_names(tree, {"Selected", "Neighbour"}) == {"Far"},
+        "growing keep set",
+    )
+    check(
+        bounds.link_neighbour_names(tree, set()) == set(),
+        "empty keep set",
+    )
+
+
 def main():
     tests = [
         test_view_metrics,
@@ -533,6 +566,7 @@ def main():
         test_output_preflight,
         test_disk_full,
         test_selected_node_names,
+        test_link_neighbour_names,
         test_filename_sanitization,
         test_render_filename,
         test_tree_owner_name,

@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.5.0
+
+- Add **Keep Links to Connected Nodes** for the Selected Nodes scope. The export keeps the
+  nodes directly connected to the selection in its temporary copy, so those links stay
+  visible instead of ending at the selection's edge. The image still covers the selected
+  nodes only, and the neighbours outside that area are cropped.
+- The toggle appears only while Scope is Selected Nodes and is off by default; the original
+  tree, the selection and the undo history are unchanged.
+
 ## 1.4.1
 
 - Long connections no longer fade in the middle of a tiled export. Blender dims a link to

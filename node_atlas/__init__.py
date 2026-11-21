@@ -10,13 +10,13 @@ from .log import get_logger
 
 log = get_logger()
 
-__version__ = "1.4.1"
+__version__ = "1.5.0"
 __author__ = "kirillhod"
 
 bl_info = {
     "name": "Node Atlas",
     "author": "kirillhod",
-    "version": (1, 4, 1),
+    "version": (1, 5, 0),
     "blender": (4, 2, 0),
     "location": "Node Editor > Sidebar > Node Atlas",
     "description": "Export any node tree as one high-resolution PNG",
@@ -108,6 +108,8 @@ class NODE_PT_node_atlas(bpy.types.Panel):
         box.prop(prefs, "padding")
         box.prop(prefs, "max_mp")
         box.prop(prefs, "scope", expand=True)
+        if prefs.scope == "SELECTED":
+            box.prop(prefs, "keep_links")
 
         parts = capture.get_node_context(context)
         if parts is not None:

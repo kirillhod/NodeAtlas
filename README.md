@@ -14,7 +14,7 @@ Compositor or Texture, the whole graph, on the real editor background.
 | **Whole graph** | Captures the editor in tiles and stitches them; nodes outside the view are included |
 | **Density** | Output DPI sets the size (96 = 1:1, default 128); monitor DPI and zoom do not matter |
 | **Padding** | Captured, not painted, in units: 1 unit = 1 px at 96 DPI, so 20 units = 27 px at 128 DPI |
-| **Scope** | Current tree, or selected nodes through a temporary copy that leaves your file intact |
+| **Scope** | Current tree, or selected nodes through a temporary copy that leaves your file intact; links to directly connected nodes can stay visible |
 | **Output** | PNG file or clipboard; `Esc` cancels; the sidebar reopens the last export |
 | **Safety** | Max Megapixels 200 stops before capture; DPI clamps are reported |
 | **Undo** | Editor, selection and view restored after success, error or cancel |
@@ -55,6 +55,7 @@ From source: `blender --command extension build --source-dir node_atlas`.
 | Padding | `20` units |
 | Max Megapixels | `200` |
 | Scope | Current Tree |
+| Keep Links to Connected Nodes | Off (Selected Nodes scope only) |
 | Default Directory | Desktop |
 | Filename Pattern | `{blend}_{tree}_{date}.png`, plus `{datablock}` and `{type}` |
 | Hide UI, Restore UI, Deterministic View | On |

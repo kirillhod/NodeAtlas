@@ -33,7 +33,7 @@ matches a heading prefix (`M7`). Use `--max-lines N` when a section is still too
 | --- | --- | --- | --- |
 | Node rectangles, bounds, layout | `node_atlas/bounds.py` (`node_rect`, `compute_layout`) | report §4.2, §6.2, §11.5 | `tests/unit/test_core.py` |
 | View scale, `upp`, DPI clamp | `bounds.py` (`measure_view`, `target_upp`, `planned_scale`) | report §4.3, §11.7, §11.9 | `test_core.py`, `tests/gui/test_density.py`, `test_boost.py` |
-| Selected-only copy | `bounds.py` (`selected_node_names`, `build_selected_copy`) | report §11.15 | `test_selected.py`, `test_estimate_selected.py` |
+| Selected-only copy | `bounds.py` (`selected_node_names`, `link_neighbour_names`, `build_selected_copy`), `operators.py` (`content_names`) | report §11.15 | `test_selected.py`, `test_selected_links.py`, `test_estimate_selected.py` |
 | Tile capture, pan, anchor | `capture.py` (`capture_tile`, `pan`, `anchor_first_tile`) | report §4.4-§4.5, §11.1-§11.4, §11.8 | `test_export.py`, `test_repeat.py`, `test_scaling.py` |
 | Maximize, leave, lost area | `capture.py` (`maximize`, `leave_maximize`, `find_area_by_bbox`) | report §11.10, §11.13 | `test_multiarea.py`, `test_multiwindow.py`, `test_arealost.py` |
 | Version adapter: 5.2+ raw vs 4.2-5.1 area | `capture.py` (`can_capture_raw`, `_capture_tile_legacy`) | report §4.4, §11.1 | `test_legacy.py`, `test_artifact.py` |
