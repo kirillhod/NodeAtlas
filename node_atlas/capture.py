@@ -622,6 +622,59 @@ def _restore_tree_path(
     )
 
 
+def _restore_flags(space, snapshot: EditorSnapshot) -> None:
+    """Apply the saved region and overlay flags to *space*."""
+    with bpy.context.temp_override(window=snapshot.window):
+        _restore_attr(space, "show_region_header", snapshot.header)
+        _restore_attr(space, "show_region_ui", snapshot.ui)
+        _restore_attr(space, "show_region_toolbar", snapshot.toolbar)
+        _restore_attr(space, "show_gizmo", snapshot.gizmo)
+        _restore_attr(space.overlay, "show_context_path", snapshot.context_path)
+        _restore_attr(space, "show_backdrop", snapshot.backdrop)
+
+
+def _restore_selection(snapshot: EditorSnapshot, errors: list[str]) -> None:
+    """Reapply the saved node selection and active node."""
+    if snapshot.tree is None:
+        return
+    try:
+        for node in snapshot.tree.nodes:
+            node.select = node.name in snapshot.selected
+        snapshot.tree.nodes.active = (
+            snapshot.tree.nodes.get(snapshot.active) if snapshot.active else None
+        )
+    except Exception as exc:
+        errors.append(f"selection restore failed: {exc}")
+
+
+def _apply_tree_state(
+    snapshot: EditorSnapshot,
+    window,
+    area,
+    space,
+    region,
+    label: str,
+    errors: list[str],
+    *,
+    flags: bool,
+    selection: bool,
+) -> None:
+    """Reapply the tree path, then the flags and selection requested by the stage.
+
+    ``screen_full_area`` and region visibility changes rebuild ``area`` and its
+    regions, so each stage passes freshly acquired references and records its own
+    label when the tree path fails.
+    """
+    try:
+        _restore_tree_path(space, snapshot, window, area, region)
+    except Exception as exc:
+        errors.append(f"{label} failed: {exc}")
+    if flags:
+        _restore_flags(space, snapshot)
+    if selection:
+        _restore_selection(snapshot, errors)
+
+
 def restore_snapshot(snapshot: EditorSnapshot):
     """Best-effort restoration. Returns (errors, warnings)."""
     restore_link_highlight(snapshot.link_highlight_alpha)
@@ -641,33 +694,10 @@ def restore_snapshot(snapshot: EditorSnapshot):
     if space is None or region is None:
         return ["Node Editor space/region is no longer available"], warnings
 
-    try:
-        _restore_tree_path(space, snapshot, window, area, region)
-    except Exception as exc:
-        errors.append(f"tree/pin restore failed: {exc}")
-
-    def restore_ui_state(target_space):
-        with bpy.context.temp_override(window=snapshot.window):
-            _restore_attr(target_space, "show_region_header", snapshot.header)
-            _restore_attr(target_space, "show_region_ui", snapshot.ui)
-            _restore_attr(target_space, "show_region_toolbar", snapshot.toolbar)
-            _restore_attr(target_space, "show_gizmo", snapshot.gizmo)
-            _restore_attr(target_space.overlay, "show_context_path", snapshot.context_path)
-            _restore_attr(target_space, "show_backdrop", snapshot.backdrop)
-
-    def restore_selection():
-        if snapshot.tree is None:
-            return
-        try:
-            for node in snapshot.tree.nodes:
-                node.select = node.name in snapshot.selected
-            snapshot.tree.nodes.active = (
-                snapshot.tree.nodes.get(snapshot.active) if snapshot.active else None
-            )
-        except Exception as exc:
-            errors.append(f"selection restore failed: {exc}")
-
-    restore_ui_state(space)
+    _apply_tree_state(
+        snapshot, window, area, space, region,
+        "tree/pin restore", errors, flags=True, selection=False,
+    )
 
     prefs = bpy.context.preferences
     try:
@@ -702,20 +732,16 @@ def restore_snapshot(snapshot: EditorSnapshot):
     # on the final space, then re-apply the path once more because UI flag
     # updates can rebuild the area.
     if space is not None:
-        try:
-            _restore_tree_path(space, snapshot, window, area, region)
-        except Exception as exc:
-            errors.append(f"tree/pin restore after maximize failed: {exc}")
-        restore_ui_state(space)
-        # Region visibility updates can rebuild the area and invalidate the
-        # space reference; re-acquire before re-applying the node path.
+        _apply_tree_state(
+            snapshot, window, area, space, region,
+            "tree/pin restore after maximize", errors, flags=True, selection=False,
+        )
         area, space, region = fresh_node_area(window)
         if space is not None:
-            try:
-                _restore_tree_path(space, snapshot, window, area, region)
-            except Exception as exc:
-                errors.append(f"tree/pin restore after UI flags failed: {exc}")
-        restore_selection()
+            _apply_tree_state(
+                snapshot, window, area, space, region,
+                "tree/pin restore after UI flags", errors, flags=False, selection=True,
+            )
 
     if region is not None:
         try:
@@ -724,30 +750,34 @@ def restore_snapshot(snapshot: EditorSnapshot):
             errors.append(f"view restore failed: {exc}")
 
     # View operators can reset the node path; leave the user in the same tree.
+    # Each redraw can rebuild the area, so the path and selection are re-applied
+    # after every one of them.
     area = find_node_area(window)
     if area is not None:
         space = area.spaces.active
         region = next((item for item in area.regions if item.type == "WINDOW"), None)
         if space is not None and region is not None:
-            try:
-                _restore_tree_path(space, snapshot, window, area, region)
-                restore_selection()
-            except Exception as exc:
-                errors.append(f"final tree/pin restore failed: {exc}")
+            _apply_tree_state(
+                snapshot, window, area, space, region,
+                "final tree/pin restore", errors, flags=False, selection=True,
+            )
             for _ in range(2):
-                redraw(window, area, region)
-                area2 = find_node_area(window)
-                if area2 is None:
+                try:
+                    redraw(window, area, region)
+                except Exception as exc:
+                    warnings.append(f"final restore redraw failed: {exc}")
                     break
-                space = area2.spaces.active
-                region = next((item for item in area2.regions if item.type == "WINDOW"), None)
+                area = find_node_area(window)
+                if area is None:
+                    break
+                space = area.spaces.active
+                region = next((item for item in area.regions if item.type == "WINDOW"), None)
                 if space is None or region is None:
                     break
-                try:
-                    _restore_tree_path(space, snapshot, window, area2, region)
-                    restore_selection()
-                except Exception as exc:
-                    errors.append(f"tree/pin restore after redraw failed: {exc}")
+                _apply_tree_state(
+                    snapshot, window, area, space, region,
+                    "tree/pin restore after redraw", errors, flags=False, selection=True,
+                )
 
     try:
         prefs.view.smooth_view = snapshot.smooth_view
