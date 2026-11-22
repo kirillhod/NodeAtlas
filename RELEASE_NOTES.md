@@ -5,16 +5,28 @@
 Node Atlas exports any Blender node tree as one high-resolution PNG: the whole graph in a
 single image, with the real editor background or a transparent one.
 
-### What's new in 1.7.1
+### What's new from 1.6.0
 
-- **No stray selection outlines.** When Blender's interface **Resolution Scale** was set to
-  anything other than 100 %, nodes and frames that were fully inside the capture could be
-  drawn as selected, leaving their highlight and frame tint in the PNG. The export now
-  measures node positions the same way the editor draws them, so the temporary selection
-  used to keep long links at full strength always stays outside the captured tiles.
-- **Deterministic View is gone.** Every export now primes the view with **View All**, so
-  repeated exports of the same graph are pixel-identical. The option was in the sidebar and
-  in **Export As**, and nothing needs to be enabled in its place.
+- **Transparent background (1.7.0).** Turn on **Transparent Background** and the editor
+  background and the padding are removed, so the PNG drops onto any colour. Shadows, links
+  and semi-transparent frames keep their real alpha instead of a hard cut-out edge. Every
+  tile is captured twice, so the export takes about twice as long; the editor dims once per
+  pass and never flashes white.
+- **The capture-area preview is off by default (1.7.0).** Enable **Show Capture Area** in
+  the sidebar to see the dashed rectangle and its estimated size.
+- **No stray selection outlines (1.7.1).** At interface **Resolution Scale** values other
+  than 100 %, nodes and frames that were fully inside the capture could be drawn as
+  selected, leaving their highlight and frame tint in the PNG. The export now measures node
+  positions the same way the editor draws them.
+- **Deterministic View is gone (1.7.1).** Every export primes the view with **View All**, so
+  repeated exports of the same graph are pixel-identical; nothing needs to be enabled.
+- **Patch fixes (1.6.1).** `~` in output folders is expanded, an exhausted disk quota reads
+  as "not enough free disk space", the quick-export shortcut uses Cmd on macOS, **Open Last
+  Export** reports a missing application, and every export restores the editor UI and
+  selection (the **Restore UI** option is gone). The Linux default-folder parser accepts
+  `${HOME}` and escaped spaces.
+
+1.7.1 replaces 1.7.0.
 
 ### Features
 
