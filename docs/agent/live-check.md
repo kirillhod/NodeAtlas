@@ -64,6 +64,13 @@ Work in this order and stop at the first failure:
    goes through `bpy.ops.image.clipboard_copy`, which needs a clipboard owner and can fail
    on Wayland or a minimal session. A failure must surface as a reported error with the UI
    restored, and a normal file export on the same machine must stay unaffected.
+7. **Transparent Background.** It changes the user's theme, so check what the user sees:
+   the backdrop switches from black to mid-grey once per pass, never to white, and the grid
+   is hidden for the capture. After success, cancel and an induced failure, `space.back` and
+   `grid_levels` must be exactly what they were, and nothing may be written to the
+   preferences. Compare the alpha: the padding is 0, nodes are 255, shadows and frames are
+   partial, and compositing the PNG over the theme colour reproduces an opaque export. A
+   warm theme with a coloured background is the useful second case.
 
 Record the platform as its own row in [`QA_REPORT.md`](../../QA_REPORT.md): Blender version,
 OS and its scaling, `WINDOW` region size, `D`, `padding_px`, grid, tile size, and the

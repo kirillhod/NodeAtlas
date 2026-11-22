@@ -19,7 +19,8 @@
             'test_trees.py',
             'test_texture.py',
             'test_legacy.py',
-            'test_group.py'
+            'test_group.py',
+            'test_transparent.py'
         )
         selected = @(
             'test_selected.py',
@@ -41,7 +42,8 @@
             'test_arealost.py',
             'test_multiarea.py',
             'test_multiwindow.py',
-            'test_group.py'
+            'test_group.py',
+            'test_transparent.py'
         )
         density = @(
             'test_density.py',
@@ -57,7 +59,8 @@
             'test_path.py',
             'test_readonly.py',
             'test_diskfull.py',
-            'test_limits.py'
+            'test_limits.py',
+            'test_transparent.py'
         )
         repeat = @(
             'test_repeat.py',

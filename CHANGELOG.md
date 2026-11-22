@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.7.0
+
+- Add a **Transparent Background** export option. Every tile is captured twice, over flat
+  black and over flat mid-grey, and the editor background is removed pixel by pixel, so the
+  graph, its shadows, its semi-transparent frames and its anti-aliased edges keep their
+  exact alpha. The padding becomes transparent, and the PNG drops straight onto any
+  background. The option is also in the **Export As** dialog. Cost: the export takes about
+  twice as long, because every tile is captured twice.
+- The editor dims once per background pass and the backdrop grid is hidden during a
+  transparent export; the theme and the grid are restored afterwards. There is no white
+  flash.
+- The capture-area preview is now **off by default**. Enable **Show Capture Area** in the
+  sidebar to see the exported rectangle and its estimated size.
+- Export time and memory are otherwise unchanged; the alpha is stitched with the same
+  weights as the colour, so a shadow crossing a tile seam keeps its value.
+
 ## 1.6.1
 
 - Remove the **Restore UI** preference. Every export now restores the editor flags and

@@ -103,6 +103,7 @@ class NODE_ATLAS_OT_export_as(bpy.types.Operator, ExportHelper):
         box = layout.box()
         box.prop(prefs, "output_dpi")
         box.prop(prefs, "padding")
+        box.prop(prefs, "transparent")
         box.prop(prefs, "max_mp")
         box.prop(prefs, "scope", expand=True)
         box.prop(prefs, "hide_ui")

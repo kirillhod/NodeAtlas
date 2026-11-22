@@ -15,8 +15,9 @@ blender --background --factory-startup --python tests/unit/test_core.py
 
 Covers view metrics, layout/bounds, density clamping, stitching and memmap spill, PNG
 writing and `pHYs` metadata, save errors (including a full disk and an exhausted quota),
-output-path checks, `~` expansion in output paths, selected-node filtering, tile selection
-geometry, capture-area geometry and label, filename tokens and registration.
+output-path checks, `~` expansion in output paths, transparent matting (alpha, background
+step, premultiplied stitching), selected-node filtering, tile selection geometry,
+capture-area geometry and label, filename tokens and registration.
 
 ## Fixtures and GUI tests
 
@@ -55,6 +56,7 @@ blender --factory-startup --python tests/gui/test_limits.py
 blender --factory-startup --python tests/gui/test_readonly.py
 blender --factory-startup --python tests/gui/test_diskfull.py
 blender --factory-startup --python tests/gui/test_arealost.py
+blender --factory-startup --python tests/gui/test_transparent.py
 blender --factory-startup --python tests/gui/test_estimate.py
 blender --factory-startup --python tests/gui/test_estimate_selected.py
 blender --factory-startup --python tests/gui/test_preview.py
@@ -94,7 +96,10 @@ only when it covers most of the band; the outermost 2 px are always checked.
 on all four sides of the live graph bounds, checks that the drawn rectangle equals the
 computed one, counts the frame's pixels in a screenshot, and then exports the same tree
 with the overlay on and off and requires identical pixels: the overlay must never reach a
-tile. The commands above are for debugging; they do not run the runner's PNG content
+tile. `test_transparent.py` exports with **Transparent Background** and requires the outer
+border and the padding bands to be transparent, opaque nodes, partial alpha for shadows,
+and an exactly restored theme background and grid setting. The commands above are for
+debugging; they do not run the runner's PNG content
 check, so use the wrapper or the matrix runner when the result is evidence.
 
 ## Matrix runner
@@ -107,7 +112,7 @@ Pass each binary as `version=path`; separate entries with a semicolon:
 powershell -File tests/run_matrix.ps1 -Tier smoke `
   -Blender '5.3.0=C:\Blender\5.3\blender.exe'
 
-# Release matrix: 33 tests plus the 120 dpi and maximized variants on five versions.
+# Release matrix: 34 tests plus the 120 dpi and maximized variants on five versions.
 powershell -File tests/run_matrix.ps1 -Tier full `
   -Blender '4.2.23=C:\Blender\4.2\blender.exe;4.5.9=C:\Blender\4.5\blender.exe;5.1.2=C:\Blender\5.1\blender.exe;5.2.4=C:\Blender\5.2\blender.exe;5.3.0=C:\Blender\5.3\blender.exe'
 ```

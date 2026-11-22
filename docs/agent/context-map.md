@@ -51,6 +51,7 @@ matches a heading prefix (`M7`). Use `--max-lines N` when a section is still too
 | Filename pattern and tokens | `naming.py` (`render_filename`, `_filename_fields`, `quick_filepath`) | - | `test_naming.py`, `test_path.py` |
 | Preferences, panel, preview, estimate, menus, keymap | `preferences.py`, `preview.py`, `node_atlas/__init__.py` (`preview.estimate`) | report §5 item 39 | `test_core.py`, `test_estimate.py`, `test_preview.py`, `test_artifact.py`, manual GUI |
 | Capture-area preview (outline, label) | `preview.py` (`estimate`, `live_union`, `screen_rect`, `dash_quads`, `suppress`) | report §5 item 39 | `test_preview.py`, `test_core.py` |
+| Transparent background | `stitch.py` (`matte_from_pair`, `matte_step`, `stitch_tiles`), `job.py` (`_capture_transparent`, `_start_second_pass`), `capture.py` (`set_theme_backdrop`) | report §11.14 | `test_transparent.py`, `test_core.py` |
 | Undo neutrality | every pipeline module | report §11.16 | unit + `test_export.py`, `test_fail.py` |
 | Extension manifest and packaging | `node_atlas/blender_manifest.toml` | report §4.7; `QA_REPORT.md` Packaging | `blender --command extension validate` |
 | New OS or display scaling | `preferences.py` (desktop branches), `capture.py` (`capture_tile`) | report §7 items 3 and 16 | [`live-check.md`](live-check.md) §2 |

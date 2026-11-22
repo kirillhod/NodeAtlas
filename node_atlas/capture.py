@@ -22,6 +22,12 @@ from .log import get_logger
 
 log = get_logger()
 
+# Transparent mode paints the editor background twice: black first, then mid grey.
+# Mid grey avoids a white flash while still leaving about 190 of the 255 byte steps
+# for the matting; the real step is measured per export (report section 11.14).
+DARK_BACKDROP = (0.0, 0.0, 0.0)
+LIGHT_BACKDROP = (0.5, 0.5, 0.5)
+
 
 @dataclass
 class EditorSnapshot:
@@ -49,6 +55,8 @@ class EditorSnapshot:
     maximized: bool = False
     temp_tree: object | None = None
     link_highlight_alpha: float | None = None
+    theme_backdrop: tuple | None = None
+    theme_grid_levels: int | None = None
     warnings: list[str] = field(default_factory=list)
 
 
@@ -147,6 +155,54 @@ def restore_link_highlight(alpha: float | None) -> None:
         log.warning("Could not restore the link highlight alpha", exc_info=True)
 
 
+def current_theme_backdrop():
+    """Return the node editor background colour of the active theme."""
+    theme = getattr(bpy.context.preferences.themes[0], "node_editor", None)
+    space = getattr(theme, "space", None) if theme is not None else None
+    color = getattr(space, "back", None) if space is not None else None
+    if color is None or len(color) < 3:
+        return None
+    return tuple(float(channel) for channel in color[:3])
+
+
+def current_theme_grid_levels():
+    theme = getattr(bpy.context.preferences.themes[0], "node_editor", None)
+    value = getattr(theme, "grid_levels", None) if theme is not None else None
+    return int(value) if value is not None else None
+
+
+def set_theme_backdrop(value) -> None:
+    """Paint the node editor background one flat colour for transparent capture."""
+    theme = getattr(bpy.context.preferences.themes[0], "node_editor", None)
+    space = getattr(theme, "space", None) if theme is not None else None
+    if space is None or not hasattr(space, "back"):
+        raise RuntimeError("this Blender build has no node editor background colour")
+    red, green, blue = value
+    space.back = (float(red), float(green), float(blue))
+
+
+def set_theme_grid_levels(levels: int) -> None:
+    """Set the backdrop grid detail; 0 hides the grid for a flat background."""
+    theme = getattr(bpy.context.preferences.themes[0], "node_editor", None)
+    if theme is None or not hasattr(theme, "grid_levels"):
+        raise RuntimeError("this Blender build has no node editor grid setting")
+    theme.grid_levels = int(levels)
+
+
+def restore_theme(backdrop, grid_levels) -> None:
+    """Best-effort restore of the theme values transparent capture changes."""
+    if backdrop is not None:
+        try:
+            set_theme_backdrop(backdrop)
+        except Exception as exc:
+            log.warning("Could not restore the node editor background: %s", exc)
+    if grid_levels is not None:
+        try:
+            set_theme_grid_levels(grid_levels)
+        except Exception as exc:
+            log.warning("Could not restore the node editor grid: %s", exc)
+
+
 def take_snapshot(window, area, space, region, tree) -> EditorSnapshot:
     v2d = region.view2d
     prefs = bpy.context.preferences
@@ -180,6 +236,8 @@ def take_snapshot(window, area, space, region, tree) -> EditorSnapshot:
             if item.node_tree is not None
         ),
         link_highlight_alpha=float(highlight[3]) if highlight is not None else None,
+        theme_backdrop=current_theme_backdrop(),
+        theme_grid_levels=current_theme_grid_levels(),
     )
 
 
@@ -678,6 +736,7 @@ def _apply_tree_state(
 def restore_snapshot(snapshot: EditorSnapshot):
     """Best-effort restoration. Returns (errors, warnings)."""
     restore_link_highlight(snapshot.link_highlight_alpha)
+    restore_theme(snapshot.theme_backdrop, snapshot.theme_grid_levels)
     errors: list[str] = []
     warnings: list[str] = list(snapshot.warnings)
     if snapshot.pin and not effective_pin(snapshot.tree_type, snapshot.pin):

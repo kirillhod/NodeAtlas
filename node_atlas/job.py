@@ -4,11 +4,14 @@
 from __future__ import annotations
 
 import os
+import shutil
+import tempfile
 import time
 import traceback
 from dataclasses import dataclass
 
 import bpy
+import numpy as np
 
 from . import bounds, capture, preview, stitch
 from .log import get_logger
@@ -30,6 +33,7 @@ class ExportSettings:
     deterministic: bool
     copy_only: bool = False
     keep_links: bool = False
+    transparent: bool = False
 
 
 def settings_from_prefs(prefs, filepath, copy_only: bool = False) -> ExportSettings:
@@ -43,6 +47,7 @@ def settings_from_prefs(prefs, filepath, copy_only: bool = False) -> ExportSetti
         deterministic=bool(prefs.deterministic),
         copy_only=copy_only,
         keep_links=bool(prefs.keep_links),
+        transparent=bool(getattr(prefs, "transparent", False)),
     )
 
 
@@ -116,6 +121,11 @@ class ExportJob:
         self.message = ""
         self.started = time.perf_counter()
         self.elapsed = 0.0
+        self.transparent_pass = 0
+        self.dark_dir = None
+        self.dark_paths = {}
+        self.matte_step = None
+        self.anchor = None
 
     # -- status ---------------------------------------------------------
     def _status(self, text: str | None) -> None:
@@ -181,6 +191,15 @@ class ExportJob:
         self.snapshot = capture.take_snapshot(window, area, space, region, tree)
         self.tree_type = space.tree_type
         self.tree = tree
+
+        if self.settings.transparent:
+            # The grid would not cancel out between the two backgrounds: it keeps
+            # its own colour, so matting would turn it opaque.
+            capture.set_theme_grid_levels(0)
+            # The first pass is written here, not held in RAM: a large graph holds
+            # one whole image worth of tiles, and doubling that would break the
+            # memory limit the stitcher already spills to keep.
+            self.dark_dir = tempfile.mkdtemp(prefix="nodeatlas_alpha_")
 
         # Selected-only needs a pinned temporary tree; pinning a compositor
         # tree crashes Blender 4.2/4.5 and the scene tree is read-only there.
@@ -262,7 +281,7 @@ class ExportJob:
             capture.view_op(window, area, region, "reset")
         achieved = capture.set_zoom(
             window, area, region, space, target, region.width, height,
-            prime=self.settings.deterministic,
+            prime=self.settings.deterministic or self.settings.transparent,
         )
         if abs(achieved / target - 1.0) > 0.01:
             self.warnings.append(f"Zoom error {abs(achieved / target - 1.0) * 100:.2f}%")
@@ -287,6 +306,9 @@ class ExportJob:
             window, area, region, space, self.tree, layout, effective_scale, vis,
             nodes=nodes,
         )
+        # The second background pass repeats the same view, so keep what the
+        # anchor and the capture loop need to reach it again.
+        self.anchor = (target, effective_scale, vis, nodes)
         self.layout = layout
         self.region_width = region.width
         self.region_height = height
@@ -298,6 +320,12 @@ class ExportJob:
         self.index = 0
         self.current_tile = (0, 0)
         self.stage = "capture"
+
+    def _capture_tile(self):
+        return capture.capture_tile(
+            self.window, self.area, self.region,
+            self.region_width, self.region_height, self.bottom_ui, self.layout.pad,
+        )
 
     def _capture_one(self) -> None:
         layout = self.layout
@@ -321,19 +349,69 @@ class ExportJob:
                 self.region_height,
                 self.selection_margin_px,
             )
-        self._status(f"NodeAtlas: capturing tile {self.index + 1}/{total}…")
-        self.tiles[(i, j)] = capture.capture_tile(
-            self.window, self.area, self.region,
-            self.region_width, self.region_height, self.bottom_ui, layout.pad,
-        )
+        if self.settings.transparent:
+            self._capture_transparent(i, j, total)
+        else:
+            self._status(f"NodeAtlas: capturing tile {self.index + 1}/{total}…")
+            self.tiles[(i, j)] = self._capture_tile()
+
         self.index += 1
         if self.index >= total:
-            self.stage = "stitch"
+            if self.settings.transparent and self.transparent_pass == 0:
+                self._start_second_pass()
+            else:
+                self.stage = "stitch"
+
+    def _capture_transparent(self, i: int, j: int, total: int) -> None:
+        """Capture one tile for the current background pass.
+
+        The dark pass is written to a temporary file and read back in the light
+        pass: the export already holds one full image worth of tiles, and two
+        passes in RAM at once would double the peak.
+        """
+        if self.transparent_pass == 0:
+            self._status(f"NodeAtlas: dark pass, tile {self.index + 1}/{total}…")
+            if self.index == 0:
+                capture.set_theme_backdrop(capture.DARK_BACKDROP)
+            path = os.path.join(self.dark_dir, f"tile_{i}_{j}.npy")
+            np.save(path, self._capture_tile())
+            self.dark_paths[(i, j)] = path
+            return
+
+        self._status(f"NodeAtlas: light pass, tile {self.index + 1}/{total}…")
+        dark = np.load(self.dark_paths.pop((i, j)))
+        light = self._capture_tile()
+        if self.matte_step is None:
+            self.matte_step = stitch.matte_step(dark, light)
+        self.tiles[(i, j)] = stitch.matte_from_pair(dark, light, step=self.matte_step)
+
+    def _start_second_pass(self) -> None:
+        """Switch the background once and replay the same tile views.
+
+        The background changes twice per export, not twice per tile: a per-tile
+        alternation would flash the whole editor at tile rate.
+        """
+        capture.set_theme_backdrop(capture.LIGHT_BACKDROP)
+        target, effective_scale, vis, nodes = self.anchor
+        capture.set_zoom(
+            self.window, self.area, self.region, self.space, target,
+            self.region.width, self.region_height,
+            prime=True,
+        )
+        capture.anchor_first_tile(
+            self.window, self.area, self.region, self.space, self.tree,
+            self.layout, effective_scale, vis, nodes=nodes,
+        )
+        self.current_tile = (0, 0)
+        self.index = 0
+        self.transparent_pass = 1
+        self._status("NodeAtlas: light pass…")
 
     def _stitch(self) -> None:
         self._status("NodeAtlas: stitching…")
         self.final = stitch.stitch_tiles(
             self.tiles, self.layout, self.region_width, self.region_height,
+            transparent=self.settings.transparent,
         )
         self.output_size = (self.final.shape[1], self.final.shape[0])
         self.tiles = {}
@@ -366,6 +444,12 @@ class ExportJob:
             if errors:
                 self.error = (self.error + "\n" if self.error else "") + "\n".join(errors)
             self.snapshot = None
+        if self.dark_dir is not None:
+            # The first background pass lives on disk until the second one reads
+            # it; a failed or cancelled export must not leave it behind.
+            shutil.rmtree(self.dark_dir, ignore_errors=True)
+            self.dark_dir = None
+        self.dark_paths = {}
         self.final = None
         self.stage = "done"
 

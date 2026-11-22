@@ -14,12 +14,12 @@ restate them.
 
 ## Now
 
-Empty. The 1.6.0 capture-area preview shipped; the next unit is chosen from `Backlog`
+Empty. The 1.7.0 transparent background shipped; the next unit is chosen from `Backlog`
 when it earns a goal and a checkable exit.
 
 ## Next
 
-Empty. The unit after the preview is chosen from `Backlog` when it earns a slot.
+Empty.
 
 ## Backlog
 
@@ -28,7 +28,6 @@ checkable exit.
 
 | Entry | State |
 |---|---|
-| Transparent background | Method measured (report §11.14: mean \|Δα\| = 0.000000, foreground min 0.9908). Cost: two captures per tile and an alpha path through `imbuf` and the NumPy fallback. |
 | Batch export | Deferred from 1.0.0 twice (report §6.5, plan §8). Cost: a loop over trees, collision-safe names, one snapshot per tree. |
 | Hide the grid | Cosmetic: a clean background without grid lines. |
 | JPG and WEBP output | A second encoder and a lossy quality choice; PNG is the only format today. |

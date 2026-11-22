@@ -87,6 +87,16 @@ class NodeAtlasPreferences(bpy.types.AddonPreferences):
         min=0,
         max=4000,
     )
+    transparent: bpy.props.BoolProperty(
+        name="Transparent Background",
+        description=(
+            "Export the graph without the editor background. The editor dims once "
+            "during the capture and the backdrop grid is hidden; both are restored "
+            "afterwards. The export takes about twice as long and the padding "
+            "becomes transparent"
+        ),
+        default=False,
+    )
     max_mp: bpy.props.FloatProperty(
         name="Max Megapixels",
         description=(
@@ -120,7 +130,7 @@ class NodeAtlasPreferences(bpy.types.AddonPreferences):
             "Draw the exported rectangle and its estimated size over the Node "
             "Editor; the export hides the overlay automatically"
         ),
-        default=True,
+        default=False,
         update=_node_redraw,
     )
     default_dir: bpy.props.StringProperty(

@@ -15,6 +15,11 @@ import numpy as np
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
+HERE = os.path.dirname(os.path.abspath(__file__))
+if HERE not in sys.path:
+    sys.path.insert(0, HERE)
+
+import png_content  # noqa: E402
 
 OUT = tempfile.mkdtemp(prefix="nodeatlas_repeat_")
 FIXTURE = os.path.join(ROOT, "tests", "fixtures", "scene_both.blend")
@@ -65,6 +70,9 @@ def setup():
 
 
 def start_export():
+    # A hover highlight on the node under the pointer would be captured, and it can
+    # differ between the two runs; park the pointer before every export.
+    png_content.park_cursor()
     area, region = node_area()
     window = bpy.context.window_manager.windows[0]
     with bpy.context.temp_override(window=window, area=area, region=region):

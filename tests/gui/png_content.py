@@ -13,6 +13,21 @@ from __future__ import annotations
 import numpy as np
 
 
+def park_cursor() -> None:
+    """Move the pointer to the screen corner so no node row draws a hover highlight.
+
+    Two screenshots of the same graph otherwise differ when the pointer happens to
+    rest over a node: the hovered row is drawn lighter and with its arrows, and the
+    capture includes it. Best effort: other platforms keep the pointer where it is.
+    """
+    try:
+        import ctypes
+
+        ctypes.windll.user32.SetCursorPos(0, 0)
+    except Exception:
+        pass
+
+
 def read_rgba(path: str) -> np.ndarray:
     import bpy
 

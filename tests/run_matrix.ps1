@@ -116,7 +116,8 @@ $fullNames = @(
     'test_boost.py',
     'test_naming.py',
     'test_clipboard.py',
-    'test_path.py'
+    'test_path.py',
+    'test_transparent.py'
 )
 
 $requested = @()

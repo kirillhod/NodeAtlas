@@ -15,7 +15,7 @@ as one high-resolution PNG. It captures the
 [NumPy](https://numpy.org/doc/stable/), and saves through
 [`imbuf`](https://docs.blender.org/api/current/imbuf.html). No re-rendering.
 
-**Status:** 1.6.1. M0–M8 are complete (Shader/Geometry Nodes/Compositor/Texture),
+**Status:** 1.7.0. M0–M8 are complete (Shader/Geometry Nodes/Compositor/Texture),
 the legacy 4.2–5.1 path is validated on Blender 4.2.23, 4.5.9 and 5.1.2, and hardening
 (limits, fault injection, read-only/full-disk output, scaling) is tested on 4.2–5.3.
 The Compositor works on 4.2–5.3: the compositor tree stays unpinned on 4.2/4.5, where
@@ -23,10 +23,12 @@ pinning crashes the next area refresh, and selected-only compositor export needs
 Connections that cross tile boundaries keep full strength since 1.4.1, and Selected Nodes
 can keep its links to directly connected nodes since 1.5.0. Since 1.6.0 the Node Editor
 draws the capture-area outline and its size label from the same estimate the export uses,
-and the overlay is suppressed for the whole job. Since 1.6.1 every export restores the
-editor UI and selection, `~` in a folder is expanded, and the shortcut uses Cmd on macOS.
-The 1.6.1 artifact was verified on 5.3.0 only; the five-version matrix was last run for
-1.6.0. Packaging and docs are complete for Windows; Linux, macOS and a second monitor are
+and the overlay is suppressed for the whole job; the preview is off by default since 1.7.0.
+Since 1.6.1 every export restores the editor UI and selection, `~` in a folder is expanded,
+and the shortcut uses Cmd on macOS.
+Since 1.7.0 **Transparent Background** recovers alpha from two capture passes over black
+and mid-grey; it costs a second screenshot per tile, hides the grid, and restores the theme.
+Packaging and docs are complete for Windows; Linux, macOS and a second monitor are
 untested.
 
 **Agreed identifiers** (do not rename without approval):
@@ -221,6 +223,16 @@ Verified on Blender 5.3.0. Violating them yields plausible-looking but wrong ima
     [`blf.size`](https://docs.blender.org/api/current/blf.html) takes `(font, size)` on 5.x
     and `(font, size, dpi)` on 4.2–5.1; probe the signature once.
 
+16. **Transparent background = two passes, never white.** Alpha comes from
+    `stitch.matte_from_pair` with two screenshots per tile: `space.back = (0,0,0)` for the
+    whole first pass, then `(0.5,0.5,0.5)` for the second, with `grid_levels = 0` and both
+    values restored from the snapshot. Do not alternate the background per tile (it flashes
+    at tile rate) and do not use white (a full-screen white phase is a photosensitivity
+    risk). The step between the backgrounds is measured per export (`stitch.matte_step`)
+    because Blender maps the theme colour to bytes without gamma, and α below 2.5/255 is
+    snapped to zero. Store the dark pass on disk and stitch alpha premultiplied; report
+    §11.14 has the measurements.
+
 ## 6. Coding conventions
 
 - English for code, comments, docs, commits.
@@ -255,6 +267,9 @@ grid. Full matrix: report §8 and plan §6. The concrete runner and evidence ste
   `QA_REPORT.md`, commit bodies or `docs/agent/`. The test is the reader: a sentence that
   only makes sense to someone who has seen the repository is a developer sentence, and it
   goes to a developer document.
+- **The README keeps one short `Development` section of links only** — tests, report,
+  roadmap, this file, and the image-generation command. It carries no counts, matrix
+  results or release state, so the rule above still holds.
 - **Each fact has one home.** Measurements → `NodeGraph_Export_Report.md`; test counts and
   inventory → `tests/README.md` and `QA_REPORT.md`; workflow → `docs/agent/`; scope and
   next work → [`ROADMAP.md`](ROADMAP.md); repository state (tags, releases, submissions)

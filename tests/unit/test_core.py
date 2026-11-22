@@ -125,6 +125,86 @@ def test_stitch_single_tile():
     check((spilled == image).all(), "memmap output")
 
 
+def test_transparent_stitch():
+    region_w, region_h, pad, padding = 200, 100, 16, 10
+    tile_w, tile_h = region_w - 2 * pad, region_h - 2 * pad
+    layout = bounds.Layout(
+        pad=pad, overlap=120, margin=padding + pad,
+        grid_x=1, grid_y=1, step_x=region_w - 120, step_y=region_h - 120,
+        canvas_w=region_w, canvas_h=region_h,
+        final_w=math.ceil(region_w - 2 * (padding + pad)) + 2 * padding,
+        final_h=math.ceil(region_h - 2 * (padding + pad)) + 2 * padding,
+    )
+    tile = np.zeros((tile_h, tile_w, 4), dtype=np.uint8)
+    tile[:, :, 0] = 200
+    # The left half is a semi-transparent node pixel, the right half is empty.
+    tile[:, : tile_w // 2, 3] = 128
+    tiles = {(0, 0): tile}
+    image = stitch.stitch_tiles(tiles, layout, region_w, region_h, transparent=True)
+    check(image.shape == (layout.final_h, layout.final_w, 4), "transparent shape")
+    check(image[0, 0, 3] in (127, 128), "semi-transparent alpha survives")
+    check(image[0, -1, 3] == 0, "empty background is transparent")
+    check(abs(int(image[0, 0, 0]) - 200) <= 2, "straight colour after premultiplied stitch")
+
+    spilled = stitch.stitch_tiles(
+        tiles, layout, region_w, region_h, memory_limit=0, transparent=True
+    )
+    check((spilled == image).all(), "transparent memmap output")
+
+
+def test_matte_pair():
+    # Background over black and white: no foreground, so alpha is zero.
+    dark = np.zeros((2, 2, 4), dtype=np.uint8)
+    light = np.full((2, 2, 4), 255, dtype=np.uint8)
+    image = stitch.matte_from_pair(dark, light)
+    check((image[:, :, 3] == 0).all(), "background alpha")
+    check((image[:, :, :3] == 0).all(), "background colour")
+
+    # Opaque red is identical over both backgrounds.
+    dark = np.zeros((1, 1, 4), dtype=np.uint8)
+    light = np.zeros((1, 1, 4), dtype=np.uint8)
+    dark[0, 0] = (255, 0, 0, 255)
+    light[0, 0] = (255, 0, 0, 255)
+    image = stitch.matte_from_pair(dark, light)
+    check(image[0, 0, 3] == 255, "opaque alpha")
+    check(tuple(image[0, 0, :3]) == (255, 0, 0), "opaque colour")
+
+    # Half coverage: 127 of the 254 steps between the backgrounds.
+    dark = np.zeros((1, 1, 4), dtype=np.uint8)
+    light = np.zeros((1, 1, 4), dtype=np.uint8)
+    dark[0, 0] = (64, 64, 64, 255)
+    light[0, 0] = (191, 191, 191, 255)
+    image = stitch.matte_from_pair(dark, light)
+    check(abs(int(image[0, 0, 3]) - 128) <= 1, "half alpha")
+    check(abs(int(image[0, 0, 0]) - 128) <= 2, "half colour unpremultiplied")
+
+
+def test_matte_step():
+    # The bottom-left block of the first tile is background: 100 bytes apart.
+    dark = np.zeros((16, 16, 4), dtype=np.uint8)
+    light = np.zeros((16, 16, 4), dtype=np.uint8)
+    light[:, :, :3] = 100
+    # An opaque node in the middle does not change the corner sample.
+    dark[8:, 8:, :3] = 40
+    light[8:, 8:, :3] = 40
+    check(abs(stitch.matte_step(dark, light) - 100.0) < 1e-6, "measured step")
+
+    # A corner covered by content falls back to the whole tile.
+    dark[:] = 0
+    light[:] = 0
+    dark[4:, 4:, 0] = 0
+    light[4:, 4:, 0] = 60
+    check(abs(stitch.matte_step(dark, light) - 60.0) < 20.0, "fallback step")
+
+    flat = np.zeros((8, 8, 4), dtype=np.uint8)
+    try:
+        stitch.matte_step(flat, flat)
+    except stitch.StitchError:
+        pass
+    else:
+        check(False, "a flat pair must not produce a step")
+
+
 def png_phys_dpi(path):
     import struct
 
@@ -204,6 +284,10 @@ def test_registration():
         check(os.path.isdir(prefs.default_dir), "default directory exists")
         check(prefs.enable_shortcut is False, "shortcut is off by default")
         check(prefs.show_advanced is False, "advanced section is collapsed")
+        check(
+            prefs.show_capture_area is False,
+            "capture-area preview is off by default",
+        )
         from node_atlas import operators, job
 
         check(hasattr(operators.NODE_ATLAS_OT_export_as, "draw"), "export dialog settings")
@@ -754,6 +838,9 @@ def main():
         test_padding_unit,
         test_density,
         test_stitch_single_tile,
+        test_transparent_stitch,
+        test_matte_pair,
+        test_matte_step,
         test_png_writer,
         test_save_cleanup,
         test_locked_target,

@@ -1,19 +1,19 @@
 # NodeAtlas QA report
 
-**Version:** 1.6.1<br>
+**Version:** 1.7.0<br>
 **Date:** 22 November 2026<br>
 **Platforms:** Windows, GUI sessions only
 
-> **1.6.1.** Patch release for the cross-platform audit: `~` is expanded in output
-> folders, an exhausted quota maps to the disk-full message, the shortcut uses Cmd on
-> macOS, **Open Last Export** reports a missing handler, the Linux `user-dirs.dirs` parser
-> accepts `${HOME}` and escaped spaces, and **Restore UI** is gone because every export now
-> restores the editor UI and selection.
+> **1.7.0.** Adds **Transparent Background**: the editor background and the padding are
+> removed by two-background matting, so shadows, links and semi-transparent frames keep
+> their real alpha. Each tile is captured twice, over black and over mid-grey, in two
+> passes: the editor dims once per pass, never flashing white. The theme and the backdrop
+> grid are restored after success, cancel and an induced failure, and the first pass is
+> held on disk so peak memory is unchanged. The capture-area preview is now off by default.
 >
-> Full source matrix for 1.6.1: not re-run. The patch was verified on Blender 5.3.0 with
-> **25/25 unit tests**, the **8/8 smoke tier** and the affected path, I/O and state tests;
-> the 1.6.0 numbers below are the last five-version matrix. `test_artifact.py` results and
-> the artifact hash are in [Packaging](#packaging).
+> Full source matrix for 1.7.0: **36/36 GUI runs and 28/28 unit tests on each of
+> Blender 4.2.23, 4.5.9, 5.1.2, 5.2.4 and 5.3.0** (180/180 GUI total).
+> `test_artifact.py` results and the artifact hash are in [Packaging](#packaging).
 >
 > The detailed tables below are the 1.3.6 baseline; 1.4.0 changed sizes only by the
 > `VIS` margin and the padding unit, and later versions added cases.
@@ -62,12 +62,13 @@ blender --background --factory-startup --python tests/unit/test_core.py
 | Filename tokens / fallback | PASS | PASS | PASS | PASS | PASS |
 | Tree owner names | PASS | PASS | PASS | PASS | PASS |
 | Quick path / empty directory | PASS | PASS | PASS | PASS | PASS |
+| Transparent matting: alpha, step, stitch | PASS | PASS | PASS | PASS | PASS |
 | Registration/preferences | PASS | PASS | PASS | PASS | PASS |
 | Shortcut keymap / customization | PASS | PASS | PASS | PASS | PASS |
 | Manifest/`__version__` consistency | PASS | PASS | PASS | PASS | PASS |
 
-Result: **18/18 categories PASS on all five versions** (1.3.6 baseline; the 1.6.1 suite is
-25/25 on 5.3.0, see the version notes above).
+Result: **19/19 categories PASS on all five versions** (1.3.6 baseline; the 1.7.0 suite is
+28/28, see the version notes above).
 
 ## GUI tests
 
@@ -106,6 +107,17 @@ window, exports a fixture, validates the PNG and editor restoration, then exits.
 | `test_naming.py` | PASS, owner name + 96 dpi | PASS | PASS | PASS | PASS |
 | `test_clipboard.py` | PASS, OS clipboard checked | PASS | PASS | PASS | PASS |
 | `test_path.py` | PASS, empty dir refused | PASS | PASS | PASS | PASS |
+| `test_transparent.py` | PASS, transparent padding | PASS | PASS | PASS | PASS |
+
+1.7.0: **36/36 source GUI runs passed on each of the five versions** (180/180 total), and
+the unit suite is 28/28 on each version. `test_transparent.py` is the new case: it exports
+with **Transparent Background**, requires the outer padding to be clear, opaque nodes and
+partial alpha for shadows, and compares the theme background and grid before and after.
+Two unit cases cover the matting itself (`test_matte_pair`, `test_matte_step`) and one the
+premultiplied alpha stitch (`test_transparent_stitch`). The matrix also caught two test-side
+issues that were fixed rather than waived: a node shadow legitimately reaching into the
+inner padding, and a hover highlight from the pointer landing in one of two repeat exports
+(`png_content.park_cursor`).
 
 1.6.1: **no five-version matrix.** On 5.3.0 the unit suite is 25/25, the smoke tier is
 8/8, and the affected cases pass: `test_path.py`, `test_naming.py`, `test_export.py`,
@@ -174,7 +186,16 @@ without a clamp warning.
 
 - `blender --command extension validate node_atlas`: PASS.
 - `blender --command extension build --source-dir node_atlas --output-dir dist`:
-  produces `node_atlas-1.6.1.zip` with the manifest and the eight package modules.
+  produces `node_atlas-1.7.0.zip` with the manifest and the ten package modules.
+- **1.7.0 artifact:** build and `extension validate` PASS; the zip contains only the
+  manifest and the ten package modules (`job.py` and `naming.py` included), with no
+  `__pycache__`. The official installer (`install-file -r user_default -e`) installed it
+  into an isolated `BLENDER_USER_EXTENSIONS` profile on 4.2.23, 4.5.9, 5.1.2, 5.2.4 and
+  5.3.0, and `test_artifact.py` exported a PNG from `bl_ext.user_default.node_atlas` on
+  each. The classic folder copied into an isolated `scripts/addons` profile enabled
+  `node_atlas` and exported on all five.
+- `node_atlas-1.7.0.zip` SHA256:
+  `C1CC29B0E127F9A1AAC93D2705C00CF7E60849218857FB0D3BC84AA5ADDB977E`.
 - **1.6.1 artifact:** build and `extension validate` PASS; the zip contains only the
   manifest and the eight package modules, with no `__pycache__`. On 5.3.0 the official
   installer (`install-file -r user_default -e`) installed it into an isolated

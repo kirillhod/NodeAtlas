@@ -101,6 +101,9 @@ def current_rect(est, area, region):
 
 
 def start_export():
+    # Park the pointer: a hover highlight on a node row would land in one of the
+    # two comparison exports and break the pixel equality check.
+    png_content.park_cursor()
     area, region = node_area()
     window = bpy.context.window_manager.windows[0]
     with bpy.context.temp_override(window=window, area=area, region=region):
