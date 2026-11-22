@@ -94,7 +94,6 @@ def setup():
     prefs.max_mp = 100.0
     prefs.scope = "CURRENT"
     prefs.hide_ui = True
-    prefs.deterministic = True
     return areas_before
 
 

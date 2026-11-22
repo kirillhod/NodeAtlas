@@ -118,7 +118,6 @@ def configure(hide_ui, name):
     prefs.max_mp = 100.0
     prefs.scope = "CURRENT"
     prefs.hide_ui = hide_ui
-    prefs.deterministic = True
     state["expect_hide"] = hide_ui
     state["hide_calls"] = 0
     return snapshot(), os.path.join(OUT, name)

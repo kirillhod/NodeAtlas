@@ -20,7 +20,8 @@
             'test_texture.py',
             'test_legacy.py',
             'test_group.py',
-            'test_transparent.py'
+            'test_transparent.py',
+            'test_scale.py'
         )
         selected = @(
             'test_selected.py',

@@ -71,7 +71,7 @@ From source: `blender --command extension build --source-dir node_atlas`.
 | Show Capture Area | Off |
 | Default Directory | Desktop (home if absent); `~` is expanded |
 | Filename Pattern | `{blend}_{tree}_{date}.png`, plus `{datablock}` and `{type}` |
-| Hide UI, Deterministic View, Header Buttons | On |
+| Hide UI, Header Buttons | On |
 | Advanced, quick export shortcut | Off |
 
 ## Troubleshooting

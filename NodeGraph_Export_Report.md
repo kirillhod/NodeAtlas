@@ -293,7 +293,14 @@ Only items verified on a live Blender 5.3.0 or hard platform constraints are lis
     1.5.1 derives the per-tile box from the anchored layout (`margin`, `step_x`,
     `step_y`) instead of `View2D.region_to_view`, which can lag one pan: a node already
     inside a tile was selected and captured with its white selection outline.
-    `test_select_outside_tiles` covers the tile geometry; the long-link ratio stays 1.000.
+    1.7.1 also maps positions with `s`, not `k` (§4.3), and anchors the box to
+    `bounds.content_origin`: the box used `k` for positions and every node for the
+    origin, so at effective UI scale 1.25 a node stood up to 25 % of the graph to the
+    right of and below its assumed position and was selected while visible. On a
+    53-node shader tree (9 tiles, 6756×3340 at 128 DPI, `S = 1.25`) 36 visible
+    node-tile pairs were selected, frames included; the old and fixed exports differed
+    by 37 392 px (max 185/255). `test_select_outside_tiles` covers the tile geometry;
+    the long-link ratio stays 1.000.
     Result on 5.3: ratio 1.000; the fixed and unfixed exports differ only inside the link
     band (7806 px, rows 80-108 of a 56-136 band) and no node pixel changes. On 4.2.23 and
     4.5.9 a 1-px link's peak pixel varies by up to 16 % along its length from sub-pixel AA
@@ -424,7 +431,7 @@ class NODE_PT_node_atlas(bpy.types.Panel):
   - **Export As…** — file browser (`ExportHelper`);
   - compact settings: **Output DPI** (96 = `D 1.0`), **Padding (px)**, **Max MP**, **Scope** (current tree / selected nodes), **Background** (theme / solid color);
   - an estimated output size line, and a warning when `output_dpi` exceeds `D_max = S/0.43311`;
-  - an expandable **Advanced** section: `PAD`/`OVERLAP` scaling, deterministic mode (`view_all`), hide UI during capture, save current view, default directory, filename pattern.
+  - an expandable **Advanced** section: `PAD`/`OVERLAP` scaling, hide UI during capture, save current view, default directory, filename pattern. The view is always primed with `view_all` before zooming; there is no option to disable it.
 - The panel `poll()` returns true only when `context.space_data` is a `SpaceNodeEditor` with an `edit_tree`, so it never appears in unrelated editors.
 - The user opens it with `N` (standard sidebar shortcut); the tab name “Node Atlas” is visible next to Item/Tool.
 
@@ -438,7 +445,7 @@ class NODE_PT_node_atlas(bpy.types.Panel):
 
 **4. Keyboard shortcut.** Register `Ctrl+Shift+E` in the `Node Editor` keymap for the quick export, with a preference to enable/disable it and to choose another shortcut later. The keymap entry is added on `register()` and removed on `unregister()` so it does not leak.
 
-**5. Global defaults (AddonPreferences).** `Edit > Preferences > Add-ons > Node Atlas` stores `output_dpi` (96), `padding` (20), `max_mp`, a default output directory (empty asks for a path on every quick export), filename pattern (`{blend}_{tree}_{date}.png`; `{tree}` resolves to the owning material/world/object/scene/texture, `{datablock}` to the tree name, `{type}` to the tree type), `hide_ui`, `deterministic`, `copy_to_clipboard`, `background`, and whether to show the header button. The panel shows these values and can override them for one run; a “Use defaults” button resets the overrides.
+**5. Global defaults (AddonPreferences).** `Edit > Preferences > Add-ons > Node Atlas` stores `output_dpi` (96), `padding` (20), `max_mp`, a default output directory (empty asks for a path on every quick export), filename pattern (`{blend}_{tree}_{date}.png`; `{tree}` resolves to the owning material/world/object/scene/texture, `{datablock}` to the tree name, `{type}` to the tree type), `hide_ui`, `copy_to_clipboard`, `background`, and whether to show the header button. The panel shows these values and can override them for one run; a "Use defaults" button resets the overrides. The view is always primed with `view_all`, so no repeatability option is exposed.
 
 **6. Progress, cancel, result.** The operator runs as a timer-driven modal job: the status bar shows “Capturing tile i/n”, `Esc` sets a cancel flag, and the `finally` block restores the UI. On success, report the output path, pixel size, and elapsed time; optionally open the PNG in the Image Editor. On error, show a popup with the exception and confirm that the UI was restored.
 
@@ -723,7 +730,7 @@ How to go beyond: (a) raise `view.ui_scale` to 6 (the main path); (b) raise OS s
 - `view2d.reset()` is **not** deterministic: it preserves the current center, so the rasterization phase drifts. Two reset runs: raw frames mean 6.2 (27 % pixels > 2), tiled output mean 0.67 (1.8 % > 2).
 - `bpy.ops.node.view_all()` before zoom **is deterministic**: three full `D=1` runs (including after other exports) — **0 differing pixels**; two cross-process runs — 0; with area maximization — 0. View_all derives the base from node bounds and region size, not from the previous center.
 - **Options for repeatability:** (A) recommended — prime with `view_all` + `zoom_border`; bit-identical on the same machine, no restart needed. (B) If `reset` is used, accept AA-only differences and validate geometry (size, margins, positions) instead of pixels. (C) Supersample (capture at 2×D, downscale) to stabilize AA/text at fractional phases — not tested, costs 4× pixels/time. (D) Cross-machine reproducibility is not guaranteed; compare geometry invariants in tests.
-- Recommended mode: `view_all` → `zoom_border` to `S/D` → measure `upp` → anchor by pan. For tests, compare geometry (size, margins, positions), not only pixels; cross-machine determinism (GPU/fonts) is not guaranteed.
+- Recommended mode: `view_all` → `zoom_border` to `S/D` → measure `upp` → anchor by pan. The add-on always does this; repeatability is not a user option. For tests, compare geometry (size, margins, positions), not only pixels; cross-machine determinism (GPU/fonts) is not guaranteed.
 - **Ctrl+Space:** `screen_full_area(use_hide_panels=True)` grows the `WINDOW` region from 2100×1170 to 2560×1361. Big scene: grid 3×4 → 2×3, capture 0.46 → 0.21 s, stitch 0.62 → 0.45 s; `D_max` unchanged. References become invalid — re-acquire; restore by calling the operator again.
 - **PAD/OVERLAP:** at `view=6` the measured scrollbar is ≈17 px, frame ≈8 px, shadow ≈15 px, so `PAD=16` is too small. Use `PAD_eff = max(16, ceil(8*view.ui_scale))`, `OVERLAP_eff = max(120, 2*PAD_eff+32)`. Otherwise `OVERLAP − 2*PAD` goes negative and the grid/feathering breaks.
 - **Selection:** the active node draws a contour outside `Node.dimensions` (≈3 px at 1×, ≈16 px at 6×). Clear `select`/`nodes.active` during export and restore afterwards; otherwise the contour eats padding and makes the image depend on the current selection.

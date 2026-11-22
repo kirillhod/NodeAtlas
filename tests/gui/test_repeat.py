@@ -23,10 +23,11 @@ import png_content  # noqa: E402
 
 OUT = tempfile.mkdtemp(prefix="nodeatlas_repeat_")
 FIXTURE = os.path.join(ROOT, "tests", "fixtures", "scene_both.blend")
-state = {"ticks": 0, "phase": 0, "found": None}
+state = {"ticks": 0, "phase": 0, "found": None, "cursor": None}
 
 
 def fail(message):
+    png_content.restore_cursor(state["cursor"])
     print("FAIL:", message)
     traceback.print_exc()
     sys.stdout.flush()
@@ -65,14 +66,14 @@ def setup():
     prefs.max_mp = 100.0
     prefs.scope = "CURRENT"
     prefs.hide_ui = True
-    prefs.deterministic = True
     return os.path.join(OUT, "a.png")
 
 
 def start_export():
     # A hover highlight on the node under the pointer would be captured, and it can
-    # differ between the two runs; park the pointer before every export.
-    png_content.park_cursor()
+    # differ between the two runs; park the pointer before every export. The saved
+    # position is restored as soon as the file exists.
+    state["cursor"] = png_content.park_cursor()
     area, region = node_area()
     window = bpy.context.window_manager.windows[0]
     with bpy.context.temp_override(window=window, area=area, region=region):
@@ -98,6 +99,9 @@ def tick():
     if state["phase"] == 0:
         path = os.path.join(OUT, "a.png")
         if os.path.exists(path):
+            if state["cursor"] is not None:
+                png_content.restore_cursor(state["cursor"])
+                state["cursor"] = None
             if state["found"] is None:
                 state["found"] = state["ticks"]
             if state["ticks"] - state["found"] >= 5:
@@ -111,6 +115,9 @@ def tick():
     else:
         path = os.path.join(OUT, "b.png")
         if os.path.exists(path):
+            if state["cursor"] is not None:
+                png_content.restore_cursor(state["cursor"])
+                state["cursor"] = None
             if state["found"] is None:
                 state["found"] = state["ticks"]
             if state["ticks"] - state["found"] >= 5:

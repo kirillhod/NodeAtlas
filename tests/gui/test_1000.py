@@ -85,7 +85,6 @@ def setup():
     prefs.max_mp = 200.0 if DPI > 96 else 150.0
     prefs.scope = "CURRENT"
     prefs.hide_ui = True
-    prefs.deterministic = True
     return snapshot()
 
 

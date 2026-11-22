@@ -107,7 +107,6 @@ class NODE_ATLAS_OT_export_as(bpy.types.Operator, ExportHelper):
         box.prop(prefs, "max_mp")
         box.prop(prefs, "scope", expand=True)
         box.prop(prefs, "hide_ui")
-        box.prop(prefs, "deterministic")
 
     def execute(self, context):
         if not self.filepath.strip():

@@ -30,7 +30,6 @@ class ExportSettings:
     max_mp: float
     scope: str
     hide_ui: bool
-    deterministic: bool
     copy_only: bool = False
     keep_links: bool = False
     transparent: bool = False
@@ -44,7 +43,6 @@ def settings_from_prefs(prefs, filepath, copy_only: bool = False) -> ExportSetti
         max_mp=float(prefs.max_mp),
         scope=prefs.scope,
         hide_ui=bool(prefs.hide_ui),
-        deterministic=bool(prefs.deterministic),
         copy_only=copy_only,
         keep_links=bool(prefs.keep_links),
         transparent=bool(getattr(prefs, "transparent", False)),
@@ -104,6 +102,7 @@ class ExportJob:
         self.selection_margin_px = 0.0
         self.content_left = 0.0
         self.content_top = 0.0
+        self.content_s = 1.0
         self.content_k = 1.0
         self.link_selection_fix = False
         self.layout = None
@@ -277,11 +276,10 @@ class ExportJob:
                 f"(limit {dpi_max:.0f})"
             )
 
-        if not self.settings.deterministic:
-            capture.view_op(window, area, region, "reset")
+        # Always prime with View All: view2d.reset() keeps the current center, so
+        # the rasterization phase drifts between exports (report §11.10).
         achieved = capture.set_zoom(
             window, area, region, space, target, region.width, height,
-            prime=self.settings.deterministic or self.settings.transparent,
         )
         if abs(achieved / target - 1.0) > 0.01:
             self.warnings.append(f"Zoom error {abs(achieved / target - 1.0) * 100:.2f}%")
@@ -302,7 +300,7 @@ class ExportJob:
                 f"({layout.megapixels:.1f} MP), above the {self.settings.max_mp:.0f} MP limit"
             )
 
-        capture.anchor_first_tile(
+        anchored = capture.anchor_first_tile(
             window, area, region, space, self.tree, layout, effective_scale, vis,
             nodes=nodes,
         )
@@ -312,9 +310,12 @@ class ExportJob:
         self.layout = layout
         self.region_width = region.width
         self.region_height = height
-        self.content_left = min(bounds.absolute_location(node)[0] for node in nodes)
-        self.content_top = max(bounds.absolute_location(node)[1] for node in nodes)
-        self.content_k = metrics.k
+        # The per-tile selection box must use the same origin and factors as
+        # node_rect: drawable nodes only, positions by s (UI scale), sizes by k
+        # (report §4.3). "anchor_first_tile" aligns this union.
+        self.content_left, self.content_top = bounds.content_origin(nodes)
+        self.content_s = anchored.s
+        self.content_k = anchored.k
         self.selection_margin_px = layout.pad + bounds.visual_margin(view_scale)
         self.tiles = {}
         self.index = 0
@@ -342,6 +343,7 @@ class ExportJob:
                 self.tree,
                 self.content_left,
                 self.content_top,
+                self.content_s,
                 self.content_k,
                 self.layout,
                 (i, j),

@@ -41,6 +41,7 @@ blender --factory-startup --python tests/gui/test_padding.py
 blender --factory-startup --python tests/gui/test_trees.py
 blender --factory-startup --python tests/gui/test_texture.py
 blender --factory-startup --python tests/gui/test_repeat.py
+blender --factory-startup --python tests/gui/test_scale.py
 blender --factory-startup --python tests/gui/test_longlink.py
 blender --factory-startup --python tests/gui/test_cancel.py
 blender --factory-startup --python tests/gui/test_fail.py
@@ -98,9 +99,15 @@ computed one, counts the frame's pixels in a screenshot, and then exports the sa
 with the overlay on and off and requires identical pixels: the overlay must never reach a
 tile. `test_transparent.py` exports with **Transparent Background** and requires the outer
 border and the padding bands to be transparent, opaque nodes, partial alpha for shadows,
-and an exactly restored theme background and grid setting. The commands above are for
-debugging; they do not run the runner's PNG content
-check, so use the wrapper or the matrix runner when the result is evidence.
+and an exactly restored theme background and grid setting.
+`test_scale.py` exports at **Resolution Scale 1.25** with 192 DPI and checks every selected
+node against the measured view after the redraw: a node that the per-tile selection marked
+outside must not intersect the captured tile. `test_repeat.py` and `test_preview.py` park
+the pointer before an export, because a hover highlight would otherwise land in one capture;
+they move it only when it is over the Blender window and restore it as soon as the export
+finishes. The commands above are for debugging; they do
+not run the runner's PNG content check, so use the wrapper or the matrix runner when the
+result is evidence.
 
 ## Matrix runner
 

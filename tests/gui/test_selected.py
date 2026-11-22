@@ -82,7 +82,6 @@ def setup():
     prefs.max_mp = 100.0
     prefs.scope = "SELECTED"
     prefs.hide_ui = True
-    prefs.deterministic = True
     return tree, before
 
 

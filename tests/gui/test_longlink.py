@@ -121,7 +121,6 @@ def setup():
     prefs.max_mp = 200.0
     prefs.scope = "CURRENT"
     prefs.hide_ui = True
-    prefs.deterministic = True
 
     state["tree"] = tree
     return {

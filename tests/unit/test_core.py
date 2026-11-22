@@ -706,16 +706,45 @@ def test_select_outside_tiles():
     tree.nodes = [inside, near, far, low]
     layout = SimpleNamespace(margin=20, step_x=800, step_y=600)
 
-    capture.select_outside_view(tree, 0.0, 0.0, 1.0, layout, (0, 0), 1000, 800, 20)
+    capture.select_outside_view(tree, 0.0, 0.0, 1.0, 1.0, layout, (0, 0), 1000, 800, 20)
     check(not inside.select, "node inside the first tile stays unselected")
     check(not near.select, "node within the margin stays unselected")
     check(far.select, "node beyond the margin is selected")
     check(low.select, "node below the first tile is selected")
 
     tree.nodes = [Node("inside", 0, 0), Node("visible", 900, -900)]
-    capture.select_outside_view(tree, 0.0, 0.0, 1.0, layout, (1, 1), 1000, 800, 20)
+    capture.select_outside_view(tree, 0.0, 0.0, 1.0, 1.0, layout, (1, 1), 1000, 800, 20)
     check(tree.nodes[0].select, "top node is outside the lower-right tile")
     check(not tree.nodes[1].select, "lower-right node is inside its tile")
+
+    # Effective UI scale 2: positions use s, sizes use k (report §4.3). The
+    # node sits 120 px into the second tile with s = 2, while k = 1 would put
+    # its right edge at -230 px and select it inside the captured tile.
+    tree.nodes = [Node("scaled", 450, 0)]
+    capture.select_outside_view(tree, 0.0, 0.0, 2.0, 1.0, layout, (1, 0), 1000, 800, 20)
+    check(not tree.nodes[0].select, "positions use s, not k")
+
+
+def test_content_origin():
+    from types import SimpleNamespace
+
+    from node_atlas import bounds
+
+    class Dim:
+        def __init__(self, x, y):
+            self.x = x
+            self.y = y
+
+    def node(x, y, width=100, height=50):
+        return SimpleNamespace(
+            location=(x, y), parent=None, dimensions=Dim(width, height)
+        )
+
+    nodes = [node(0, 0), node(400, 300), node(-900, 800, 0, 0)]
+    check(
+        bounds.content_origin(nodes) == (0.0, 300.0),
+        "nodes without dimensions are ignored by the content origin",
+    )
 
 
 def test_preview_geometry():
@@ -850,6 +879,7 @@ def main():
         test_selected_node_names,
         test_link_neighbour_names,
         test_select_outside_tiles,
+        test_content_origin,
         test_preview_geometry,
         test_preview_dashes_and_label,
         test_filename_sanitization,

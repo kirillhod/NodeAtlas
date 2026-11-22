@@ -152,11 +152,6 @@ class NodeAtlasPreferences(bpy.types.AddonPreferences):
         description="Hide headers, toolbars, gizmos and the context path",
         default=True,
     )
-    deterministic: bpy.props.BoolProperty(
-        name="Deterministic View",
-        description="Prime the view with View All before zooming; makes repeated exports identical",
-        default=True,
-    )
     show_header_button: bpy.props.BoolProperty(
         name="Header Buttons",
         description="Show the export buttons in the Node Editor header",

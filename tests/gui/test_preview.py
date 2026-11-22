@@ -30,10 +30,11 @@ OUT = tempfile.mkdtemp(prefix="nodeatlas_preview_")
 FIXTURE = os.path.join(ROOT, "tests", "fixtures", "scene_both.blend")
 PADDING = 20
 PADDING_PX = PADDING  # 96 DPI: 1 unit == 1 final pixel
-state = {"ticks": 0, "phase": 0, "found": None}
+state = {"ticks": 0, "phase": 0, "found": None, "cursor": None}
 
 
 def fail(message):
+    png_content.restore_cursor(state["cursor"])
     print("FAIL:", message)
     traceback.print_exc()
     sys.stdout.flush()
@@ -72,7 +73,6 @@ def setup():
     prefs.max_mp = 100.0
     prefs.scope = "CURRENT"
     prefs.hide_ui = True
-    prefs.deterministic = True
     prefs.show_capture_area = True
 
 
@@ -102,8 +102,9 @@ def current_rect(est, area, region):
 
 def start_export():
     # Park the pointer: a hover highlight on a node row would land in one of the
-    # two comparison exports and break the pixel equality check.
-    png_content.park_cursor()
+    # two comparison exports and break the pixel equality check. Restored as soon
+    # as the file exists.
+    state["cursor"] = png_content.park_cursor()
     area, region = node_area()
     window = bpy.context.window_manager.windows[0]
     with bpy.context.temp_override(window=window, area=area, region=region):
@@ -261,6 +262,9 @@ def tick():
         if state["ticks"] > 1800:
             fail("timed out waiting for the export")
         return 0.1
+    if state["cursor"] is not None:
+        png_content.restore_cursor(state["cursor"])
+        state["cursor"] = None
     if state["found"] is None:
         state["found"] = state["ticks"]
     if state["ticks"] - state["found"] < 5:

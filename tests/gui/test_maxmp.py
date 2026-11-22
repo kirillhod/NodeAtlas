@@ -82,7 +82,6 @@ def setup():
     prefs.max_mp = 0.01  # far below the real ~3.6 MP output
     prefs.scope = "CURRENT"
     prefs.hide_ui = True
-    prefs.deterministic = True
     return snapshot()
 
 

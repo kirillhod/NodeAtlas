@@ -141,6 +141,26 @@ def collect_rects(nodes, metrics: ViewMetrics, vis: float = 0.0) -> list[Rect]:
     return rects
 
 
+def content_origin(nodes) -> tuple[float, float]:
+    """Return the node-unit corner the anchored layout aligns to.
+
+    ``anchor_first_tile`` aligns the union of :func:`collect_rects`, which
+    skips nodes without positive dimensions. Such a node must not move that
+    origin: using every node shifted the per-tile selection box relative to
+    the drawn content, so nodes that were visible could be selected.
+    """
+    usable = [
+        node for node in nodes
+        if node.dimensions.x > 0 and node.dimensions.y > 0
+    ]
+    if not usable:
+        raise ValueError("No drawable nodes in the tree")
+    return (
+        min(absolute_location(node)[0] for node in usable),
+        max(absolute_location(node)[1] for node in usable),
+    )
+
+
 def union_rects(rects) -> Rect:
     rects = list(rects)
     if not rects:

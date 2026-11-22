@@ -92,7 +92,6 @@ def setup():
     prefs.scope = "SELECTED"
     prefs.keep_links = False
     prefs.hide_ui = True
-    prefs.deterministic = True
     return tree, before
 
 

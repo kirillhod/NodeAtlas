@@ -284,7 +284,7 @@ def clear_selection(tree) -> None:
 
 
 def select_outside_view(
-    tree, content_left: float, content_top: float, k: float, layout,
+    tree, content_left: float, content_top: float, s: float, k: float, layout,
     tile: tuple[int, int], width: int, height: int, margin_px: float,
 ) -> None:
     """Select every node that cannot contribute pixels to the current tile.
@@ -304,6 +304,11 @@ def select_outside_view(
     ``layout.margin`` pixels inside the region, and :func:`pan` moves it by exact
     integer steps, so this geometry is stable.
 
+    Positions use *s* and sizes *k* (report §4.3): the two factors differ when
+    the effective UI scale is not 1. Using *k* for both drew the selection
+    outline and the frame tint of nodes that were still inside the tile at
+    UI scale 1.25.
+
     *margin_px* covers PAD and the outline drawn outside ``Node.dimensions``,
     so a node that could leave any pixel in the captured tile stays unselected.
     """
@@ -312,8 +317,8 @@ def select_outside_view(
     step_y = layout.step_y
     for node in tree.nodes:
         x, y = absolute_location(node)
-        left = layout.margin + (x - content_left) * k - tile[0] * step_x
-        top = height - layout.margin - (content_top - y) * k + tile[1] * step_y
+        left = layout.margin + (x - content_left) * s - tile[0] * step_x
+        top = height - layout.margin - (content_top - y) * s + tile[1] * step_y
         right = left + node.dimensions.x * k
         bottom = top - node.dimensions.y * k
         visible = (

@@ -10,20 +10,78 @@ writer did not leave transparent holes.
 
 from __future__ import annotations
 
+import os
+
 import numpy as np
 
 
-def park_cursor() -> None:
-    """Move the pointer to the screen corner so no node row draws a hover highlight.
+def _cursor_position():
+    """Return the pointer position, or None when the platform cannot report it."""
+    if os.name != "nt":
+        return None
+    try:
+        import ctypes
+        from ctypes import wintypes
 
-    Two screenshots of the same graph otherwise differ when the pointer happens to
-    rest over a node: the hovered row is drawn lighter and with its arrows, and the
-    capture includes it. Best effort: other platforms keep the pointer where it is.
+        point = wintypes.POINT()
+        if ctypes.windll.user32.GetCursorPos(ctypes.byref(point)):
+            return point
+    except Exception:
+        pass
+    return None
+
+
+def _cursor_over_this_process(point) -> bool:
+    """True when the window under *point* belongs to this Blender process."""
+    try:
+        import ctypes
+        from ctypes import wintypes
+
+        user32 = ctypes.windll.user32
+        user32.WindowFromPoint.argtypes = [wintypes.POINT]
+        user32.WindowFromPoint.restype = wintypes.HWND
+        window = user32.WindowFromPoint(point)
+        if not window:
+            return False
+        pid = wintypes.DWORD()
+        user32.GetWindowThreadProcessId(window, ctypes.byref(pid))
+        return int(pid.value) == os.getpid()
+    except Exception:
+        return False
+
+
+def park_cursor():
+    """Move the pointer out of the graph and return the position to restore.
+
+    Two screenshots of the same graph differ when the pointer happens to rest
+    over a node: the hovered row is drawn lighter and with its arrows, and the
+    capture includes it. Returns ``None`` without moving anything when the
+    pointer is over another application, so a test never interrupts the user.
     """
+    point = _cursor_position()
+    if point is None or not _cursor_over_this_process(point):
+        return None
     try:
         import ctypes
 
-        ctypes.windll.user32.SetCursorPos(0, 0)
+        if ctypes.windll.user32.SetCursorPos(0, 0):
+            return (int(point.x), int(point.y))
+    except Exception:
+        pass
+    return None
+
+
+def restore_cursor(saved) -> None:
+    """Return the pointer to *saved* unless the user moved it in the meantime."""
+    if saved is None:
+        return
+    point = _cursor_position()
+    if point is None or (int(point.x), int(point.y)) != (0, 0):
+        return
+    try:
+        import ctypes
+
+        ctypes.windll.user32.SetCursorPos(int(saved[0]), int(saved[1]))
     except Exception:
         pass
 
