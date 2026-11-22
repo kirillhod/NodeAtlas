@@ -6,7 +6,7 @@ one.
 
 `Blender 4.2+` · `GPL-3.0-or-later` · `Windows tested`
 
-![A whole shader tree in one 5068 × 2506 PNG](docs/images/example-export.png)
+![A whole shader tree in one 6756 × 3340 PNG](docs/images/example-export.png)
 
 ## What it does
 

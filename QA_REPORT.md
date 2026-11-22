@@ -1,18 +1,23 @@
 # NodeAtlas QA report
 
-**Version:** 1.7.0<br>
+**Version:** 1.7.1<br>
 **Date:** 22 November 2026<br>
 **Platforms:** Windows, GUI sessions only
 
-> **1.7.0.** Adds **Transparent Background**: the editor background and the padding are
-> removed by two-background matting, so shadows, links and semi-transparent frames keep
-> their real alpha. Each tile is captured twice, over black and over mid-grey, in two
-> passes: the editor dims once per pass, never flashing white. The theme and the backdrop
-> grid are restored after success, cancel and an induced failure, and the first pass is
-> held on disk so peak memory is unchanged. The capture-area preview is now off by default.
+> **1.7.1.** Patch release for exports at a non-default interface **Resolution Scale** and
+> for the repeatability option. The per-tile selection that keeps long links at full
+> strength mapped node positions with the size factor, so at Resolution Scale 1.25 nodes
+> and frames that were inside the capture were selected and their outline and frame tint
+> appeared in the PNG. Positions now use `s`, sizes `k` (report §5 item 17), and the box
+> origin comes from the drawable nodes. On a 53-node shader tree at 128 DPI the old box
+> selected 36 visible node-tile pairs across eight of nine tiles; the old and fixed exports
+> differed by 37 392 px. **Deterministic View** is gone: every export primes with
+> `view_all`, so repeated exports are identical without a setting.
 >
-> Full source matrix for 1.7.0: **36/36 GUI runs and 28/28 unit tests on each of
-> Blender 4.2.23, 4.5.9, 5.1.2, 5.2.4 and 5.3.0** (180/180 GUI total).
+> Full source matrix: **37/37 GUI runs and 29/29 unit tests on each of Blender 4.2.23,
+> 4.5.9, 5.1.2, 5.2.4 and 5.3.0** (185/185 GUI total). The matrix ran on the fix commit;
+> the later version-bump commit changes only the three version fields, and the unit suite
+> (including the version-consistency case) was re-run after the bump.
 > `test_artifact.py` results and the artifact hash are in [Packaging](#packaging).
 >
 > The detailed tables below are the 1.3.6 baseline; 1.4.0 changed sizes only by the
@@ -67,8 +72,8 @@ blender --background --factory-startup --python tests/unit/test_core.py
 | Shortcut keymap / customization | PASS | PASS | PASS | PASS | PASS |
 | Manifest/`__version__` consistency | PASS | PASS | PASS | PASS | PASS |
 
-Result: **19/19 categories PASS on all five versions** (1.3.6 baseline; the 1.7.0 suite is
-28/28, see the version notes above).
+Result: **19/19 categories PASS on all five versions** (1.3.6 baseline; the 1.7.1 suite is
+29/29, see the version notes above).
 
 ## GUI tests
 
@@ -108,6 +113,14 @@ window, exports a fixture, validates the PNG and editor restoration, then exits.
 | `test_clipboard.py` | PASS, OS clipboard checked | PASS | PASS | PASS | PASS |
 | `test_path.py` | PASS, empty dir refused | PASS | PASS | PASS | PASS |
 | `test_transparent.py` | PASS, transparent padding | PASS | PASS | PASS | PASS |
+
+1.7.1: **37/37 source GUI runs passed on each of the five versions** (185/185 total), and
+the unit suite is 29/29 on each version. `test_scale.py` is the new case: it exports at
+Resolution Scale 1.25 and 192 DPI and checks every selected node against the measured view
+after the redraw, so a node selected while visible fails the test. The unit suite also adds
+the `s != k` tile case and `test_content_origin`. The Deterministic View preference was
+removed, so the tests no longer set it. The matrix ran before the version bump; the only
+later change is the three version fields, covered by the unit suite.
 
 1.7.0: **36/36 source GUI runs passed on each of the five versions** (180/180 total), and
 the unit suite is 28/28 on each version. `test_transparent.py` is the new case: it exports
@@ -186,7 +199,16 @@ without a clamp warning.
 
 - `blender --command extension validate node_atlas`: PASS.
 - `blender --command extension build --source-dir node_atlas --output-dir dist`:
-  produces `node_atlas-1.7.0.zip` with the manifest and the ten package modules.
+  produces `node_atlas-1.7.1.zip` with the manifest and the ten package modules.
+- **1.7.1 artifact:** build and `extension validate` PASS; the zip contains only the
+  manifest and the ten package modules (`job.py` and `naming.py` included), with no
+  `__pycache__`. The official installer (`install-file -r user_default -e`) installed it
+  into an isolated `BLENDER_USER_EXTENSIONS` profile on 4.2.23, 4.5.9, 5.1.2, 5.2.4 and
+  5.3.0, and `test_artifact.py` exported a PNG from `bl_ext.user_default.node_atlas` on
+  each. The classic folder copied into an isolated `scripts/addons` profile enabled
+  `node_atlas` and exported on all five.
+- `node_atlas-1.7.1.zip` SHA256:
+  `b8bafb6a263c5ae848e7ca169d3107ed27d364990e7d45ab8ef6284d953d0851`.
 - **1.7.0 artifact:** build and `extension validate` PASS; the zip contains only the
   manifest and the ten package modules (`job.py` and `naming.py` included), with no
   `__pycache__`. The official installer (`install-file -r user_default -e`) installed it

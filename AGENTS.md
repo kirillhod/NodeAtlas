@@ -15,7 +15,7 @@ as one high-resolution PNG. It captures the
 [NumPy](https://numpy.org/doc/stable/), and saves through
 [`imbuf`](https://docs.blender.org/api/current/imbuf.html). No re-rendering.
 
-**Status:** 1.7.0. M0–M8 are complete (Shader/Geometry Nodes/Compositor/Texture),
+**Status:** 1.7.1. M0–M8 are complete (Shader/Geometry Nodes/Compositor/Texture),
 the legacy 4.2–5.1 path is validated on Blender 4.2.23, 4.5.9 and 5.1.2, and hardening
 (limits, fault injection, read-only/full-disk output, scaling) is tested on 4.2–5.3.
 The Compositor works on 4.2–5.3: the compositor tree stays unpinned on 4.2/4.5, where
@@ -28,6 +28,9 @@ Since 1.6.1 every export restores the editor UI and selection, `~` in a folder i
 and the shortcut uses Cmd on macOS.
 Since 1.7.0 **Transparent Background** recovers alpha from two capture passes over black
 and mid-grey; it costs a second screenshot per tile, hides the grid, and restores the theme.
+Since 1.7.1 the per-tile selection maps positions with the UI-scale factor, so exports at
+any Resolution Scale no longer capture selection outlines, and the view is always primed
+with `view_all` (the Deterministic View option is gone).
 Packaging and docs are complete for Windows; Linux, macOS and a second monitor are
 untested.
 
@@ -117,7 +120,8 @@ Verified on Blender 5.3.0. Violating them yields plausible-looking but wrong ima
 
    Use `location_absolute` (some 4.2 node types lack it; fall back to summing
    `location` up the parent chain) and `dimensions` (not `height`); bounds are zero before the
-   first draw.
+   first draw. Use `s` for every node position (export rectangle, preview, per-tile selection)
+   and `k` only for widths and heights.
 
 2. **Never assume zoom.** `view2d.reset()` is non-deterministic. Prime with
    [`node.view_all()`](https://docs.blender.org/api/current/bpy.ops.node.html#bpy.ops.node.view_all),

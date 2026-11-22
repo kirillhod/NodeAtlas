@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.7.1
+
+- Fix stray selection highlights in the exported PNG when Blender's interface
+  **Resolution Scale** is not 100 %. Nodes and frames that were fully inside the capture
+  could be drawn as selected, leaving their outline and frame tint in the image. The
+  per-tile selection that keeps long links at full strength now uses the same position
+  scale as the editor.
+- Remove the **Deterministic View** option. Every export primes the view with **View All**,
+  so repeated exports of the same graph stay pixel-identical; there was no reason to turn
+  the option off. It is gone from the sidebar and from **Export As**.
+
 ## 1.7.0
 
 - Add a **Transparent Background** export option. Every tile is captured twice, over flat
