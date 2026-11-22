@@ -13,11 +13,12 @@ single image, with the real editor background and padding.
   their real alpha instead of being cut out with a colour key.
 - **Nothing else changes in the image.** The matting is solved from two captures of the
   same tile; composited back over the editor background, the result matches a normal export
-  to a mean of 0.05 and a maximum of 2.8 of 255. Node shadows and semi-transparent frames
-  keep their real alpha. The option is in the sidebar and in **Export As**.
-- **No white flash.** The editor darkens for one capture pass and lightens for the second,
-  instead of switching colour for every tile; the theme and the backdrop grid come back
-  when the export ends.
+  to a mean of 0.05 and a maximum of 2.8 of 255, measured on Windows. Node shadows and
+  semi-transparent frames keep their real alpha. The option is in the sidebar and in
+  **Export As**.
+- **No white flash.** The editor background turns black for the first capture pass and
+  mid-grey for the second, instead of switching colour for every tile; the theme and the
+  backdrop grid come back when the export ends.
 - **The capture-area preview is off by default.** Enable **Show Capture Area** in the
   sidebar if you want the dashed rectangle and its size label.
 - **What it costs.** Every tile is captured twice, once over black and once over mid-grey,
@@ -26,8 +27,8 @@ single image, with the real editor background and padding.
 
 ### Features
 
-- Current-tree or selected-nodes export for Shader, Geometry Nodes, Compositor and
-  Texture trees.
+- Current-tree or selected-nodes export for Shader, Geometry Nodes and Texture trees, and
+  the whole Compositor tree.
 - Optional links to the nodes directly connected to the selection.
 - Capture-area preview that shows the exported rectangle and its estimated size.
 - Output density independent of monitor DPI and current zoom: 96 DPI is 1:1 with node
@@ -58,6 +59,8 @@ LTS and 5.3.0, with Shader, Geometry Nodes, Compositor and Texture trees.
   restored exactly.
 - **Transparent Background** writes straight alpha into the PNG. Viewers show it on a
   checkerboard, and a clipboard paste may flatten it onto white or black.
+- **The capture shows the editor as it is drawn**, so a node row under the pointer keeps
+  its hover highlight; park the pointer outside the graph for a clean export.
 - **Copy to Clipboard** depends on Blender's image clipboard support and OS limits; very
   large images may be rejected or slow to paste. Normal file exports are unaffected.
 - No batch export, SVG or JSON output, or headless capture.
