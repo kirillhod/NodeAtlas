@@ -84,15 +84,15 @@ def setup():
 
 
 def tick():
-    from node_atlas import operators
+    from node_atlas import job
 
     state["ticks"] += 1
-    if operators._current_job is not None:
+    if job.current_job() is not None:
         if state["ticks"] > 1200:
             fail("timed out waiting for the disk-full export to finish")
         return 0.05
 
-    result = operators.last_result
+    result = job.last_result
     if result is None:
         fail("the disk-full job never reported a result")
     if result["ok"]:

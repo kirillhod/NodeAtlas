@@ -24,8 +24,7 @@ for extra in (ROOT, os.path.dirname(os.path.abspath(__file__))):
         sys.path.insert(0, extra)
 
 import png_content  # noqa: E402
-from node_atlas import bounds  # noqa: E402
-from node_atlas import operators  # noqa: E402
+from node_atlas import job, bounds  # noqa: E402
 
 OUT = tempfile.mkdtemp(prefix="nodeatlas_selected_links_")
 FIXTURE = os.path.join(ROOT, "tests", "fixtures", "scene_selected.blend")
@@ -130,7 +129,7 @@ def band_bright(pixels, background, tolerance=60):
 
 
 def finish():
-    result = operators.last_result
+    result = job.last_result
     if result is None or not result["ok"]:
         fail(f"export failed: {result and result.get('error')}")
 
@@ -192,7 +191,7 @@ def finish():
 
 def tick():
     state["ticks"] += 1
-    result = operators.last_result
+    result = job.last_result
     if state["phase"] == 0:
         if result is not None:
             if state["started"] is None:

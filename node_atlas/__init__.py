@@ -7,7 +7,7 @@ import sys
 
 import bpy
 
-from . import bounds, capture, operators, preferences, preview
+from . import bounds, capture, job, operators, preferences, preview
 from .log import get_logger
 
 log = get_logger()
@@ -60,7 +60,7 @@ class NODE_PT_node_atlas(bpy.types.Panel):
         layout.operator("node_atlas.copy_png", text="Copy to Clipboard", icon="COPYDOWN")
         layout.operator("node_atlas.export_png", text="Export Current Tree", icon="IMAGE_DATA")
         layout.operator("node_atlas.export_as", text="Export As…", icon="FILE_TICK")
-        if operators._current_job is not None:
+        if job.current_job() is not None:
             layout.operator("node_atlas.cancel_export", text="Cancel Export", icon="CANCEL")
             layout.label(text="Export in progress…", icon="TIME")
 

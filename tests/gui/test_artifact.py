@@ -103,9 +103,9 @@ def setup(module):
 
 def tick():
     package = sys.modules.get(state["module"])
-    if package is None or not hasattr(package, "operators"):
+    if package is None or not hasattr(package, "job"):
         fail(f"module {state['module']} has not been imported")
-    operators = package.operators
+    job = package.job
 
     state["ticks"] += 1
     if os.path.exists(OUTPUT):
@@ -120,8 +120,8 @@ def tick():
                     bpy.data.images.remove(image)
                 if snapshot() != state["before"]:
                     fail(f"state mismatch: {state['before']} != {snapshot()}")
-                if not operators.last_result or not operators.last_result["ok"]:
-                    fail(f"export did not succeed: {operators.last_result}")
+                if not job.last_result or not job.last_result["ok"]:
+                    fail(f"export did not succeed: {job.last_result}")
                 print(json.dumps({
                     "result": "PASS",
                     "module": state["module"],

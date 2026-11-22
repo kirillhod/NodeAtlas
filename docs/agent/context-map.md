@@ -16,7 +16,9 @@ what the task needs; the research report alone is about 27k tokens.
 | `RELEASE_NOTES.md` | 2k | the first release block only |
 | `README.md` | 1.4k | grep the setting or error text; it is user-facing copy |
 | `node_atlas/capture.py` | 6k | grep the function, then read 80-150 lines around it |
-| `node_atlas/operators.py` | 7k | grep the state or operator, then read the matching block |
+| `node_atlas/job.py` | 5k | grep the stage or field, then read that block |
+| `node_atlas/operators.py` | 1.5k | RNA operators and dialogs; read one class |
+| `node_atlas/naming.py` | 1k | read whole |
 | `tests/unit/test_core.py` | 4k | grep `def test_` for the named case; run the whole file anyway |
 | `tests/gui/*.py` | 1-2k each | open only the scenario under test |
 | `reference/prototypes/` | large | frozen evidence; grep a symbol, never sweep |
@@ -33,20 +35,20 @@ matches a heading prefix (`M7`). Use `--max-lines N` when a section is still too
 | --- | --- | --- | --- |
 | Node rectangles, bounds, layout | `node_atlas/bounds.py` (`node_rect`, `compute_layout`) | report §4.2, §6.2, §11.5 | `tests/unit/test_core.py` |
 | View scale, `upp`, DPI clamp | `bounds.py` (`measure_view`, `target_upp`, `planned_scale`) | report §4.3, §11.7, §11.9 | `test_core.py`, `tests/gui/test_density.py`, `test_boost.py` |
-| Selected-only copy | `bounds.py` (`selected_node_names`, `link_neighbour_names`, `build_selected_copy`), `operators.py` (`content_names`) | report §11.15 | `test_selected.py`, `test_selected_links.py`, `test_estimate_selected.py` |
+| Selected-only copy | `bounds.py` (`selected_node_names`, `link_neighbour_names`, `build_selected_copy`), `job.py` (`ExportJob.content_names`) | report §11.15 | `test_selected.py`, `test_selected_links.py`, `test_estimate_selected.py` |
 | Tile capture, pan, anchor | `capture.py` (`capture_tile`, `pan`, `anchor_first_tile`) | report §4.4-§4.5, §11.1-§11.4, §11.8 | `test_export.py`, `test_repeat.py`, `test_scaling.py` |
 | Maximize, leave, lost area | `capture.py` (`maximize`, `leave_maximize`, `find_area_by_bbox`) | report §11.10, §11.13 | `test_multiarea.py`, `test_multiwindow.py`, `test_arealost.py` |
 | Version adapter: 5.2+ raw vs 4.2-5.1 area | `capture.py` (`can_capture_raw`, `_capture_tile_legacy`) | report §4.4, §11.1 | `test_legacy.py`, `test_artifact.py` |
-| Shader/GN/Compositor/Texture switch | `capture.py` (`assign_tree`, `get_node_context`) | report §11.12; the 4.2-5.1 Compositor guard is in `operators.py` | `test_trees.py`, `test_texture.py` |
+| Shader/GN/Compositor/Texture switch | `capture.py` (`assign_tree`, `get_node_context`) | report §11.12; the 4.2-5.1 Compositor guard is in `job.py` | `test_trees.py`, `test_texture.py` |
 | Nested group path and `pin` | `capture.py` (`apply_tree_path`, `_restore_tree_path`) | report §11.13 | `test_group.py` |
 | Stitching, feather, top crop, holes | `stitch.py` (`stitch_tiles`) | report §4.6, §11.8 | `test_core.py` |
-| Long links crossing tiles | `capture.py` (`select_outside_view`, `mute_link_highlight`), `operators.py` (`_capture_one`) | report §5 item 17 | `test_longlink.py` |
+| Long links crossing tiles | `capture.py` (`select_outside_view`, `mute_link_highlight`), `job.py` (`ExportJob._capture_one`) | report §5 item 17 | `test_longlink.py` |
 | PNG save, `pHYs`, EXIF, fallback | `stitch.py` (`save_png`, `_insert_png_phys`, `_write_png_numpy`) | report §4.6, §11.7, §11.9 | `test_core.py`, `test_naming.py`, `test_artifact.py` |
-| Memory cap, memmap, huge graphs | `stitch.py` (`_allocate_canvas`), `operators.py` estimate | report §11.9 | `test_large.py`, `test_maxmp.py`, `test_limits.py` |
+| Memory cap, memmap, huge graphs | `stitch.py` (`_allocate_canvas`), `job.py` (`ExportJob._measure`) | report §11.9 | `test_large.py`, `test_maxmp.py`, `test_limits.py` |
 | Output path, read-only, disk full | `stitch.py` (`check_output_path`) | - | `test_readonly.py`, `test_diskfull.py`, `test_path.py` |
-| Timer job, progress, cancel | `operators.py` (`ExportJob`, `_job_tick`, `start_job`) | report §6.2, §11.13 | `test_cancel.py`, `test_fail.py` |
-| Clipboard and Open Last Export | `operators.py` (`_copy_result`, `NODE_ATLAS_OT_open_last_export`) | - | `test_clipboard.py` |
-| Filename pattern and tokens | `operators.py` (`render_filename`, `_filename_fields`) | - | `test_naming.py`, `test_path.py` |
+| Timer job, progress, cancel | `job.py` (`ExportJob`, `_job_tick`, `start_job`) | report §6.2, §11.13 | `test_cancel.py`, `test_fail.py` |
+| Clipboard and Open Last Export | `job.py` (`_copy_result`), `operators.py` (`NODE_ATLAS_OT_open_last_export`) | - | `test_clipboard.py` |
+| Filename pattern and tokens | `naming.py` (`render_filename`, `_filename_fields`, `quick_filepath`) | - | `test_naming.py`, `test_path.py` |
 | Preferences, panel, preview, estimate, menus, keymap | `preferences.py`, `preview.py`, `node_atlas/__init__.py` (`preview.estimate`) | report §5 item 39 | `test_core.py`, `test_estimate.py`, `test_preview.py`, `test_artifact.py`, manual GUI |
 | Capture-area preview (outline, label) | `preview.py` (`estimate`, `live_union`, `screen_rect`, `dash_quads`, `suppress`) | report §5 item 39 | `test_preview.py`, `test_core.py` |
 | Undo neutrality | every pipeline module | report §11.16 | unit + `test_export.py`, `test_fail.py` |
@@ -78,7 +80,7 @@ matches a heading prefix (`M7`). Use `--max-lines N` when a section is still too
 
 - Full report: 27k tokens. Chapter 4 (`§4`): 4k. Chapter 6 (`§6`): 3.5k. Chapter 11
   (`§11`): 9k. One validation subsection (`§11.8`): 0.4k.
-- `capture.py` + `operators.py` together are 13k; read one function block, not both files.
+- `capture.py` + `job.py` together are 11k; read one function block, not both files.
 - `test_core.py` is 4k but running it is cheap; run the file instead of reading it.
 - The five-version GUI matrix is dozens of Blender launches; one targeted test is minutes,
   the matrix is an afternoon. Say which one you ran.

@@ -204,19 +204,19 @@ def test_registration():
         check(os.path.isdir(prefs.default_dir), "default directory exists")
         check(prefs.enable_shortcut is False, "shortcut is off by default")
         check(prefs.show_advanced is False, "advanced section is collapsed")
-        from node_atlas import operators
+        from node_atlas import operators, job
 
         check(hasattr(operators.NODE_ATLAS_OT_export_as, "draw"), "export dialog settings")
         check(hasattr(bpy.ops.node_atlas, "open_last_export"), "open-last-export operator")
-        previous = operators.last_result
-        operators.last_result = {"path": __file__}
+        previous = job.last_result
+        job.last_result = {"path": __file__}
         try:
             check(
                 bpy.ops.node_atlas.open_last_export.poll(),
                 "open-last-export poll",
             )
         finally:
-            operators.last_result = previous
+            job.last_result = previous
     finally:
         bpy.ops.preferences.addon_disable(module="node_atlas")
 
@@ -456,24 +456,24 @@ def test_selected_node_names():
 
 
 def test_filename_sanitization():
-    from node_atlas import operators
+    from node_atlas import naming
 
-    check(operators._safe_name("Дерево 儀") == "Дерево_儀", "unicode filename")
+    check(naming.safe_name("Дерево 儀") == "Дерево_儀", "unicode filename")
     check(
-        operators._safe_name("Shader  Nodetree") == "Shader_Nodetree",
+        naming.safe_name("Shader  Nodetree") == "Shader_Nodetree",
         "whitespace to underscore",
     )
     check(
-        operators._safe_name("  Material (copy)  ") == "Material_(copy)",
+        naming.safe_name("  Material (copy)  ") == "Material_(copy)",
         "trim and collapse",
     )
-    sanitized = operators._safe_name('a/b:c*?"<>|')
+    sanitized = naming.safe_name('a/b:c*?"<>|')
     check(not any(char in sanitized for char in '/\\:*?"<>|'), "invalid characters")
-    check(operators._safe_name("...") == "export", "empty filename fallback")
+    check(naming.safe_name("...") == "export", "empty filename fallback")
 
 
 def test_render_filename():
-    from node_atlas import operators
+    from node_atlas import naming
 
     fields = {
         "blend": "scene",
@@ -483,17 +483,17 @@ def test_render_filename():
         "date": "20260101-000000",
     }
     check(
-        operators.render_filename("{blend}_{tree}_{type}.png", fields)
+        naming.render_filename("{blend}_{tree}_{type}.png", fields)
         == "scene_Material_Shader.png",
         "owner and type tokens",
     )
     check(
-        operators.render_filename("{datablock}_{date}", fields)
+        naming.render_filename("{datablock}_{date}", fields)
         == "Shader_Nodetree_20260101-000000.png",
         "datablock token and suffix",
     )
     check(
-        operators.render_filename("{unknown}.png", fields)
+        naming.render_filename("{unknown}.png", fields)
         == "scene_Material_20260101-000000.png",
         "unknown token falls back",
     )
@@ -502,18 +502,18 @@ def test_render_filename():
 def test_tree_owner_name():
     import bpy
 
-    from node_atlas import operators
+    from node_atlas import naming
 
     material = bpy.data.materials.new("Owner Material")
     material.use_nodes = True
     try:
         check(
-            operators._tree_owner_name(material.node_tree) == "Owner Material",
+            naming.tree_owner_name(material.node_tree) == "Owner Material",
             "material owner",
         )
     finally:
         bpy.data.materials.remove(material)
-    check(operators._tree_owner_name(None) is None, "no tree")
+    check(naming.tree_owner_name(None) is None, "no tree")
 
 
 def test_quick_filepath():
@@ -523,16 +523,16 @@ def test_quick_filepath():
 
     import bpy
 
-    from node_atlas import operators
+    from node_atlas import naming
 
     empty = types.SimpleNamespace(default_dir="", filename_pattern="{tree}.png")
-    check(operators.quick_filepath(bpy.context, empty) is None, "empty dir asks")
+    check(naming.quick_filepath(bpy.context, empty) is None, "empty dir asks")
 
     folder = tempfile.mkdtemp(prefix="nodeatlas_path_")
     prefs = types.SimpleNamespace(
         default_dir=folder, filename_pattern="{tree}_{date}.png"
     )
-    path = operators.quick_filepath(bpy.context, prefs)
+    path = naming.quick_filepath(bpy.context, prefs)
     check(path is not None and os.path.dirname(path) == folder, "quick path")
     check(os.path.basename(path).endswith(".png"), "png suffix")
 
@@ -542,7 +542,7 @@ def test_quick_filepath():
         default_dir=os.path.join("~", "NodeAtlasTildeTest"),
         filename_pattern="{tree}.png",
     )
-    path = operators.quick_filepath(bpy.context, tilde)
+    path = naming.quick_filepath(bpy.context, tilde)
     check(
         path is not None
         and os.path.dirname(path) == os.path.join(home, "NodeAtlasTildeTest"),
@@ -635,7 +635,7 @@ def test_select_outside_tiles():
 
 
 def test_preview_geometry():
-    from node_atlas import preview
+    from node_atlas import bounds, preview
 
     content = bounds.Rect(left=0, top=500, right=1000, bottom=0)
 
@@ -672,7 +672,7 @@ def test_preview_geometry():
 def test_preview_dashes_and_label():
     from types import SimpleNamespace
 
-    from node_atlas import preview
+    from node_atlas import bounds, preview
 
     dashes = preview.dash_quads((0, 100, 100, 0), dash=10, gap=5, width=2)
     solid = preview.dash_quads((0, 100, 100, 0), dash=1000, gap=0, width=2)
@@ -726,7 +726,7 @@ def test_preview_dashes_and_label():
 def test_preview_registration():
     import bpy
 
-    from node_atlas import preview
+    from node_atlas import bounds, preview
 
     check(preview._handle is None, "no handler before enable")
     bpy.ops.preferences.addon_enable(module="node_atlas")

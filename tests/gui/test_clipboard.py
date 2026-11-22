@@ -100,14 +100,14 @@ def clipboard_size():
 
 
 def tick():
-    from node_atlas import operators
+    from node_atlas import job
 
     state["ticks"] += 1
-    if operators._current_job is not None:
+    if job.current_job() is not None:
         if state["ticks"] > 1200:
             fail("timed out waiting for the clipboard export")
         return 0.1
-    result = operators.last_result
+    result = job.last_result
     if result is None:
         if state["ticks"] > 1200:
             fail("the clipboard job never reported a result")

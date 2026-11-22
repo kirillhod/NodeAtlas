@@ -43,7 +43,8 @@ Work in this order and stop at the first failure:
    4.2-5.1 path compares `image.size` instead (`screenshot_area width ... != WINDOW width`).
    A Retina backing buffer at 2x the logical region would trip the first check. Do not relax
    it: print both sizes and treat the mismatch as the finding.
-3. **Effective UI scale.** `operators.py` reads `system.ui_scale` after a redraw and assumes
+3. **Effective UI scale.** `job.py` (`ExportJob._measure`) reads `system.ui_scale` after a
+   redraw and assumes
    it already includes `view.ui_scale`. `system.ui_scale` cannot be changed from RNA, so set
    the OS scaling, restart Blender, then export the same fixture at two scales and check
    that the node corners stay within 2 px and `D` stays constant. On macOS the Retina factor

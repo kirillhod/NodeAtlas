@@ -59,7 +59,9 @@ milestone from the archived `IMPLEMENTATION_PLAN.md`, for example `M7`. Current 
 ```text
 node_atlas/              # extension/add-on root
 ├─ __init__.py           # registration, menus, panel
-├─ operators.py          # timer job, progress, cancel, file dialog
+├─ operators.py          # RNA operators, menus, Export As dialog
+├─ job.py                # timer job: stages, progress, cancel, last result
+├─ naming.py             # output folder and filename tokens
 ├─ capture.py            # snapshot/restore, tree switch, tiles, adapters
 ├─ bounds.py             # view metrics, bounds, layout, selected-only copy
 ├─ preview.py            # capture-area outline and size label (draw handler)

@@ -125,10 +125,10 @@ def finish():
 
 
 def tick():
-    from node_atlas import operators
+    from node_atlas import job
 
     state["ticks"] += 1
-    if operators._current_job is not None:
+    if job.current_job() is not None:
         if state["ticks"] > 3600:
             fail("timed out waiting for a scaling export")
         return 0.1
@@ -146,7 +146,7 @@ def tick():
             fail("timed out waiting for the scaling PNG")
         return 0.1
 
-    result = operators.last_result
+    result = job.last_result
     if not result or not result["ok"]:
         fail(f"scaling export failed: {result}")
     expected_view = state["view_before"]

@@ -86,7 +86,7 @@ def setup():
 
 
 def tick():
-    from node_atlas import operators
+    from node_atlas import job
 
     state["ticks"] += 1
     if os.path.exists(state["output"]):
@@ -94,7 +94,7 @@ def tick():
             state["found"] = state["ticks"]
         if state["ticks"] - state["found"] >= 5:
             try:
-                result = operators.last_result
+                result = job.last_result
                 if not result or not result["ok"]:
                     fail(f"export did not succeed: {result}")
                 if result["path"] != state["output"]:
@@ -122,15 +122,15 @@ def tick():
 print("NodeAtlas naming test output:", OUT)
 try:
     bpy.ops.preferences.addon_enable(module="node_atlas")
-    from node_atlas import operators
+    from node_atlas import naming
 
     tree_name = setup()
-    expected = operators.render_filename(
+    expected = naming.render_filename(
         "{tree}_{type}_{datablock}.png",
         {
             "blend": "scene_both",
-            "tree": operators._safe_name("M_Small"),
-            "datablock": operators._safe_name(tree_name),
+            "tree": naming.safe_name("M_Small"),
+            "datablock": naming.safe_name(tree_name),
             "type": "Shader",
             "date": "20260101-000000",
         },

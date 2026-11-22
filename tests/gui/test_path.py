@@ -65,14 +65,14 @@ def setup():
 
 
 def tick():
-    from node_atlas import operators
+    from node_atlas import job
 
     state["ticks"] += 1
     if os.path.exists(OUTPUT):
         if state["found"] is None:
             state["found"] = state["ticks"]
         if state["ticks"] - state["found"] >= 5:
-            result = operators.last_result
+            result = job.last_result
             if not result or not result["ok"]:
                 fail(f"export with a directory did not succeed: {result}")
             print(json.dumps({"result": "PASS", "path": result["path"]}, indent=2))
@@ -87,7 +87,7 @@ print("NodeAtlas path test output:", OUT)
 try:
     bpy.ops.preferences.addon_enable(module="node_atlas")
     prefs = setup()
-    from node_atlas import operators
+    from node_atlas import job
 
     area, region = node_area()
     window = bpy.context.window_manager.windows[0]
@@ -100,7 +100,7 @@ try:
             fail("an empty Default Directory did not stop the export")
     if "Default Directory" not in message:
         fail(f"unexpected empty-directory error: {message}")
-    if operators._current_job is not None or operators.last_result is not None:
+    if job.current_job() is not None or job.last_result is not None:
         fail("a job started despite the empty Default Directory")
     if os.path.exists(OUTPUT):
         fail("the empty-directory attempt created a PNG")

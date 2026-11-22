@@ -82,7 +82,7 @@ def effective_scale():
 
 def current_union(est, area, region):
     """Return the live graph bounds used by the draw handler."""
-    from node_atlas import bounds
+    from node_atlas import bounds, preview
 
     metrics = bounds.measure_view(region.view2d, effective_scale())
     view_scale = bpy.context.preferences.view.ui_scale

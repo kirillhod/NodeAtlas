@@ -87,10 +87,10 @@ def setup():
 
 
 def tick():
-    from node_atlas import operators
+    from node_atlas import job
 
     state["ticks"] += 1
-    if operators._current_job is not None:
+    if job.current_job() is not None:
         if state["ticks"] > 1200:
             fail("timed out waiting for the max-MP guard")
         return 0.05

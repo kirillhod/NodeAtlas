@@ -112,10 +112,10 @@ def tick():
                     bpy.data.images.remove(image)
                 areas = node_areas()
                 if len(areas) != 2:
-                    from node_atlas import operators
+                    from node_atlas import job
                     fail(
                         f"expected 2 node editors after restore, got {len(areas)}; "
-                        f"result={operators.last_result}"
+                        f"result={job.last_result}"
                     )
                 after = [area_snapshot(item) for item in areas]
                 if after != state["before"]:

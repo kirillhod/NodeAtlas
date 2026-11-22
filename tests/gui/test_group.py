@@ -118,7 +118,7 @@ def setup():
 
 
 def tick():
-    from node_atlas import operators
+    from node_atlas import job
 
     state["ticks"] += 1
     if os.path.exists(OUTPUT):
@@ -137,7 +137,7 @@ def tick():
                 before = state["before"]
                 if after != before:
                     fail(f"group state mismatch: {before} != {after}")
-                result = operators.last_result
+                result = job.last_result
                 if not result or not result["ok"]:
                     fail(f"export did not succeed: {result}")
                 print(json.dumps({

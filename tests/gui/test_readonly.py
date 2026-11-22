@@ -129,10 +129,10 @@ def unlock_directory(user):
 
 
 def tick():
-    from node_atlas import operators
+    from node_atlas import job
 
     state["ticks"] += 1
-    if operators._current_job is not None:
+    if job.current_job() is not None:
         if state["ticks"] > 600:
             fail("timed out waiting for the read-only export to finish")
         return 0.05
@@ -143,8 +143,8 @@ def tick():
         fail(f"export did not fail on a read-only directory: {state.get('result')}")
     if "not writable" not in state.get("message", ""):
         fail(f"unexpected read-only error: {state.get('message')}")
-    if operators.last_result is not None:
-        fail(f"a job ran despite the read-only directory: {operators.last_result}")
+    if job.last_result is not None:
+        fail(f"a job ran despite the read-only directory: {job.last_result}")
     if snapshot() != state["before"]:
         fail(f"state mismatch after the read-only attempt: {state['before']} != {snapshot()}")
     unlock_directory(state["user"])

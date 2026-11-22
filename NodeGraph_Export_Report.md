@@ -331,12 +331,15 @@ Only items verified on a live Blender 5.3.0 or hard platform constraints are lis
 ```
 node_atlas/
 ├─ __init__.py          # registration, menu, panel
-├─ operators.py         # ExportPNG: file selector, progress, cancel
-├─ capture.py           # maximize, hide UI, tiles, version adapters
+├─ operators.py         # RNA operators, menus, Export As dialog
+├─ job.py               # timer job: stages, progress, cancel, last result
+├─ naming.py            # output folder and filename tokens
+├─ capture.py           # maximize, hide UI, tiles, version adapters, restore
 ├─ bounds.py            # graph bounds, selected-only, frames, groups
 ├─ preview.py           # capture-area outline and size label
-├─ stitch.py            # NumPy buffer, overlap, imbuf/Pillow fallback
+├─ stitch.py            # NumPy buffer, overlap, imbuf/NumPy PNG fallback
 ├─ preferences.py       # global defaults (output_dpi, padding, limits)
+├─ log.py               # namespaced logger
 └─ blender_manifest.toml
 ```
 

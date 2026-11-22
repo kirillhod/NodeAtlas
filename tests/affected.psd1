@@ -68,6 +68,8 @@
     Modules = @{
         'node_atlas/bounds.py' = @('core', 'selected', 'panel', 'density', 'repeat')
         'node_atlas/capture.py' = @('core', 'selected', 'panel', 'density', 'repeat', 'state')
+        'node_atlas/job.py' = @('core', 'selected', 'panel', 'state', 'repeat', 'io')
+        'node_atlas/naming.py' = @('panel', 'io')
         'node_atlas/operators.py' = @('core', 'selected', 'panel', 'state', 'repeat', 'io')
         'node_atlas/preview.py' = @('panel', 'repeat', 'core')
         'node_atlas/stitch.py' = @('core', 'density', 'repeat', 'io')

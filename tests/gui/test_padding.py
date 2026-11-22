@@ -22,7 +22,7 @@ for extra in (ROOT, os.path.dirname(os.path.abspath(__file__))):
         sys.path.insert(0, extra)
 
 import png_content  # noqa: E402
-from node_atlas import operators  # noqa: E402
+from node_atlas import job  # noqa: E402
 
 OUT = tempfile.mkdtemp(prefix="nodeatlas_padding_")
 FIXTURE = os.path.join(ROOT, "tests", "fixtures", "scene_both.blend")
@@ -101,7 +101,7 @@ def setup():
 
 
 def finish(before, expected):
-    result = operators.last_result
+    result = job.last_result
     if result is None:
         fail("export never finished")
     if not result["ok"]:
@@ -136,7 +136,7 @@ def finish(before, expected):
 
 def tick():
     state["ticks"] += 1
-    if operators.last_result is not None:
+    if job.last_result is not None:
         try:
             finish(state["before"], state["expected"])
         except Exception:

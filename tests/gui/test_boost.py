@@ -81,7 +81,7 @@ def setup():
 
 
 def tick():
-    from node_atlas import operators
+    from node_atlas import job
 
     state["ticks"] += 1
     if os.path.exists(OUTPUT):
@@ -94,7 +94,7 @@ def tick():
                     size = tuple(image.size)
                 finally:
                     bpy.data.images.remove(image)
-                result = operators.last_result
+                result = job.last_result
                 if not result or not result["ok"]:
                     fail(f"export did not succeed: {result}")
                 if any("DPI clamped" in item for item in result["warnings"]):

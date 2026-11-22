@@ -89,13 +89,13 @@ def setup():
 
 
 def tick():
-    from node_atlas import operators
+    from node_atlas import job
 
     state["ticks"] += 1
-    job = operators._current_job
-    if job is not None:
-        state["stage"] = job.stage
-        if job.stage == "capture" and not state["cancelled"]:
+    running = job.current_job()
+    if running is not None:
+        state["stage"] = running.stage
+        if running.stage == "capture" and not state["cancelled"]:
             area, region = node_area()
             window = bpy.context.window_manager.windows[0]
             with bpy.context.temp_override(window=window, area=area, region=region):
@@ -103,7 +103,7 @@ def tick():
             state["cancelled"] = True
             return 0.05
         if state["ticks"] > 1800:
-            fail(f"timed out waiting for the job; stage={job.stage}")
+            fail(f"timed out waiting for the job; stage={running.stage}")
         return 0.05
 
     if not state["cancelled"]:
