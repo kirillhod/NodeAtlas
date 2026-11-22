@@ -1,10 +1,21 @@
 # Changelog
 
-## Unreleased
+## 1.6.1
 
 - Remove the **Restore UI** preference. Every export now restores the editor flags and
   selection, including runs that hide the UI during capture, so the editor can no longer
   be left with hidden panels or a cleared selection.
+- Expand `~` in output folders and filenames. A typed `~/Pictures` stayed relative on
+  Linux and macOS and created a folder literally named `~`; the quick export and
+  **Export As** now resolve it to the home directory.
+- Report an exhausted disk quota on Linux and macOS as "not enough free disk space"
+  instead of a generic write error.
+- Use **Cmd** for the quick-export shortcut on macOS, where the **Ctrl** modifier mapped
+  to Control; the preference is labelled **Cmd** there.
+- **Open Last Export** reports an error when the system has no application for the file
+  instead of doing nothing.
+- Read `${HOME}` and escaped spaces from the Linux `user-dirs.dirs` when choosing the
+  default output folder.
 
 ## 1.6.0
 

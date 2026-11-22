@@ -15,7 +15,7 @@ as one high-resolution PNG. It captures the
 [NumPy](https://numpy.org/doc/stable/), and saves through
 [`imbuf`](https://docs.blender.org/api/current/imbuf.html). No re-rendering.
 
-**Status:** 1.6.0. M0–M8 are complete (Shader/Geometry Nodes/Compositor/Texture),
+**Status:** 1.6.1. M0–M8 are complete (Shader/Geometry Nodes/Compositor/Texture),
 the legacy 4.2–5.1 path is validated on Blender 4.2.23, 4.5.9 and 5.1.2, and hardening
 (limits, fault injection, read-only/full-disk output, scaling) is tested on 4.2–5.3.
 The Compositor works on 4.2–5.3: the compositor tree stays unpinned on 4.2/4.5, where
@@ -23,9 +23,11 @@ pinning crashes the next area refresh, and selected-only compositor export needs
 Connections that cross tile boundaries keep full strength since 1.4.1, and Selected Nodes
 can keep its links to directly connected nodes since 1.5.0. Since 1.6.0 the Node Editor
 draws the capture-area outline and its size label from the same estimate the export uses,
-and the overlay is suppressed for the whole job. The 1.6.0 artifact ships that behavior and
-passes the five-version matrix. Packaging and docs are complete for Windows; Linux, macOS
-and a second monitor are untested.
+and the overlay is suppressed for the whole job. Since 1.6.1 every export restores the
+editor UI and selection, `~` in a folder is expanded, and the shortcut uses Cmd on macOS.
+The 1.6.1 artifact was verified on 5.3.0 only; the five-version matrix was last run for
+1.6.0. Packaging and docs are complete for Windows; Linux, macOS and a second monitor are
+untested.
 
 **Agreed identifiers** (do not rename without approval):
 

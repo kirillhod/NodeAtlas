@@ -1,27 +1,32 @@
-# Node Atlas 1.6.0
+# Node Atlas 1.6.1
 
-**Released:** 21 November 2026
+**Released:** 22 November 2026
 
 Node Atlas exports any Blender node tree as one high-resolution PNG: the whole graph in a
 single image, with the real editor background and padding.
 
-### What's new in 1.6.0
+### What's new in 1.6.1
 
-- **See the capture before it starts.** The Node Editor draws a dashed rectangle around
-  the area that will be exported and labels it with the estimated size, megapixels,
-  density and padding. For Selected Nodes it also shows the node count. The rectangle
-  follows the graph when nodes move and stays correct when you zoom.
-- **The label matches the file.** Both the outline and its numbers use the same estimate
-  as the sidebar, so the PNG is the size the frame promised.
-- **Never in the image.** The preview disappears for the whole export, so no outline or
-  text can land in a tile. **Show Capture Area** in the sidebar turns it off if you prefer
-  a clean editor.
+- **Home folders now work.** A folder written as `~/Pictures` was kept relative on Linux
+  and macOS, so the PNG landed in a folder literally named `~`. Both the quick export and
+  **Export As** now expand it to your home directory.
+- **The editor is always restored.** The **Restore UI** option is gone: every export puts
+  the sidebar, toolbar, header, gizmo and node selection back, including exports that hide
+  the interface while capturing. No mode is left that can keep panels hidden.
+- **A full quota reads as a full disk.** Linux and macOS report an exhausted quota as a
+  generic write error; it now says the disk is full, like Windows does.
+- **Cmd on macOS.** The quick-export shortcut now uses Cmd, the key macOS users expect,
+  and the preference is labelled **Cmd**.
+- **Clearer errors.** **Open Last Export** says when the system has no application for the
+  PNG instead of doing nothing, and a hand-edited Linux `user-dirs.dirs` with `${HOME}` or
+  escaped spaces now yields the right default folder.
 
 ### Features
 
 - Current-tree or selected-nodes export for Shader, Geometry Nodes, Compositor and
   Texture trees.
 - Optional links to the nodes directly connected to the selection.
+- Capture-area preview that shows the exported rectangle and its estimated size.
 - Output density independent of monitor DPI and current zoom: 96 DPI is 1:1 with node
   pixels.
 - Real background padding captured from the editor, not painted.
@@ -32,15 +37,16 @@ single image, with the real editor background and padding.
 
 ### Supported versions
 
-Blender **4.2.23 LTS, 4.5.9 LTS, 5.1.2, 5.2.4 LTS and 5.3.0** on Windows, with Shader,
-Geometry Nodes, Compositor and Texture trees. Each version was tested with the extension
-installed through the official installer and with the classic add-on.
+Blender **4.2 and newer**. Version 1.6.0 was checked on 4.2.23 LTS, 4.5.9 LTS, 5.1.2, 5.2.4
+LTS and 5.3.0; the 1.6.1 changes were checked on 5.3.0 only. Shader, Geometry Nodes,
+Compositor and Texture trees are covered.
 
 ### Known limitations
 
 - GUI only: `--background` cannot capture the editor.
 - **Linux and macOS are untested.** The code does not depend on the platform, but there is
-  no test record for either.
+  no test record for either. The `~`, quota, `Cmd` and folder fixes above are reasoned from
+  the APIs, not from a run on those systems.
 - **A second physical monitor is untested.** Two Blender windows on the primary display
   work.
 - **Selected nodes from a Compositor tree need Blender 5.1+.** Exporting the whole
@@ -55,12 +61,12 @@ installed through the official installer and with the classic add-on.
 
 ### Verification
 
-Every supported Blender version was checked with a real export from the attached zip,
-installed both as an extension and as a classic add-on.
+The 1.6.1 zip was installed on Blender 5.3.0 through the official extension installer and
+also as a classic add-on, and exported a real PNG in both cases.
 
 ### Install
 
-1. Download `node_atlas-1.6.0.zip` below.
+1. Download `node_atlas-1.6.1.zip` below.
 2. In Blender open **Edit → Preferences → Extensions**.
 3. Use **Install from Disk…**, choose the zip and enable **Node Atlas**.
 

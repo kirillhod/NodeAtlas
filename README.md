@@ -60,7 +60,7 @@ From source: `blender --command extension build --source-dir node_atlas`.
 | Scope | Current Tree |
 | Keep Links to Connected Nodes | Off (Selected Nodes scope only) |
 | Show Capture Area | On |
-| Default Directory | Desktop (home if absent) |
+| Default Directory | Desktop (home if absent); `~` is expanded |
 | Filename Pattern | `{blend}_{tree}_{date}.png`, plus `{datablock}` and `{type}` |
 | Hide UI, Deterministic View, Header Buttons | On |
 | Advanced, quick export shortcut | Off |
@@ -75,6 +75,7 @@ From source: `blender --command extension build --source-dir node_atlas`.
 | Output would be … above the N MP limit | Raise Max Megapixels or lower Output DPI |
 | Node Editor is too small for export | Enlarge the Node Editor |
 | `no image clipboard support` or `clipboard copy returned …` | Lower Output DPI or save to a file |
+| No application could open … | Install a PNG viewer, or check that `xdg-open` exists on Linux |
 
 ---
 

@@ -1,17 +1,19 @@
 # NodeAtlas QA report
 
-**Version:** 1.6.0<br>
-**Date:** 21 November 2026<br>
+**Version:** 1.6.1<br>
+**Date:** 22 November 2026<br>
 **Platforms:** Windows, GUI sessions only
 
-> **1.6.0.** Adds the capture-area preview: the Node Editor draws the exported rectangle
-> with a label for the estimated size, density and padding, from the same estimate as the
-> sidebar, and the overlay is suppressed for the whole export. Selected Nodes keeps its
-> links to connected nodes (1.5.0) and the tile selection fix (1.5.1).
+> **1.6.1.** Patch release for the cross-platform audit: `~` is expanded in output
+> folders, an exhausted quota maps to the disk-full message, the shortcut uses Cmd on
+> macOS, **Open Last Export** reports a missing handler, the Linux `user-dirs.dirs` parser
+> accepts `${HOME}` and escaped spaces, and **Restore UI** is gone because every export now
+> restores the editor UI and selection.
 >
-> Full source matrix for 1.6.0: **35/35 GUI runs and 24/24 unit tests on each of
-> Blender 4.2.23, 4.5.9, 5.1.2, 5.2.4 and 5.3.0**. `test_artifact.py` results and the
-> artifact hash are in [Packaging](#packaging).
+> Full source matrix for 1.6.1: not re-run. The patch was verified on Blender 5.3.0 with
+> **25/25 unit tests**, the **8/8 smoke tier** and the affected path, I/O and state tests;
+> the 1.6.0 numbers below are the last five-version matrix. `test_artifact.py` results and
+> the artifact hash are in [Packaging](#packaging).
 >
 > The detailed tables below are the 1.3.6 baseline; 1.4.0 changed sizes only by the
 > `VIS` margin and the padding unit, and later versions added cases.
@@ -64,8 +66,8 @@ blender --background --factory-startup --python tests/unit/test_core.py
 | Shortcut keymap / customization | PASS | PASS | PASS | PASS | PASS |
 | Manifest/`__version__` consistency | PASS | PASS | PASS | PASS | PASS |
 
-Result: **18/18 categories PASS on all five versions** (1.3.6 baseline; the 1.6.0 suite is
-24/24, see the version notes above).
+Result: **18/18 categories PASS on all five versions** (1.3.6 baseline; the 1.6.1 suite is
+25/25 on 5.3.0, see the version notes above).
 
 ## GUI tests
 
@@ -104,6 +106,13 @@ window, exports a fixture, validates the PNG and editor restoration, then exits.
 | `test_naming.py` | PASS, owner name + 96 dpi | PASS | PASS | PASS | PASS |
 | `test_clipboard.py` | PASS, OS clipboard checked | PASS | PASS | PASS | PASS |
 | `test_path.py` | PASS, empty dir refused | PASS | PASS | PASS | PASS |
+
+1.6.1: **no five-version matrix.** On 5.3.0 the unit suite is 25/25, the smoke tier is
+8/8, and the affected cases pass: `test_path.py`, `test_naming.py`, `test_export.py`,
+`test_diskfull.py`, `test_readonly.py`, `test_clipboard.py` and `test_cancel.py`. The new
+unit case, `test_resolve_path`, requires `~/Pictures/x.png` to resolve under the home
+directory, and `test_quick_filepath` gained the same check for the quick export path.
+`test_disk_full` now also injects `EDQUOT`.
 
 1.6.0: **35/35 source GUI runs passed on each of the five versions** (175/175 total), and
 the unit suite is 24/24 on each version. `test_preview.py` is the new case: it zooms until
@@ -165,7 +174,15 @@ without a clamp warning.
 
 - `blender --command extension validate node_atlas`: PASS.
 - `blender --command extension build --source-dir node_atlas --output-dir dist`:
-  produces `node_atlas-1.6.0.zip` with the manifest and the eight package modules.
+  produces `node_atlas-1.6.1.zip` with the manifest and the eight package modules.
+- **1.6.1 artifact:** build and `extension validate` PASS; the zip contains only the
+  manifest and the eight package modules, with no `__pycache__`. On 5.3.0 the official
+  installer (`install-file -r user_default -e`) installed it into an isolated
+  `BLENDER_USER_EXTENSIONS` profile and `test_artifact.py` exported a PNG from
+  `bl_ext.user_default.node_atlas`; the classic folder copied into an isolated
+  `scripts/addons` profile enabled `node_atlas` and exported too.
+- `node_atlas-1.6.1.zip` SHA256:
+  `0568D75FB4FC2145BD63C7BF34FBF6EEE388D53F80F25BA7C94AFCBE02B35A79`.
 - **1.6.0 artifact:** build and `extension validate` PASS; the zip contains only the
   manifest and the eight package modules (`preview.py` included), with no `__pycache__`.
   The official installer (`install-file -r user_default -e`) installed it into an isolated

@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import sys
+
 import bpy
 
 from . import bounds, capture, operators, preferences, preview
@@ -10,13 +12,13 @@ from .log import get_logger
 
 log = get_logger()
 
-__version__ = "1.6.0"
+__version__ = "1.6.1"
 __author__ = "kirillhod"
 
 bl_info = {
     "name": "Node Atlas",
     "author": "kirillhod",
-    "version": (1, 6, 0),
+    "version": (1, 6, 1),
     "blender": (4, 2, 0),
     "location": "Node Editor > Sidebar > Node Atlas",
     "description": "Export any node tree as one high-resolution PNG",
@@ -156,20 +158,29 @@ def _register_keymap():
     if keymap is None:
         keymap = keyconfig.keymaps.new(name="Node Editor", space_type="NODE_EDITOR")
     key = (prefs.shortcut_key or "E").strip().upper()
+    # Blender maps Cmd to oskey on macOS; ctrl would give Control there.
+    cmd = sys.platform == "darwin"
+    ctrl = bool(prefs.shortcut_ctrl)
     try:
         item = keymap.keymap_items.new(
             "node_atlas.export_png",
             key,
             "PRESS",
-            ctrl=bool(prefs.shortcut_ctrl),
+            ctrl=ctrl and not cmd,
             shift=bool(prefs.shortcut_shift),
             alt=bool(prefs.shortcut_alt),
+            oskey=ctrl and cmd,
         )
     except Exception:
         log.warning("Invalid shortcut key %r; falling back to E", key, exc_info=True)
         try:
             item = keymap.keymap_items.new(
-                "node_atlas.export_png", "E", "PRESS", ctrl=True, shift=True
+                "node_atlas.export_png",
+                "E",
+                "PRESS",
+                ctrl=not cmd,
+                shift=True,
+                oskey=cmd,
             )
         except Exception:
             return

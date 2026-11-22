@@ -121,7 +121,7 @@ def quick_filepath(context, prefs) -> str | None:
     default_dir = prefs.default_dir.strip() if prefs.default_dir else ""
     if not default_dir:
         return None
-    base = bpy.path.abspath(default_dir)
+    base = stitch.resolve_path(default_dir)
     pattern = prefs.filename_pattern or "{blend}_{tree}_{date}.png"
     name = render_filename(pattern, _filename_fields(context))
     return _unique_path(os.path.join(base, name))
@@ -762,7 +762,7 @@ class NODE_ATLAS_OT_export_as(bpy.types.Operator, ExportHelper):
         if not self.filepath.strip():
             self.report({"ERROR"}, "NodeAtlas: choose an output file")
             return {"CANCELLED"}
-        path = bpy.path.abspath(self.filepath)
+        path = stitch.resolve_path(self.filepath)
         return {"FINISHED"} if start_job(context, path, self) else {"CANCELLED"}
 
 
@@ -802,6 +802,10 @@ class NODE_ATLAS_OT_open_last_export(bpy.types.Operator):
         if not path or not os.path.exists(path):
             self.report({"ERROR"}, "The last export is no longer available")
             return {"CANCELLED"}
-        bpy.ops.wm.path_open(filepath=path)
+        result = bpy.ops.wm.path_open(filepath=path)
+        if "FINISHED" not in result:
+            # No xdg-open on a bare Linux install, or no default handler.
+            self.report({"ERROR"}, f"NodeAtlas: no application could open {path}")
+            return {"CANCELLED"}
         return {"FINISHED"}
 

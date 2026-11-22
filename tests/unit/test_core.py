@@ -403,6 +403,27 @@ def test_disk_full():
         if os.path.exists(path):
             os.remove(path)
 
+    # Linux and macOS report an exhausted quota instead of ENOSPC.
+    descriptor, path = tempfile.mkstemp(suffix=".png")
+    os.close(descriptor)
+    original_replace = stitch.os.replace
+    try:
+        def quota(*_args, **_kwargs):
+            raise OSError(getattr(errno, "EDQUOT", errno.ENOSPC), "Disk quota exceeded")
+
+        stitch.os.replace = quota
+        try:
+            stitch.save_png(image, path)
+        except stitch.OutputError as exc:
+            check("Not enough free disk space" in str(exc), "quota message")
+        else:
+            check(False, "save_png should fail on an exhausted quota")
+    finally:
+        stitch.os.replace = original_replace
+        check(not os.path.exists(path + ".tmp.png"), "quota temp PNG was not cleaned up")
+        if os.path.exists(path):
+            os.remove(path)
+
 
 def test_selected_node_names():
     class Node:
@@ -514,6 +535,29 @@ def test_quick_filepath():
     path = operators.quick_filepath(bpy.context, prefs)
     check(path is not None and os.path.dirname(path) == folder, "quick path")
     check(os.path.basename(path).endswith(".png"), "png suffix")
+
+    # bpy.path.abspath leaves "~" alone, so the folder must be expanded separately.
+    home = os.path.expanduser("~")
+    tilde = types.SimpleNamespace(
+        default_dir=os.path.join("~", "NodeAtlasTildeTest"),
+        filename_pattern="{tree}.png",
+    )
+    path = operators.quick_filepath(bpy.context, tilde)
+    check(
+        path is not None
+        and os.path.dirname(path) == os.path.join(home, "NodeAtlasTildeTest"),
+        "quick path expands the home shorthand",
+    )
+
+
+def test_resolve_path():
+    home = os.path.expanduser("~")
+    check(
+        stitch.resolve_path(os.path.join("~", "Pictures", "x.png"))
+        == os.path.join(home, "Pictures", "x.png"),
+        "resolve_path expands the home shorthand",
+    )
+    check(os.path.isabs(stitch.resolve_path("relative.png")), "resolve_path is absolute")
 
 
 def test_link_neighbour_names():
@@ -725,6 +769,7 @@ def main():
         test_render_filename,
         test_tree_owner_name,
         test_quick_filepath,
+        test_resolve_path,
         test_preview_registration,
         test_registration,
         test_shortcut_keymap,

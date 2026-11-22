@@ -20,8 +20,21 @@ class OutputError(StitchError):
     """The output path cannot be created or the image cannot be written."""
 
 
+def resolve_path(filepath: str) -> str:
+    """Expand ``~`` and Blender's ``//`` prefix, then return an absolute path.
+
+    ``bpy.path.abspath`` leaves a leading ``~`` untouched, so a hand-typed
+    ``~/Pictures`` stayed relative on Linux and macOS and the export landed in a
+    literal ``~`` directory next to the working directory.
+    """
+    import bpy
+
+    return os.path.abspath(os.path.expanduser(bpy.path.abspath(filepath)))
+
+
 def _disk_full(exc: OSError) -> bool:
-    if getattr(exc, "errno", None) == errno.ENOSPC:
+    # EDQUOT is a quota exhausted on Linux and macOS; the write fails the same way.
+    if getattr(exc, "errno", None) in (errno.ENOSPC, getattr(errno, "EDQUOT", None)):
         return True
     # Windows reports a full volume as ERROR_DISK_FULL / ERROR_HANDLE_DISK_FULL.
     return getattr(exc, "winerror", None) in (39, 112)
@@ -60,7 +73,7 @@ def _probe_writable(directory: str) -> None:
 
 def check_output_path(filepath: str) -> None:
     """Fail early when the destination directory is missing or read-only."""
-    path = os.path.abspath(filepath)
+    path = resolve_path(filepath)
     directory = os.path.dirname(path)
     try:
         os.makedirs(directory, exist_ok=True)
@@ -286,7 +299,7 @@ def save_png(image: np.ndarray, filepath: str, dpi: float | None = None) -> None
     """Write bottom-up RGBA, using imbuf when available and a NumPy PNG fallback."""
     import bpy
 
-    path = os.path.abspath(filepath)
+    path = resolve_path(filepath)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     temp_path = path + ".tmp.png"
 

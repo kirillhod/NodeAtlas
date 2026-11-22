@@ -14,9 +14,9 @@ blender --background --factory-startup --python tests/unit/test_core.py
 ```
 
 Covers view metrics, layout/bounds, density clamping, stitching and memmap spill, PNG
-writing and `pHYs` metadata, save errors, output-path checks, selected-node filtering,
-tile selection geometry, capture-area geometry and label, filename tokens and
-registration.
+writing and `pHYs` metadata, save errors (including a full disk and an exhausted quota),
+output-path checks, `~` expansion in output paths, selected-node filtering, tile selection
+geometry, capture-area geometry and label, filename tokens and registration.
 
 ## Fixtures and GUI tests
 

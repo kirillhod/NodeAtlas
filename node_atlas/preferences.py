@@ -24,7 +24,11 @@ def default_output_dir() -> str:
                 for line in handle:
                     if line.startswith("XDG_DESKTOP_DIR="):
                         value = line.split("=", 1)[1].strip().strip('"')
-                        candidates.append(value.replace("$HOME", home))
+                        # user-dirs.dirs writes $HOME, but ${HOME} and escaped
+                        # spaces appear in hand-edited files.
+                        value = value.replace("${HOME}", home).replace("$HOME", home)
+                        value = value.replace("\\ ", " ")
+                        candidates.append(os.path.expanduser(value))
                         break
         except OSError:
             pass
@@ -167,8 +171,8 @@ class NodeAtlasPreferences(bpy.types.AddonPreferences):
         update=_shortcut_updated,
     )
     shortcut_ctrl: bpy.props.BoolProperty(
-        name="Ctrl",
-        description="Require Ctrl",
+        name="Cmd" if sys.platform == "darwin" else "Ctrl",
+        description="Require Cmd" if sys.platform == "darwin" else "Require Ctrl",
         default=True,
         update=_shortcut_updated,
     )
