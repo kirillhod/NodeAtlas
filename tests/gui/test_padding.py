@@ -9,6 +9,7 @@ outer 40 px and fail ``png_content``.
 from __future__ import annotations
 
 import json
+import math
 import os
 import sys
 import tempfile
@@ -115,8 +116,12 @@ def finish(before, expected):
         bpy.data.images.remove(image)
     # The band must really be 40 px of background at D=2.
     content = png_content.check_capture(path, PADDING_PX)
-    if any(abs(a - b) > 3 for a, b in zip(size, expected)):
-        fail(f"estimate {expected} does not match the PNG {size}")
+    # The estimate assumes the target upp, while set_zoom stops within 0.2 %
+    # of it (report 4.3), so a high DPI image can differ by a few pixels. The
+    # padding band itself was checked exactly above.
+    slack = max(3, math.ceil(max(expected) * 0.003))
+    if any(abs(a - b) > slack for a, b in zip(size, expected)):
+        fail(f"estimate {expected} does not match the PNG {size} (slack {slack})")
     if snapshot() != before:
         fail(f"state mismatch: {before} != {snapshot()}")
     if estimate() != expected:
