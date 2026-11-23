@@ -12,15 +12,15 @@ one.
 
 | Capability | Detail |
 | --- | --- |
-| **Whole graph** | Captures the editor in tiles and stitches them; nodes outside the view are included |
+| **Whole graph** | Tiles the editor and stitches the tiles; nodes outside the view are included |
 | **Density** | Output DPI sets the size (96 = 1:1, default 128); monitor DPI and zoom do not matter |
-| **Padding** | Captured, not painted, in units: 1 unit = 1 px at 96 DPI, so 20 units = 27 px at 128 DPI |
-| **Transparent Background** | Off by default; removes the editor background and the padding. Every tile is captured twice, so the export takes about twice as long |
-| **Preview** | Optional dashed rectangle and size label for the capture area, off by default; the export hides it automatically |
-| **Scope** | Current tree, or selected nodes through a temporary copy that leaves your file intact; links to directly connected nodes can stay visible |
-| **Output** | PNG file or clipboard; `Esc` cancels; the sidebar opens the last export |
-| **Safety** | Max Megapixels 200 stops before capture; DPI clamps are reported |
-| **Undo** | No undo step is added; editor, selection and view are restored after success, error or cancel |
+| **Padding** | Captured from the editor in units: 1 unit = 1 px at 96 DPI, so 20 units = 27 px at 128 DPI |
+| **Transparent Background** | Removes the editor background and the padding; every tile is captured twice, so it takes about twice as long |
+| **Preview** | Optional dashed rectangle and size label over the capture area; the export hides it |
+| **Scope** | Current tree, or selected nodes through a temporary copy; links to connected nodes can stay |
+| **Output** | PNG file or clipboard; `Esc` cancels |
+| **Safety** | Max Megapixels 200 stops before capture; read-only folders and full disks are checked first |
+| **Undo** | No undo step; editor, selection and view are restored after success, error or cancel |
 
 > [!NOTE]
 > During export the editor is maximized and the graph scrolls while tiles are captured; the
@@ -29,9 +29,9 @@ one.
 ## Use
 
 Press `N` in a Node Editor → **Node Atlas** → **Export Current Tree**, **Export As…** or
-**Copy to Clipboard**. The dashed frame over the graph shows the exported rectangle with
-its estimated size and padding; turn on **Show Capture Area** to see it.
-Turn on **Transparent Background** to drop the editor background and the padding.
+**Copy to Clipboard**. Turn on **Show Capture Area** to see the exported rectangle with its
+estimated size and padding; turn on **Transparent Background** to drop the background and
+the padding.
 
 <p align="center"><img src="docs/images/panel.png" alt="Node Atlas panel" width="240"></p>
 
@@ -46,17 +46,17 @@ From source: `blender --command extension build --source-dir node_atlas`.
 
 ## Limits
 
-- **GUI only.** `--background` cannot capture the editor.
-- **No batch export or SVG/JSON output.**
-- **Linux, macOS and a second physical monitor are untested.** Windows: 4.2.23, 4.5.9,
-  5.1.2, 5.2.4, 5.3.0.
-- **Selected Compositor nodes need Blender 5.1+.**
-- **View returns to the nearest pixel;** the clipboard may refuse very large images.
+- **GUI only.** Exports need a real window; `--background` cannot capture the editor.
+- **One tree per export.** No batch export, SVG/JSON output or scripting API.
+- **Windows is the tested platform.** 4.2.23, 4.5.9, 5.1.2, 5.2.4 and 5.3.0; Linux, macOS
+  and a second physical monitor are untested.
+- **Selected Compositor nodes need Blender 5.1+.** Whole-tree compositor export works on
+  4.2 and newer.
+- **Copy to Clipboard may fail on very large images.** Save to a file instead.
 - **The capture shows the editor as it is drawn.** A node row under the pointer keeps its
-  hover highlight, so park the pointer outside the graph for a clean export.
-- **Transparent Background** hides the backdrop grid while it captures and dims the editor
-  once per pass. The PNG keeps straight alpha: viewers show a checkerboard, and a clipboard
-  paste may flatten it onto white or black.
+  hover highlight, so park the pointer outside the graph.
+- **A transparent PNG keeps straight alpha.** Viewers show a checkerboard, and pasting it
+  into another application may flatten it.
 
 ## Settings and defaults
 
@@ -64,7 +64,7 @@ From source: `blender --command extension build --source-dir node_atlas`.
 | --- | --- |
 | Output DPI | `128` (96 = 1:1) |
 | Padding | `20` units |
-| Transparent Background | Off (about twice the export time when on) |
+| Transparent Background | Off |
 | Max Megapixels | `200` |
 | Scope | Current Tree |
 | Keep Links to Connected Nodes | Off (Selected Nodes scope only) |
@@ -72,7 +72,7 @@ From source: `blender --command extension build --source-dir node_atlas`.
 | Default Directory | Desktop (home if absent); `~` is expanded |
 | Filename Pattern | `{blend}_{tree}_{date}.png`, plus `{datablock}` and `{type}` |
 | Hide UI, Header Buttons | On |
-| Advanced, quick export shortcut | Off |
+| Advanced | Off (folder, filename, UI and shortcut options hidden) |
 
 ## Troubleshooting
 
@@ -90,9 +90,18 @@ From source: `blender --command extension build --source-dir node_atlas`.
 ## Development
 
 The add-on is plain Python with no third-party packages, and `node_atlas/` works both as
-an extension and as a classic add-on. Tests: [`tests/README.md`](tests/README.md).
-Architecture and measured facts: [`NodeGraph_Export_Report.md`](NodeGraph_Export_Report.md).
-Scope: [`ROADMAP.md`](ROADMAP.md). Agent workflow: [`AGENTS.md`](AGENTS.md).
+an extension and as a classic add-on. For a live loop, link or junction `node_atlas/` into
+`scripts/addons/` and reload with **F3 → Reload Scripts**.
+
+- Tests, tiers, the hang-safe runner, selecting affected tests:
+  [`tests/README.md`](tests/README.md)
+- Measured geometry, capture and stitching facts, one section at a time:
+  [`NodeGraph_Export_Report.md`](NodeGraph_Export_Report.md), for example
+  `python tools/doc.py NodeGraph_Export_Report.md 4.6`
+- Verification on a real window: [`docs/agent/live-check.md`](docs/agent/live-check.md)
+- Release and tagging procedure: [`docs/agent/release.md`](docs/agent/release.md)
+- Scope and next work: [`ROADMAP.md`](ROADMAP.md)
+- Repository rules and agent workflow: [`AGENTS.md`](AGENTS.md)
 
 Regenerate the panel and demo images with
 `blender --factory-startup --python docs/make_images.py`.

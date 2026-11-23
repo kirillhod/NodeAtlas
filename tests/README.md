@@ -119,7 +119,7 @@ Pass each binary as `version=path`; separate entries with a semicolon:
 powershell -File tests/run_matrix.ps1 -Tier smoke `
   -Blender '5.3.0=C:\Blender\5.3\blender.exe'
 
-# Release matrix: 34 tests plus the 120 dpi and maximized variants on five versions.
+# Release matrix: 35 tests plus the 120 dpi and maximized variants (37 cases) on five versions.
 powershell -File tests/run_matrix.ps1 -Tier full `
   -Blender '4.2.23=C:\Blender\4.2\blender.exe;4.5.9=C:\Blender\4.5\blender.exe;5.1.2=C:\Blender\5.1\blender.exe;5.2.4=C:\Blender\5.2\blender.exe;5.3.0=C:\Blender\5.3\blender.exe'
 ```
