@@ -33,7 +33,7 @@ Press `N` in a Node Editor → **Node Atlas** → **Export Current Tree**, **Exp
 estimated size and padding; turn on **Transparent Background** to drop the background and
 the padding.
 
-<p align="center"><img src="docs/images/panel.png" alt="Node Atlas panel" width="240"></p>
+<p align="center"><img src="docs/images/node_atlas_preview.png" alt="The Node Atlas sidebar over a shader tree, with the capture-area preview outlined" width="900"></p>
 
 ## Install
 
