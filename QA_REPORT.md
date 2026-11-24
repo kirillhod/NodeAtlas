@@ -1,24 +1,20 @@
 # NodeAtlas QA report
 
-**Version:** 1.7.1<br>
-**Date:** 22 November 2026<br>
+**Version:** 1.7.2<br>
+**Date:** 24 November 2026<br>
 **Platforms:** Windows, GUI sessions only
 
-> **1.7.1.** Patch release for exports at a non-default interface **Resolution Scale** and
-> for the repeatability option. The per-tile selection that keeps long links at full
-> strength mapped node positions with the size factor, so at Resolution Scale 1.25 nodes
-> and frames that were inside the capture were selected and their outline and frame tint
-> appeared in the PNG. Positions now use `s`, sizes `k` (report §5 item 17), and the box
-> origin comes from the drawable nodes. On a 53-node shader tree at 128 DPI the old box
-> selected 36 visible node-tile pairs across eight of nine tiles; the old and fixed exports
-> differed by 37 392 px. **Deterministic View** is gone: every export primes with
-> `view_all`, so repeated exports are identical without a setting.
+> **1.7.2.** Patch release for editor preferences after an interrupted export. The two
+> early returns in `capture.restore_snapshot` skipped `ui_scale` and `smooth_view` when the
+> Node Editor was gone; both are now restored in `finally`, and the temporary selected-only
+> tree is removed on the same path. A quit during the capture never reached restore, so
+> `recovery.py` writes the theme background, grid, `wire_select` alpha, `ui_scale` and
+> `smooth_view` to the Blender config folder before the first change; after a restart the
+> sidebar offers **Restore Editor Settings**.
 >
-> Full source matrix: **37/37 GUI runs and 29/29 unit tests on each of Blender 4.2.23,
-> 4.5.9, 5.1.2, 5.2.4 and 5.3.0** (185/185 GUI total). The matrix ran on the fix commit;
-> the later version-bump commit changes only the three version fields, and the unit suite
-> (including the version-consistency case) was re-run after the bump.
-> `test_artifact.py` results and the artifact hash are in [Packaging](#packaging).
+> Full source matrix: **38/38 GUI runs and 30/30 unit tests on each of Blender 4.2.23,
+> 4.5.9, 5.1.2, 5.2.4 and 5.3.0** (190/190 GUI total). `test_artifact.py` results and the
+> artifact hash are in [Packaging](#packaging).
 >
 > The detailed tables below are the 1.3.6 baseline; 1.4.0 changed sizes only by the
 > `VIS` margin and the padding unit, and later versions added cases.
@@ -67,13 +63,14 @@ blender --background --factory-startup --python tests/unit/test_core.py
 | Filename tokens / fallback | PASS | PASS | PASS | PASS | PASS |
 | Tree owner names | PASS | PASS | PASS | PASS | PASS |
 | Quick path / empty directory | PASS | PASS | PASS | PASS | PASS |
+| Editor recovery file round-trip | PASS | PASS | PASS | PASS | PASS |
 | Transparent matting: alpha, step, stitch | PASS | PASS | PASS | PASS | PASS |
 | Registration/preferences | PASS | PASS | PASS | PASS | PASS |
 | Shortcut keymap / customization | PASS | PASS | PASS | PASS | PASS |
 | Manifest/`__version__` consistency | PASS | PASS | PASS | PASS | PASS |
 
-Result: **19/19 categories PASS on all five versions** (1.3.6 baseline; the 1.7.1 suite is
-29/29, see the version notes above).
+Result: **20/20 categories PASS on all five versions** (1.3.6 baseline; the 1.7.2 suite is
+30/30, see the version notes above).
 
 ## GUI tests
 
@@ -103,6 +100,7 @@ window, exports a fixture, validates the PNG and editor restoration, then exits.
 | `test_readonly.py` | PASS, real ACL deny | PASS | PASS | PASS | PASS |
 | `test_diskfull.py` | PASS, injected ENOSPC | PASS | PASS | PASS | PASS |
 | `test_arealost.py` | PASS, lost area after snapshot | PASS | PASS | PASS | PASS |
+| `test_recovery.py` | PASS, lost area + marker | PASS | PASS | PASS | PASS |
 | `test_artifact.py` | PASS, extension install | PASS | PASS | PASS | PASS |
 | `test_estimate.py` | PASS, zoom-invariant | PASS | PASS | PASS | PASS |
 | `test_estimate_selected.py` | PASS, selected subgraph | PASS | PASS | PASS | PASS |
@@ -113,6 +111,15 @@ window, exports a fixture, validates the PNG and editor restoration, then exits.
 | `test_clipboard.py` | PASS, OS clipboard checked | PASS | PASS | PASS | PASS |
 | `test_path.py` | PASS, empty dir refused | PASS | PASS | PASS | PASS |
 | `test_transparent.py` | PASS, transparent padding | PASS | PASS | PASS | PASS |
+
+1.7.2: **38/38 source GUI runs passed on each of the five versions** (190/190 total), and
+the unit suite is 30/30 on each version. `test_recovery.py` is the new case: it forces the
+Node Editor to disappear before restore, injects an exception in the area lookup, and
+checks the theme background, grid, `wire_select` alpha, `ui_scale` and `smooth_view`; it
+also writes the interrupted-export marker, restores it through the sidebar operator and
+leaves a matching marker alone. `test_export.py` now also requires a normal export to write
+and clear the marker. The matrix ran before the version bump; the later change is the three
+version fields, covered by the unit suite.
 
 1.7.1: **37/37 source GUI runs passed on each of the five versions** (185/185 total), and
 the unit suite is 29/29 on each version. `test_scale.py` is the new case: it exports at
@@ -199,7 +206,16 @@ without a clamp warning.
 
 - `blender --command extension validate node_atlas`: PASS.
 - `blender --command extension build --source-dir node_atlas --output-dir dist`:
-  produces `node_atlas-1.7.1.zip` with the manifest and the ten package modules.
+  produces `node_atlas-1.7.2.zip` with the manifest and the eleven package modules.
+- **1.7.2 artifact:** build and `extension validate` PASS; the zip contains only the
+  manifest and the eleven package modules (`recovery.py` included), with no `__pycache__`.
+  The official installer (`install-file -r user_default -e`) installed it into an isolated
+  `BLENDER_USER_EXTENSIONS` profile on 4.2.23, 4.5.9, 5.1.2, 5.2.4 and 5.3.0, and
+  `test_artifact.py` exported a PNG from `bl_ext.user_default.node_atlas` on each. The
+  classic folder copied into an isolated `scripts/addons` profile enabled `node_atlas` and
+  exported on all five.
+- `node_atlas-1.7.2.zip` SHA256:
+  `FF04F2421AF2FC36C91DD9982C2456FB5AF05290DDD12791BE236C3B17DB545D`.
 - **1.7.1 artifact:** build and `extension validate` PASS; the zip contains only the
   manifest and the ten package modules (`job.py` and `naming.py` included), with no
   `__pycache__`. The official installer (`install-file -r user_default -e`) installed it
@@ -302,8 +318,9 @@ without a clamp warning.
   as writable. This was reproduced on Python 3.11 and fixed in 0.7.0.
 - Write failures are mapped to `OutputError`; ENOSPC reports "Not enough free disk space"
   and the temporary `*.tmp.png` is removed.
-- A snapshot is taken before mutation and restored in `finally`; a lost area after the
-  snapshot is reported as a failure with the UI restored.
+- A snapshot is taken before mutation and restored in `finally`; a lost area is reported as
+  a failure, but `ui_scale`, `smooth_view`, the theme and the link tint are still restored.
+  The recovery marker covers a quit that never reaches restore.
 
 ## Known issues
 
@@ -328,9 +345,11 @@ without a clamp warning.
    units, with every changed pixel inside the link band. `test_longlink.py` requires
    median/peak >= 0.9 and trough/peak >= 0.75 (4.2/4.5 anti-alias a 1-px link by up to 16 %)
    and checks selection, theme alpha and undo restoration.
-6. Per-run setting overrides and transparent background are not in 0.7.0.
-7. If Blender hard-crashes mid-export, the in-memory `view.ui_scale` cannot be restored
-   by the add-on. Blender saves preferences only on a normal quit; NodeAtlas never calls
+6. Per-run setting overrides are not implemented; the sidebar preferences apply to the export.
+7. A hard crash mid-export is handled on the next start: `recovery.py` stores the changed
+   preferences before the capture, and the sidebar offers **Restore Editor Settings**. A
+   crash that never lets Blender save preferences leaves nothing to restore, because the
+   temporary values never reached `userpref.blend`; NodeAtlas still never calls
    `save_userpref`.
 8. **Copy to Clipboard** relies on Blender's image clipboard operator. Very large images
    may be refused by the OS or take a long time to paste; normal file exports are
@@ -344,5 +363,5 @@ without a clamp warning.
 
 ## Not in scope for 1.0.0
 
-Batch export of all groups, transparent background, SVG/JSON/HTML, headless capture
+Batch export of all groups, SVG/JSON/HTML, headless capture
 and AI upscaling are deferred; see [`ROADMAP.md`](ROADMAP.md).

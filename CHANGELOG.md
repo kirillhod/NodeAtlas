@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.7.2
 
 - Restore the editor preferences even when the Node Editor disappears during an export.
   The raised **Resolution Scale** and the disabled view animation could otherwise be
