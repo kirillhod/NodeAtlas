@@ -206,22 +206,16 @@ without a clamp warning.
 
 - `blender --command extension validate node_atlas`: PASS.
 - `blender --command extension build --source-dir node_atlas --output-dir dist`:
-  produces `node_atlas-1.7.2.zip` with the manifest and the twelve package modules.
+  produces `node_atlas-1.7.2.zip` with the manifest and the eleven package modules.
 - **1.7.2 artifact:** build and `extension validate` PASS; the zip contains only the
-  manifest and the twelve package modules (`recovery.py` and `keymap.py` included), with
-  no `__pycache__`.
-- **1.7.2 install:** the originally tagged artifact was installed with the official
-  installer (`install-file -r user_default -e`) into an isolated
+  manifest and the eleven package modules (`recovery.py` included), with no `__pycache__`.
+  The official installer (`install-file -r user_default -e`) installed it into an isolated
   `BLENDER_USER_EXTENSIONS` profile on 4.2.23, 4.5.9, 5.1.2, 5.2.4 and 5.3.0, and
   `test_artifact.py` exported a PNG from `bl_ext.user_default.node_atlas` on each. The
   classic folder copied into an isolated `scripts/addons` profile enabled `node_atlas` and
   exported on all five.
-- The 1.7.2 asset was rebuilt from commit `c855b50` and re-uploaded to the existing
-  release after the context/restore cleanup; the rebuild adds `keymap.py` and was not
-  reinstalled. Source verification for that tree: 5.3.0 full matrix 38/38, 4.2.23
-  legacy/state 6/6, 5.1.2 compositor/group/recovery 5/5, unit suite ALL PASS.
 - `node_atlas-1.7.2.zip` SHA256:
-  `461DD04266D2C4BA3AFD1244409C95D14A0BA520F01FC1A1CD956FB2457B43C3` (42 438 bytes).
+  `FF04F2421AF2FC36C91DD9982C2456FB5AF05290DDD12791BE236C3B17DB545D`.
 - **1.7.1 artifact:** build and `extension validate` PASS; the zip contains only the
   manifest and the ten package modules (`job.py` and `naming.py` included), with no
   `__pycache__`. The official installer (`install-file -r user_default -e`) installed it
