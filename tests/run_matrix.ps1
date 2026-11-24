@@ -109,6 +109,7 @@ $fullNames = @(
     'test_readonly.py',
     'test_diskfull.py',
     'test_arealost.py',
+    'test_recovery.py',
     'test_estimate.py',
     'test_estimate_selected.py',
     'test_preview.py',

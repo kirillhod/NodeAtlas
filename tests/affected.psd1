@@ -7,7 +7,7 @@
 # otherwise `run_matrix.ps1 -Group` cannot select it and `run_affected.ps1`
 # falls back to the full tier for an unknown `node_atlas/` module.
 #
-# The full 33-test tier stays the release check. This file only shortens the
+# The full 36-test tier stays the release check. This file only shortens the
 # loop between edits.
 @{
     Groups = @{
@@ -34,13 +34,15 @@
             'test_estimate_selected.py',
             'test_preview.py',
             'test_ui_options.py',
-            'test_naming.py'
+            'test_naming.py',
+            'test_recovery.py'
         )
         state = @(
             'test_ui_options.py',
             'test_cancel.py',
             'test_fail.py',
             'test_arealost.py',
+            'test_recovery.py',
             'test_multiarea.py',
             'test_multiwindow.py',
             'test_group.py',
@@ -78,6 +80,7 @@
         'node_atlas/preview.py' = @('panel', 'repeat', 'core')
         'node_atlas/stitch.py' = @('core', 'density', 'repeat', 'io')
         'node_atlas/preferences.py' = @('panel', 'density', 'io')
+        'node_atlas/recovery.py' = @('state', 'panel')
         'node_atlas/__init__.py' = @('panel', 'state', 'io')
         'node_atlas/log.py' = @()
         'node_atlas/blender_manifest.toml' = @()

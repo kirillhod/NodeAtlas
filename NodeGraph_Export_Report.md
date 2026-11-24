@@ -314,7 +314,7 @@ Only items verified on a live Blender 5.3.0 or hard platform constraints are lis
 23. **Maximize the area (Ctrl+Space) for speed.** `screen_full_area(use_hide_panels=True)` grows the `WINDOW` region from 2100×1170 to 2560×1361: big-scene grid 3×4 → 2×3, capture 0.46 → 0.21 s. `D_max` is unchanged. After maximizing, old `area`/`region`/`space` are invalid — re-acquire; restore by calling the operator again.
 24. **`PAD` and `OVERLAP` depend on UI scale.** Edge decorations scale: at `view.ui_scale = 6`, scrollbar ≈17 px, frame ≈8 px, shadow ≈15 px; `PAD = 16` is insufficient. Use `PAD_eff = max(16, ceil(8*view.ui_scale))`, `OVERLAP_eff = max(120, 2*PAD_eff+32)`; otherwise `OVERLAP − 2*PAD` goes negative and the grid/ramp breaks.
 25. **Selection and the active node change the image.** The orange active-node contour is drawn outside `Node.dimensions` and eats padding at large UI scale (≈16 px at view=6). Clear `select` and `nodes.active` during export and restore afterwards.
-26. **`view.ui_scale` is a user preference.** It is writable (0.5–6.0) but live and may persist after a crash. Set/restore in `try/finally`, do not save preferences, and warn the user if the session dies. `system.ui_scale`/`dpi` are read-only — change them only via the OS/restart.
+26. **`view.ui_scale` is a user preference.** It is writable (0.5–6.0) but live and may persist after a crash. Set/restore in `try/finally`, do not save preferences, and warn the user if the session dies. The restore must not depend on the Node Editor still existing: when the area is lost, `restore_snapshot` still returns `ui_scale` and `smooth_view`, otherwise a normal exit writes them to `userpref.blend`. `recovery.py` also writes the values to the config folder before the first change, so a quit during the export offers a restore button instead of needing a manual hunt. `system.ui_scale`/`dpi` are read-only — change them only via the OS/restart.
 27. **Compositor needs its own setup (verified).** `space.tree_type = 'CompositorNodeTree'`, `space.node_tree = scene.compositing_node_group`, `space.pin = True`, and **`space.show_backdrop = False`**. In 5.3 the tree is a node group (`scene.compositing_node_group`; `scene.use_nodes` and the pointer are deprecated for 6.0); the output is `NodeGroupOutput`, and `CompositorNodeComposite` is gone. Add a compatibility adapter for 5.x/6.x.
 28. **Geometry Nodes needs a valid interface only for the modifier.** Assign `space.tree_type = 'GeometryNodeTree'`, `space.node_tree = <group>`, `pin = True`. For drawing/capture any group works; to avoid a modifier warning (“Node group must have an output socket”) add an output socket to `node_group.interface`.
 29. **Tree switching order matters.** Set `pin = False` → `tree_type` → `show_backdrop` → `pin = True` → `node_tree`; then redraw and verify `space.edit_tree` is the expected tree. Switching `tree_type` resets the edited tree, so assigning `node_tree` before it may be lost.
@@ -344,6 +344,7 @@ node_atlas/
 ├─ capture.py           # maximize, hide UI, tiles, version adapters, restore
 ├─ bounds.py            # graph bounds, selected-only, frames, groups
 ├─ preview.py           # capture-area outline and size label
+├─ recovery.py          # crash-safe editor appearance marker and restore
 ├─ stitch.py            # NumPy buffer, overlap, imbuf/NumPy PNG fallback
 ├─ preferences.py       # global defaults (output_dpi, padding, limits)
 ├─ log.py               # namespaced logger
@@ -788,6 +789,8 @@ The snapshot included: window size, every area's type/position/size, the node `W
 
 **Important ordering discovered by the test:** the view must be restored **after leaving maximization**. If the zoom/center is restored on the maximized 2560×1361 region and then the layout is restored to 2100×1170, the center shifts. The correct sequence is: restore tree/UI/selection → restore `ui_scale`/`smooth_view` → leave maximize and re-acquire `area`/`region`/`space` → restore zoom (`zoom_border` to the saved `upp`) and pan the saved center back to the region center → restore the area type if it was changed.
 
+**Lost-area and interrupted-export recovery (verified 24 Nov 2026).** `test_recovery.py` forces `find_area_by_bbox`/`find_node_area` to return `None` after a real snapshot and requires `ui_scale`, `smooth_view`, the theme background (`0.102/0.102/0.102`), `grid_levels = 3` and the `wire_select` alpha (`0.702`) to return; an injected exception in the lookup behaves the same. The temporary selected-only tree is removed in the same `finally`. A marker written before the change is offered through **Restore Editor Settings**, restores the same five values and is deleted; a marker whose values already match is dropped without a button. Measured on 5.3.0; the preference save on a normal quit is Blender behaviour, not add-on code.
+
 **View exactness limit:** `View2D.cur` is not exposed in the Python API and `NodeTree.view_center` is read-only; `pan` accepts integer pixels. Therefore the view is restored to the nearest pixel: `upp` error ≤ 0.03 %, center error ≈1 px, and the editor screenshot differs only by sub-pixel AA (mean 0.53). Everything else is bit-exact. If pixel-identical view restoration is required, the only robust option would be a separate temporary window/editor; that is not the MVP.
 
 **Implementation rules for the add-on:**
@@ -796,10 +799,10 @@ The snapshot included: window size, every area's type/position/size, the node `W
 2. Never save user preferences; restore `view.ui_scale` even if it was changed for high-D export.
 3. Do not call `read_homefile`; do not change `area.type` unless unavoidable (the operator is invoked from a Node Editor).
 4. Re-fetch `area`/`region`/`space` after `screen_full_area`; old references are invalid.
-5. Guard against a closed area/window: check references before each timer step; if the area disappears, abort and skip the parts that can no longer be restored.
+5. Guard against a closed area/window: check references before each timer step; if the area disappears, abort and skip the parts that can no longer be restored, but still restore `ui_scale`/`smooth_view` in `finally`.
 6. Run the capture as a timer state machine; on `Esc`/cancel jump directly to the restore stage.
 7. Report success/failure and the output path; on failure, state explicitly that the UI was restored.
-8. If the session crashes mid-export, `view.ui_scale` may persist; keep it at the user value by default and change it only when the requested `D` exceeds `D_max` (with a warning).
+8. If the session crashes mid-export, `view.ui_scale` may persist; keep it at the user value by default and change it only when the requested `D` exceeds `D_max` (with a warning). `recovery.py` also covers a normal quit during the export with an explicit restore.
 
 Not yet tested: multiple windows, the user closing the editor area mid-export, the actual `Esc`/cancel path, and OS display-scaling changes during capture.
 

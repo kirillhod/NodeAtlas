@@ -60,6 +60,8 @@ Work in this order and stop at the first failure:
    through `screen_full_area`, leaving it, and retrying with a fresh area are all
    window-manager behaviour. Confirm that the layout, view and selection are restored after
    success, cancel and an injected exception, and that the window is not left maximized.
+   Delete the Node Editor area during an export: `view.ui_scale` and `view.smooth_view` must
+   still return to their saved values, because Blender writes them on a normal quit.
 6. **Clipboard.** Copy is its own action (`copy_only`, plus the separate Copy operator) and
    goes through `bpy.ops.image.clipboard_copy`, which needs a clipboard owner and can fail
    on Wayland or a minimal session. A failure must surface as a reported error with the UI
@@ -71,6 +73,11 @@ Work in this order and stop at the first failure:
    preferences. Compare the alpha: the padding is 0, nodes are 255, shadows and frames are
    partial, and compositing the PNG over the theme colour reproduces an opaque export. A
    warm theme with a coloured background is the useful second case.
+8. **Interrupted export.** Quit Blender while an export is running, then start it again: the
+   sidebar offers **Restore Editor Settings**, and it returns the theme background, grid,
+   link tint, **Resolution Scale** and view animation. `test_recovery.py` covers the
+   lost-area and marker paths without killing the process; do the manual quit once per
+   platform.
 
 Record the platform as its own row in [`QA_REPORT.md`](../../QA_REPORT.md): Blender version,
 OS and its scaling, `WINDOW` region size, `D`, `padding_px`, grid, tile size, and the

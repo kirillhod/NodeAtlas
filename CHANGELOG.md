@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Restore the editor preferences even when the Node Editor disappears during an export.
+  The raised **Resolution Scale** and the disabled view animation could otherwise be
+  saved on the next normal quit.
+- Add **Restore Editor Settings** to the sidebar. After an export that did not finish, it
+  puts back the theme background, the grid, the selected-link tint, **Resolution Scale**
+  and the view animation saved before the export.
+
 ## 1.7.1
 
 - Fix stray selection highlights in the exported PNG when Blender's interface

@@ -78,6 +78,7 @@ From source: `blender --command extension build --source-dir node_atlas`.
 
 | Message | Fix |
 | --- | --- |
+| Editor still looks changed after an export that did not finish | Open the **Node Atlas** sidebar and use **Restore Editor Settings** |
 | Output directory … is not writable | Choose a writable folder |
 | Not enough free disk space | Free space on the destination drive |
 | DPI clamped from X to Y | Lower Output DPI or raise Blender's UI scale |

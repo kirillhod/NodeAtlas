@@ -13,7 +13,7 @@ from dataclasses import dataclass
 import bpy
 import numpy as np
 
-from . import bounds, capture, preview, stitch
+from . import bounds, capture, preview, recovery, stitch
 from .log import get_logger
 from .preferences import get_prefs
 
@@ -117,6 +117,7 @@ class ExportJob:
         self.error = None
         self.warnings = []
         self.cancelled = False
+        self.recovery_written = False
         self.message = ""
         self.started = time.perf_counter()
         self.elapsed = 0.0
@@ -190,6 +191,12 @@ class ExportJob:
         self.snapshot = capture.take_snapshot(window, area, space, region, tree)
         self.tree_type = space.tree_type
         self.tree = tree
+
+        # Write the appearance before the first change, so a normal quit during
+        # the export can be undone on the next start. An older marker wins: it
+        # holds the values from before the interrupted run.
+        if recovery.pending() is None and recovery.save(recovery.current()):
+            self.recovery_written = True
 
         if self.settings.transparent:
             # The grid would not cancel out between the two backgrounds: it keeps
@@ -446,6 +453,11 @@ class ExportJob:
             if errors:
                 self.error = (self.error + "\n" if self.error else "") + "\n".join(errors)
             self.snapshot = None
+            # Preferences were restored in the snapshot's finally, so the
+            # recovery marker has done its job even when the area was lost.
+            if self.recovery_written:
+                recovery.clear()
+                self.recovery_written = False
         if self.dark_dir is not None:
             # The first background pass lives on disk until the second one reads
             # it; a failed or cancelled export must not leave it behind.
@@ -536,6 +548,24 @@ class ExportJob:
 def current_job():
     """Return the running job, or None."""
     return _current_job
+
+
+def pending_recovery():
+    """Return the appearance of an export that never restored, or None."""
+    if _current_job is not None:
+        return None
+    return recovery.pending()
+
+
+def restore_pending_recovery():
+    """Apply the recovery marker. Returns ``(errors, warnings)`` or None."""
+    appearance = pending_recovery()
+    if appearance is None:
+        return None
+    errors, warnings = recovery.apply(appearance)
+    if not errors:
+        recovery.clear()
+    return errors, warnings
 
 
 def cancel_current() -> bool:

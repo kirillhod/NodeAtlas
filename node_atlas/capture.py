@@ -738,12 +738,32 @@ def _apply_tree_state(
         _restore_selection(snapshot, errors)
 
 
-def restore_snapshot(snapshot: EditorSnapshot):
-    """Best-effort restoration. Returns (errors, warnings)."""
+def _restore_preferences(snapshot: EditorSnapshot, errors: list[str]) -> None:
+    """Return the global preferences a capture changes, whatever else failed.
+
+    ``ui_scale`` and ``smooth_view`` are user preferences, and Blender saves
+    them on exit. A missing area must not skip them, or a normal quit leaves the
+    raised scale and the disabled view animation behind (report section 5 item
+    26).
+    """
+    prefs = bpy.context.preferences
+    try:
+        if abs(float(prefs.view.ui_scale) - snapshot.ui_scale) > 1e-6:
+            prefs.view.ui_scale = snapshot.ui_scale
+    except Exception as exc:
+        errors.append(f"ui_scale restore failed: {exc}")
+    try:
+        if int(prefs.view.smooth_view) != snapshot.smooth_view:
+            prefs.view.smooth_view = snapshot.smooth_view
+    except Exception as exc:
+        errors.append(f"smooth_view restore failed: {exc}")
+
+
+def _restore_body(
+    snapshot: EditorSnapshot, errors: list[str], warnings: list[str]
+) -> None:
     restore_link_highlight(snapshot.link_highlight_alpha)
     restore_theme(snapshot.theme_backdrop, snapshot.theme_grid_levels)
-    errors: list[str] = []
-    warnings: list[str] = list(snapshot.warnings)
     if snapshot.pin and not effective_pin(snapshot.tree_type, snapshot.pin):
         warnings.append(
             "Compositor pin is disabled on Blender 4.2-4.5 to avoid a native crash"
@@ -751,20 +771,22 @@ def restore_snapshot(snapshot: EditorSnapshot):
     window = snapshot.window
     area = find_area_by_bbox(window, snapshot) or find_node_area(window)
     if area is None:
-        return ["Node Editor area is no longer available"], warnings
+        errors.append("Node Editor area is no longer available")
+        return
 
     space = area.spaces.active
     region = next((item for item in area.regions if item.type == "WINDOW"), None)
     if space is None or region is None:
-        return ["Node Editor space/region is no longer available"], warnings
+        errors.append("Node Editor space/region is no longer available")
+        return
 
     _apply_tree_state(
         snapshot, window, area, space, region,
         "tree/pin restore", errors, flags=True, selection=False,
     )
 
-    prefs = bpy.context.preferences
     try:
+        prefs = bpy.context.preferences
         prefs.view.ui_scale = snapshot.ui_scale
         prefs.view.smooth_view = 0
     except Exception as exc:
@@ -843,18 +865,6 @@ def restore_snapshot(snapshot: EditorSnapshot):
                     "tree/pin restore after redraw", errors, flags=False, selection=True,
                 )
 
-    try:
-        prefs.view.smooth_view = snapshot.smooth_view
-    except Exception as exc:
-        errors.append(f"smooth_view restore failed: {exc}")
-
-    if snapshot.temp_tree is not None:
-        try:
-            bpy.data.batch_remove([snapshot.temp_tree])
-        except Exception as exc:
-            errors.append(f"temporary tree cleanup failed: {exc}")
-        snapshot.temp_tree = None
-
     signature = tuple(
         sorted((item.type, item.x, item.y, item.width, item.height)
                for item in window.screen.areas)
@@ -862,4 +872,29 @@ def restore_snapshot(snapshot: EditorSnapshot):
     if signature != snapshot.area_signature:
         warnings.append("area layout differs from the saved snapshot")
 
+
+def restore_snapshot(snapshot: EditorSnapshot):
+    """Best-effort restoration. Returns (errors, warnings).
+
+    User preferences are restored in ``finally`` because Blender saves them on
+    exit: a lost area or an unexpected exception must not leave the raised
+    ``ui_scale`` or the disabled ``smooth_view`` behind (report section 5 item
+    26). The temporary selected-only tree is also removed there, so a lost area
+    cannot leave it in the file.
+    """
+    errors: list[str] = []
+    warnings: list[str] = list(snapshot.warnings)
+    try:
+        _restore_body(snapshot, errors, warnings)
+    except Exception as exc:
+        log.exception("Restore failed unexpectedly")
+        errors.append(f"restore failed: {exc}")
+    finally:
+        if snapshot.temp_tree is not None:
+            try:
+                bpy.data.batch_remove([snapshot.temp_tree])
+            except Exception as exc:
+                errors.append(f"temporary tree cleanup failed: {exc}")
+            snapshot.temp_tree = None
+        _restore_preferences(snapshot, errors)
     return errors, warnings

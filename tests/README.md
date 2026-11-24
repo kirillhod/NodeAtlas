@@ -57,6 +57,7 @@ blender --factory-startup --python tests/gui/test_limits.py
 blender --factory-startup --python tests/gui/test_readonly.py
 blender --factory-startup --python tests/gui/test_diskfull.py
 blender --factory-startup --python tests/gui/test_arealost.py
+blender --factory-startup --python tests/gui/test_recovery.py
 blender --factory-startup --python tests/gui/test_transparent.py
 blender --factory-startup --python tests/gui/test_estimate.py
 blender --factory-startup --python tests/gui/test_estimate_selected.py
@@ -102,10 +103,13 @@ border and the padding bands to be transparent, opaque nodes, partial alpha for 
 and an exactly restored theme background and grid setting.
 `test_scale.py` exports at **Resolution Scale 1.25** with 192 DPI and checks every selected
 node against the measured view after the redraw: a node that the per-tile selection marked
-outside must not intersect the captured tile. `test_repeat.py` and `test_preview.py` park
-the pointer before an export, because a hover highlight would otherwise land in one capture;
-they move it only when it is over the Blender window and restore it as soon as the export
-finishes. The commands above are for debugging; they do
+outside must not intersect the captured tile. `test_recovery.py` removes the Node Editor
+before restore and requires the theme, selected-link tint, `ui_scale` and `smooth_view` to
+come back anyway; it also writes the interrupted-export marker, restores it through the
+sidebar operator, and ignores a marker whose values already match. `test_repeat.py` and
+`test_preview.py` park the pointer before an export, because a hover highlight would
+otherwise land in one capture; they move it only when it is over the Blender window and
+restore it as soon as the export finishes. The commands above are for debugging; they do
 not run the runner's PNG content check, so use the wrapper or the matrix runner when the
 result is evidence.
 
@@ -119,7 +123,7 @@ Pass each binary as `version=path`; separate entries with a semicolon:
 powershell -File tests/run_matrix.ps1 -Tier smoke `
   -Blender '5.3.0=C:\Blender\5.3\blender.exe'
 
-# Release matrix: 35 tests plus the 120 dpi and maximized variants (37 cases) on five versions.
+# Release matrix: 36 tests plus the 120 dpi and maximized variants (38 cases) on five versions.
 powershell -File tests/run_matrix.ps1 -Tier full `
   -Blender '4.2.23=C:\Blender\4.2\blender.exe;4.5.9=C:\Blender\4.5\blender.exe;5.1.2=C:\Blender\5.1\blender.exe;5.2.4=C:\Blender\5.2\blender.exe;5.3.0=C:\Blender\5.3\blender.exe'
 ```

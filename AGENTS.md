@@ -70,6 +70,7 @@ node_atlas/              # extension/add-on root
 ├─ capture.py            # snapshot/restore, tree switch, tiles, adapters
 ├─ bounds.py             # view metrics, bounds, layout, selected-only copy
 ├─ preview.py            # capture-area outline and size label (draw handler)
+├─ recovery.py           # crash-safe editor appearance marker and restore
 ├─ stitch.py             # canvas, feathering, top crop, PNG save
 ├─ preferences.py        # global defaults
 ├─ log.py                # namespaced logger
@@ -195,8 +196,11 @@ Verified on Blender 5.3.0. Violating them yields plausible-looking but wrong ima
 
 11. **Snapshot/restore and preferences.** Snapshot before mutation; restore in reverse
     order in `finally`: tree/pin, regions, gizmo, context path, selection/active,
-    `view.ui_scale`, theme, `smooth_view`, view (nearest pixel). Never save preferences
-    and never call
+    `view.ui_scale`, theme, `smooth_view`, view (nearest pixel). Restore the global
+    preferences even when the area is gone: Blender saves them on exit, so a skipped
+    `ui_scale`/`smooth_view` survives a restart. `recovery.py` writes the same values to
+    the config folder before the first change, so a quit during the export offers
+    **Restore Editor Settings** next time. Never save preferences and never call
     [`read_homefile`](https://docs.blender.org/api/current/bpy.ops.wm.html#bpy.ops.wm.read_homefile).
     Handle missing windows/areas; abort but still restore.
 

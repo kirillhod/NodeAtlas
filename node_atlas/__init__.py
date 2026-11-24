@@ -64,6 +64,12 @@ class NODE_PT_node_atlas(bpy.types.Panel):
             layout.operator("node_atlas.cancel_export", text="Cancel Export", icon="CANCEL")
             layout.label(text="Export in progress…", icon="TIME")
 
+        if job.pending_recovery() is not None:
+            box = layout.box()
+            box.label(text="An export did not finish", icon="ERROR")
+            box.label(text="Editor settings may still be changed")
+            box.operator("node_atlas.restore_editor", icon="LOOP_BACK")
+
         box = layout.box()
         header = box.row(align=True)
         header.label(text="Settings")
@@ -208,6 +214,7 @@ classes = (
     operators.NODE_ATLAS_OT_export_as,
     operators.NODE_ATLAS_OT_copy_png,
     operators.NODE_ATLAS_OT_cancel_export,
+    operators.NODE_ATLAS_OT_restore_editor,
     operators.NODE_ATLAS_OT_open_last_export,
     NODE_PT_node_atlas,
 )

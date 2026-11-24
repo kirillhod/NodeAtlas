@@ -131,6 +131,37 @@ class NODE_ATLAS_OT_cancel_export(bpy.types.Operator):
         return {"FINISHED"}
 
 
+class NODE_ATLAS_OT_restore_editor(bpy.types.Operator):
+    bl_idname = "node_atlas.restore_editor"
+    bl_label = "Restore Editor Settings"
+    bl_description = (
+        "Restore the theme, link tint and view settings saved before an export "
+        "that did not finish"
+    )
+    bl_options = {"REGISTER"}
+
+    @classmethod
+    def poll(cls, context):
+        return job.pending_recovery() is not None
+
+    def execute(self, context):
+        result = job.restore_pending_recovery()
+        if result is None:
+            self.report({"WARNING"}, "NodeAtlas: nothing to restore")
+            return {"CANCELLED"}
+        errors, warnings = result
+        if errors:
+            self.report({"ERROR"}, "NodeAtlas: " + "; ".join(errors))
+            return {"CANCELLED"}
+        message = "NodeAtlas: editor settings restored"
+        if warnings:
+            message += "; " + "; ".join(warnings)
+            self.report({"WARNING"}, message)
+        else:
+            self.report({"INFO"}, message)
+        return {"FINISHED"}
+
+
 class NODE_ATLAS_OT_open_last_export(bpy.types.Operator):
     bl_idname = "node_atlas.open_last_export"
     bl_label = "Open Last Export"

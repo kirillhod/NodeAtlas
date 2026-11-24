@@ -29,6 +29,8 @@ if HERE not in sys.path:
 import png_content
 
 OUT = tempfile.mkdtemp(prefix="nodeatlas_gui_")
+RECOVERY_FILE = os.path.join(OUT, "pending.json")
+os.environ["NODEATLAS_RECOVERY_FILE"] = RECOVERY_FILE
 FIXTURE = os.path.join(ROOT, "tests", "fixtures", "scene_both.blend")
 PADDING = 20
 state = {"ticks": 0, "started": False, "error": None}
@@ -167,6 +169,12 @@ def finish():
     png_content.check_capture(state["output"], PADDING)
     check_state(state["before"], None)
     check_undo()
+    if not state.get("recovery_saved"):
+        fail("the export did not write the editor recovery marker")
+    if not state.get("recovery_cleared"):
+        fail("the export did not clear the editor recovery marker")
+    if os.path.exists(RECOVERY_FILE):
+        fail("the editor recovery marker was left on disk")
     print(json.dumps({
         "result": "PASS",
         "path": state.get("output"),
@@ -196,6 +204,22 @@ print("NodeAtlas GUI test output:", OUT)
 try:
     bpy.ops.preferences.addon_enable(module="node_atlas")
     state["before"] = setup()
+    from node_atlas import recovery
+
+    original_save, original_clear = recovery.save, recovery.clear
+
+    def tracking_save(appearance, filepath=None):
+        saved = original_save(appearance, filepath)
+        if saved:
+            state["recovery_saved"] = True
+        return saved
+
+    def tracking_clear(filepath=None):
+        state["recovery_cleared"] = True
+        return original_clear(filepath)
+
+    recovery.save = tracking_save
+    recovery.clear = tracking_clear
     area, region = node_area()
     window = bpy.context.window_manager.windows[0]
     with bpy.context.temp_override(window=window, area=area, region=region):

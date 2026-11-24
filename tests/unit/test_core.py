@@ -8,7 +8,9 @@ from __future__ import annotations
 
 import math
 import os
+import shutil
 import sys
+import tempfile
 
 import numpy as np
 
@@ -860,6 +862,56 @@ def test_preview_registration():
     check(preview._handle is None, "preview handler removed on disable")
 
 
+def test_recovery_file():
+    from node_atlas import recovery
+
+    folder = tempfile.mkdtemp(prefix="nodeatlas_recovery_unit_")
+    target = os.path.join(folder, "pending.json")
+    previous = os.environ.get("NODEATLAS_RECOVERY_FILE")
+    os.environ["NODEATLAS_RECOVERY_FILE"] = target
+    try:
+        appearance = recovery.Appearance(
+            theme="Default",
+            backdrop=(0.1, 0.2, 0.3),
+            grid_levels=2,
+            link_alpha=0.5,
+            ui_scale=1.25,
+            smooth_view=200,
+        )
+        check(recovery.save(appearance), "recovery save")
+        check(os.path.exists(target), "recovery file exists")
+        loaded = recovery.load()
+        check(loaded is not None, "recovery load")
+        check(loaded.theme == "Default", "recovery theme")
+        check(loaded.grid_levels == 2, "recovery grid")
+        check(
+            loaded.backdrop is not None
+            and all(abs(a - b) < 1e-6 for a, b in zip(loaded.backdrop, (0.1, 0.2, 0.3))),
+            "recovery backdrop",
+        )
+        check(abs(loaded.ui_scale - 1.25) < 1e-6, "recovery ui_scale")
+        check(loaded.smooth_view == 200, "recovery smooth_view")
+
+        with open(target, "w", encoding="utf-8") as handle:
+            handle.write("{not json")
+        check(recovery.load() is None, "broken json is ignored")
+        with open(target, "w", encoding="utf-8") as handle:
+            handle.write('{"version": 99}')
+        check(recovery.load() is None, "unknown version is ignored")
+        with open(target, "w", encoding="utf-8") as handle:
+            handle.write('{"version": 1, "ui_scale": NaN, "smooth_view": 1}')
+        check(recovery.load() is None, "non-finite numbers are ignored")
+
+        recovery.clear()
+        check(not os.path.exists(target), "recovery file cleared")
+    finally:
+        if previous is None:
+            os.environ.pop("NODEATLAS_RECOVERY_FILE", None)
+        else:
+            os.environ["NODEATLAS_RECOVERY_FILE"] = previous
+        shutil.rmtree(folder, ignore_errors=True)
+
+
 def main():
     tests = [
         test_view_metrics,
@@ -888,6 +940,7 @@ def main():
         test_quick_filepath,
         test_resolve_path,
         test_preview_registration,
+        test_recovery_file,
         test_registration,
         test_shortcut_keymap,
         test_version_consistency,
