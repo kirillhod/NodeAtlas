@@ -6,6 +6,8 @@ param(
     [switch]$IncludeArtifact,
     [string[]]$Only = @(),
     [string[]]$Group = @(),
+    [switch]$RequireClean,
+    [string]$SummaryJson = '',
     [switch]$List
 )
 
@@ -37,8 +39,52 @@ param(
 # -IncludeArtifact runs test_artifact.py without --factory-startup against the
 # current profile; set BLENDER_USER_* to an isolated profile first. It cannot
 # run in parallel because all versions would share that profile.
+# -RequireClean refuses to start when the working tree has changes. Every run
+# records the git tree hash; if the tree changes while cases run, the run is
+# marked TREE CHANGED and exits 1, because the result no longer describes one
+# tree. -SummaryJson writes a small per-case JSON next to the text output.
 
 $ErrorActionPreference = 'Stop'
+
+$repoRoot = Split-Path $PSScriptRoot -Parent
+
+function Get-WorkingFingerprint {
+    # Hash HEAD plus the staged and unstaged diff, so a source edit during a run is visible.
+    param([string]$Root)
+    $previousPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $head = (& git -C $Root rev-parse HEAD 2>$null | Out-String).Trim()
+        if (-not $head) { return $null }
+        $diff = (& git -C $Root diff HEAD --binary 2>$null | Out-String)
+        $status = (& git -C $Root status --porcelain=v1 2>$null | Out-String)
+    } finally {
+        $ErrorActionPreference = $previousPreference
+    }
+    $payload = $head + "`n" + $diff + $status
+    $bytes = [Text.Encoding]::UTF8.GetBytes($payload)
+    $algorithm = [Security.Cryptography.SHA256]::Create()
+    try {
+        return ([BitConverter]::ToString($algorithm.ComputeHash($bytes))).Replace('-', '').ToLower()
+    } finally {
+        $algorithm.Dispose()
+    }
+}
+
+$startTree = $null
+$startFingerprint = $null
+$startDirty = @()
+if (Get-Command git -ErrorAction SilentlyContinue) {
+    $previousPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $startTree = (& git -C $repoRoot rev-parse 'HEAD^{tree}' 2>$null | Out-String).Trim()
+        $startDirty = @(& git -C $repoRoot status --porcelain 2>$null)
+    } finally {
+        $ErrorActionPreference = $previousPreference
+    }
+    $startFingerprint = Get-WorkingFingerprint -Root $repoRoot
+}
 
 $runner = Join-Path $PSScriptRoot 'run_blender.ps1'
 $guiDir = Join-Path $PSScriptRoot 'gui'
@@ -169,6 +215,15 @@ if ($List) {
     exit 0
 }
 
+if ($RequireClean) {
+    if (-not $startTree) {
+        throw '-RequireClean needs git and a repository checkout.'
+    }
+    if ($startDirty.Count) {
+        throw ("Working tree is not clean; commit or stash first:`n{0}" -f ($startDirty -join "`n"))
+    }
+}
+
 if (-not $Blender.Count) {
     throw 'Pass at least one Blender as version=path'
 }
@@ -266,6 +321,78 @@ function Write-CaseResult {
     }
 }
 
+function Get-GitTree {
+    if (-not $startTree) { return $null }
+    $previousPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        return (& git -C $repoRoot rev-parse 'HEAD^{tree}' 2>$null | Out-String).Trim()
+    } finally {
+        $ErrorActionPreference = $previousPreference
+    }
+}
+
+function Write-Summary {
+    param($Results, $Label, [int]$FailedCount, $EndTree, $EndFingerprint, [bool]$TreeChanged)
+    if (-not $SummaryJson) { return }
+    $entries = @($Results | ForEach-Object {
+        $test = if ($null -ne $_.PSObject.Properties['Test']) { $_.Test } else { 'matrix' }
+        $ok = if ($null -ne $_.PSObject.Properties['Ok']) { [bool]$_.Ok } else { $_.Exit -eq 0 }
+        $seconds = if ($null -ne $_.PSObject.Properties['Seconds']) { $_.Seconds } else { $null }
+        [ordered]@{
+            version = $_.Version
+            test = $test
+            ok = $ok
+            exit = $_.Exit
+            seconds = $seconds
+        }
+    })
+    $record = [ordered]@{
+        label = $Label
+        start_tree = $startTree
+        end_tree = $EndTree
+        start_fingerprint = $startFingerprint
+        end_fingerprint = $EndFingerprint
+        tree_changed = $TreeChanged
+        cases = $Results.Count
+        passed = $Results.Count - $FailedCount
+        failed = $FailedCount
+        results = $entries
+    }
+    $target = if ([IO.Path]::IsPathRooted($SummaryJson)) {
+        [IO.Path]::GetFullPath($SummaryJson)
+    } else {
+        [IO.Path]::GetFullPath((Join-Path $repoRoot $SummaryJson))
+    }
+    $folder = Split-Path $target -Parent
+    if ($folder -and -not (Test-Path -LiteralPath $folder)) {
+        New-Item -ItemType Directory -Force -Path $folder | Out-Null
+    }
+    $text = $record | ConvertTo-Json -Depth 5
+    [IO.File]::WriteAllText($target, $text, [Text.UTF8Encoding]::new($false))
+    Write-Output "Summary: $target"
+}
+
+function Complete-TreeCheck {
+    param($Results, $Label, [int]$FailedCount)
+    $endTree = Get-GitTree
+    $endFingerprint = Get-WorkingFingerprint -Root $repoRoot
+    $treeChanged = [bool](
+        $startFingerprint -and $endFingerprint -and $startFingerprint -ne $endFingerprint
+    )
+    Write-Summary -Results $Results -Label $Label -FailedCount $FailedCount `
+        -EndTree $endTree -EndFingerprint $endFingerprint -TreeChanged $treeChanged
+    $script:runStatus = 0
+    if ($treeChanged) {
+        Write-Output ("TREE CHANGED since start: fingerprint {0} -> {1}" -f
+            $startFingerprint, $endFingerprint)
+        Write-Output 'The result does not describe one tree; discard it and re-run on a frozen tree.'
+        $script:runStatus = 1
+    } elseif ($FailedCount -gt 0) {
+        $script:runStatus = 1
+    }
+}
+
 $label = if ($filtered) { 'selected' } else { $Tier }
 
 if ($Parallel) {
@@ -309,10 +436,11 @@ if ($Parallel) {
         Write-Output ("Parallel {0} matrix FAILED: {1}/{2} versions" -f
             $label, $failed.Count, $results.Count)
         $failed | ForEach-Object { Write-Output ("  {0}: exit {1}" -f $_.Version, $_.Exit) }
-        exit 1
+    } else {
+        Write-Output ("Parallel {0} matrix PASSED: {1}/{1} versions" -f $label, $results.Count)
     }
-    Write-Output ("Parallel {0} matrix PASSED: {1}/{1} versions" -f $label, $results.Count)
-    exit 0
+    Complete-TreeCheck -Results $results -Label "parallel $label" -FailedCount $failed.Count
+    exit $script:runStatus
 }
 
 $results = @()
@@ -338,6 +466,6 @@ $results |
 if ($failed.Count) {
     Write-Output 'Failed cases:'
     $failed | ForEach-Object { Write-Output ("  {0} {1} (exit {2})" -f $_.Version, $_.Test, $_.Exit) }
-    exit 1
 }
-exit 0
+Complete-TreeCheck -Results $results -Label $label -FailedCount $failed.Count
+exit $script:runStatus

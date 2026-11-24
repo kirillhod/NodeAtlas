@@ -80,7 +80,7 @@ node_atlas/              # extension/add-on root
 tests/                   # unit + live-GUI scripts, fixtures
 reference/prototypes/    # archived validated research scripts
 docs/agent/              # agent procedures: context map, live check, release, publish
-tools/                   # development helpers (Markdown section loader)
+tools/                   # dev helpers: Markdown section lookup, encoding and release checks
 .opencode/skills/        # thin adapters that register docs/agent procedures
 ```
 
@@ -263,7 +263,10 @@ within 2 px; repeatable `view_all` exports; full state restored after success, c
 injected exception; undo sentinel passes. Compare geometry invariants, not pixels, across
 machines. Record Blender version, OS, `system.ui_scale`, region size, `D`, `padding`,
 grid. Full matrix: report §8 and plan §6. The concrete runner and evidence steps are in
-[`docs/agent/live-check.md`](docs/agent/live-check.md).
+[`docs/agent/live-check.md`](docs/agent/live-check.md). Freeze the tree for a full matrix:
+run it with `-RequireClean` and treat a `TREE CHANGED` result as no evidence; the runner
+records the git tree hash and can write `-SummaryJson`. The hash covers the working tree,
+so an uncommitted edit during the run also marks it invalid.
 
 ## 8. Documentation
 
@@ -334,7 +337,8 @@ grid. Full matrix: report §8 and plan §6. The concrete runner and evidence ste
   new patch version instead. Tags stay local; the no-push rule applies to them too.
 - Do not rewrite history unless explicitly asked.
 - Check `git status` before committing; no captures, `dist/`, `*.blend1`,
-  `__pycache__/`.
+  `__pycache__/`. After a file was edited by an external tool, run
+  `python tools/check_text.py`; it rejects a BOM, broken UTF-8 and tracked build artifacts.
 
 ## 10. Agent workflow and context budget
 

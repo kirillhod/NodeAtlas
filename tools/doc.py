@@ -8,11 +8,14 @@ of the context window. This helper loads only the section that answers the quest
 Usage:
     python tools/doc.py --list NodeGraph_Export_Report.md
     python tools/doc.py NodeGraph_Export_Report.md 4.6
+    python tools/doc.py NodeGraph_Export_Report.md 5.26
     python tools/doc.py IMPLEMENTATION_PLAN.md M7
     python tools/doc.py NodeGraph_Export_Report.md 11.15 --max-lines 80
 
 A numeric query matches the exact heading number: ``4`` selects chapter 4, ``4.3``
-selects section 4.3, and ``11`` does not sweep 11.1-11.16. A text query matches a
+selects section 4.3, and ``11`` does not sweep 11.1-11.16. When no heading has that
+number, a two-part query selects one numbered item inside the chapter, so ``5.26``
+prints item 26 of section 5 instead of the whole section. A text query matches a
 case-insensitive heading prefix. Ambiguous queries list the candidates instead of
 guessing. The section ends at the next heading of the same or a higher level.
 
@@ -33,6 +36,8 @@ from pathlib import Path
 
 HEADING = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
 NUMBER = re.compile(r"^(?:§\s*)?(\d+(?:\.\d+)*)\.?(?=\s|$)")
+ITEM = re.compile(r"^(\s*)(\d+)\.\s+")
+ITEM_QUERY = re.compile(r"^(\d+)\.(\d+)$")
 
 
 @dataclass(frozen=True)
@@ -86,6 +91,47 @@ def print_list(path: Path, headings: list[Heading]) -> None:
         print(f"{heading.line:>6}  {marks:<6}  {heading.title}")
 
 
+def find_item(
+    lines: list[str], headings: list[Heading], index: int, number: int
+) -> tuple[int, int] | None:
+    """Return the 0-based ``[start, end)`` slice of top-level item ``number``."""
+    start = headings[index].line
+    last = section_end(headings, index, len(lines))
+    indent = None
+    starts: list[tuple[int, int]] = []
+    for line_index in range(start, last):
+        match = ITEM.match(lines[line_index])
+        if match is None:
+            continue
+        if indent is None:
+            indent = len(match.group(1))
+        if len(match.group(1)) == indent:
+            starts.append((int(match.group(2)), line_index))
+    for position, (item_number, line_index) in enumerate(starts):
+        if item_number != number:
+            continue
+        end = starts[position + 1][1] if position + 1 < len(starts) else last
+        while end > line_index and not lines[end - 1].strip():
+            end -= 1
+        return line_index, end
+    return None
+
+
+def emit(
+    path: Path, label: str, first_line: int, section: list[str], max_lines: int
+) -> None:
+    last_line = first_line + len(section) - 1
+    print(
+        f"<!-- {path.name} {label} "
+        f"(lines {first_line}-{last_line}, {len(section)} lines) -->"
+    )
+    if max_lines and len(section) > max_lines:
+        print("\n".join(section[:max_lines]))
+        print(f"... [truncated at {max_lines} lines of the section]")
+    else:
+        print("\n".join(section))
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Print one Markdown section by heading number or prefix.",
@@ -127,6 +173,30 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("query is empty")
     found = [index for index, heading in enumerate(headings) if matches(heading, query)]
     if not found:
+        item = ITEM_QUERY.match(query)
+        if item is not None:
+            major, minor = item.group(1), int(item.group(2))
+            chapters = [
+                index for index, heading in enumerate(headings)
+                if heading.number == major
+            ]
+            if len(chapters) == 1:
+                span = find_item(lines, headings, chapters[0], minor)
+                if span is not None:
+                    first, end = span
+                    emit(
+                        args.path,
+                        f"§{major} item {minor}",
+                        first + 1,
+                        lines[first:end],
+                        args.max_lines,
+                    )
+                    return 0
+            print(
+                f"no item {minor} in section {major} of {args.path}",
+                file=sys.stderr,
+            )
+            return 1
         print(f"no heading matches {query!r} in {args.path}", file=sys.stderr)
         print("use --list to see the headings", file=sys.stderr)
         return 1
@@ -140,17 +210,13 @@ def main(argv: list[str] | None = None) -> int:
     index = found[0]
     heading = headings[index]
     last = section_end(headings, index, len(lines))
-    section = lines[heading.line - 1:last]
-    print(
-        f"<!-- {args.path.name} §{heading.title} "
-        f"(lines {heading.line}-{last}, {len(section)} lines) -->"
+    emit(
+        args.path,
+        f"§{heading.title}",
+        heading.line,
+        lines[heading.line - 1:last],
+        args.max_lines,
     )
-    if args.max_lines and len(section) > args.max_lines:
-        section = section[: args.max_lines]
-        print("\n".join(section))
-        print(f"... [truncated at {args.max_lines} lines of the section]")
-    else:
-        print("\n".join(section))
     return 0
 
 

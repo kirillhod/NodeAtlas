@@ -181,8 +181,9 @@ an image costs thousands of tokens.
 - Every affected GUI test passes on the primary Blender version.
 - Repeatability (`test_repeat.py`) and state restoration (`test_group.py`,
   `test_artifact.py`) pass when capture or restore changed.
-- For a release, run `tests/run_matrix.ps1 -Tier full` on the five-version matrix and
-  record the result in [`QA_REPORT.md`](../../QA_REPORT.md).
+- For a release, run `tests/run_matrix.ps1 -Tier full -RequireClean` on the five-version
+  matrix, keep the `-SummaryJson` file and record the result in
+  [`QA_REPORT.md`](../../QA_REPORT.md). A `TREE CHANGED` line means the run is not evidence.
 - `git status` is clean of fixtures, captures, `dist/`, `*.blend1` and `__pycache__/`.
 - The final message names the tests run and their verdicts; the full matrix is only
   claimed when it was actually run and recorded in [`QA_REPORT.md`](../../QA_REPORT.md).

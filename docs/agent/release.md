@@ -8,7 +8,9 @@ The version lives in three places and all must match in the tagged commit:
 
 1. Confirm the target version and that the user explicitly asked for a release.
 2. Bump all three version fields. `bl_info["version"]` is a tuple: `(1, 3, 6)` for
-   `1.3.6`.
+   `1.3.6`. The mechanical part is `python tools/release.py --version 1.3.6 --blender
+   <path>`: it updates the fields, refuses incomplete records, then validates and builds
+   the zip. Use `--dry-run` first; it never writes, commits, tags or publishes.
 3. Update the records in the same change:
    - `CHANGELOG.md`: a new top section with user-visible changes only.
    - `RELEASE_NOTES.md`: title, date, what's new, features and known limitations, written
@@ -27,8 +29,11 @@ The version lives in three places and all must match in the tagged commit:
    A release claim needs `-Tier full` on the five-version matrix recorded in
    `QA_REPORT.md`; do not infer Linux or macOS support. The `version=path` format and the
    full invocation are in [`tests/README.md`](../../tests/README.md); the GUI procedure is
-   [`live-check.md`](live-check.md).
-5. Build and validate the extension:
+   [`live-check.md`](live-check.md). Freeze the tree: pass `-RequireClean` and
+   `-SummaryJson <path>`, and treat a `TREE CHANGED` line as no evidence.
+5. Build and validate the extension. `python tools/release.py --version <version>
+   --blender <path>` performs the bump, record checks and these build commands, then prints
+   the file list and SHA256; the commands below are the manual fallback:
 
    ```powershell
    & $env:BLENDER --command extension validate node_atlas
@@ -60,7 +65,8 @@ The version lives in three places and all must match in the tagged commit:
    user's repositories.
 7. Commit the version bump and records in one commit. Before tagging, search the
    user-facing documents for stale claims, and the listing text the same way. Every hit is
-   a copy to delete or a statement to verify:
+   a copy to delete or a statement to verify. Also run `python tools/check_text.py`: it
+   rejects a BOM, UTF-8 read as cp1251/Latin-1 and tracked build artifacts.
 
    ```powershell
    Select-String -Path README.md, RELEASE_NOTES.md `

@@ -136,7 +136,12 @@ unit suite is not included; run it with `run_blender.ps1 -Background` or directl
 `-Parallel` starts one child matrix per version. This cuts wall-clock time but lets GUI
 windows overlap; treat the first parallel run as an experiment. `-IncludeArtifact` adds
 `test_artifact.py` with `-UserConfig`, so it uses the current profile and requires the
-add-on or extension to be installed; it cannot be combined with `-Parallel`. Before any
+add-on or extension to be installed; it cannot be combined with `-Parallel`. `-RequireClean`
+refuses a dirty working tree, so a release run starts from one commit. Every run records
+the git tree hash and a working-tree fingerprint; if either changes mid-run the result is
+marked `TREE CHANGED` and the script exits 1. `-SummaryJson <path>` writes a small per-case
+JSON with the same hashes and seconds, which is easier to attach to a release record than
+the full log. Before any
 case runs, the runner probes every binary with `--background --python-expr` and stops
 with a clear error when its embedded Python cannot start.
 
