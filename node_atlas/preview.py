@@ -54,6 +54,7 @@ class Estimate:
     nodes: int
     scope: str
     upp: float      # export units per pixel
+    max_dpi: float = 0.0  # highest density reachable with Resolution Scale
     names: tuple[str, ...] | None = None  # None: every node (whole tree)
 
     @property
@@ -96,12 +97,9 @@ def estimate(context, prefs, area=None, space=None, region=None) -> Estimate | N
         view = context.preferences.view.ui_scale
         ui_prop = context.preferences.view.bl_rna.properties["ui_scale"]
         max_view = float(getattr(ui_prop, "hard_max", 6.0))
-        effective, planned_view, _max_effective = bounds.planned_scale(
-            prefs.output_dpi, system, view, max_view
-        )
-        target, used_dpi, _dpi_max = bounds.target_upp(prefs.output_dpi, effective)
+        plan = bounds.plan_density(prefs.output_dpi, system, view, max_view)
         metrics = bounds.ViewMetrics(
-            upp=target, k=1.0 / target, s=effective / target, ox=0.0, oy=0.0
+            upp=plan.upp, k=1.0 / plan.upp, s=plan.effective / plan.upp, ox=0.0, oy=0.0
         )
         nodes = tree.nodes
         names = None
@@ -109,20 +107,21 @@ def estimate(context, prefs, area=None, space=None, region=None) -> Estimate | N
             keep = bounds.selected_node_names(tree)
             names = tuple(sorted(keep))
             nodes = [node for node in tree.nodes if node.name in keep]
-        rects = bounds.collect_rects(nodes, metrics, bounds.visual_margin(planned_view))
+        rects = bounds.collect_rects(nodes, metrics, bounds.visual_margin(plan.view_scale))
         content = bounds.union_rects(rects)
         layout = bounds.compute_layout(
             content, region.width, height,
-            bounds.padding_px(prefs.padding, used_dpi),
+            bounds.padding_px(prefs.padding, plan.used_dpi),
             view,
         )
         return Estimate(
             content=content,
             layout=layout,
-            used_dpi=used_dpi,
+            used_dpi=plan.used_dpi,
             nodes=len(nodes),
             scope=prefs.scope,
-            upp=target,
+            upp=plan.upp,
+            max_dpi=plan.max_dpi,
             names=names,
         )
     except (ValueError, RuntimeError):

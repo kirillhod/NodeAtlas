@@ -75,6 +75,7 @@ node_atlas/              # extension/add-on root
 ├─ recovery.py           # crash-safe editor appearance marker and restore
 ├─ stitch.py             # canvas, feathering, top crop, PNG save
 ├─ preferences.py        # global defaults
+├─ keymap.py             # shared Node Editor shortcut registration
 ├─ log.py                # namespaced logger
 └─ blender_manifest.toml
 tests/                   # unit + live-GUI scripts, fixtures

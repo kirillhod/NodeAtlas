@@ -183,23 +183,13 @@ def apply(appearance: Appearance) -> tuple[list[str], list[str]]:
     now = current()
     theme_is_same = not appearance.theme or appearance.theme == now.theme
     if theme_is_same:
-        if appearance.backdrop is not None:
-            try:
-                capture.set_theme_backdrop(appearance.backdrop)
-            except Exception as exc:
-                errors.append(f"background restore failed: {exc}")
-        if appearance.grid_levels is not None:
-            try:
-                capture.set_theme_grid_levels(appearance.grid_levels)
-            except Exception as exc:
-                errors.append(f"grid restore failed: {exc}")
-        if appearance.link_alpha is not None:
-            try:
-                color = capture.link_highlight_color()
-                if color is not None:
-                    color[3] = float(appearance.link_alpha)
-            except Exception as exc:
-                errors.append(f"link tint restore failed: {exc}")
+        errors.extend(
+            capture.apply_appearance(
+                appearance.backdrop,
+                appearance.grid_levels,
+                appearance.link_alpha,
+            )
+        )
     else:
         warnings.append(
             f"the active theme is {now.theme!r}, the saved one was "

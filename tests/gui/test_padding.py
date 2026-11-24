@@ -54,7 +54,7 @@ def estimate():
     import node_atlas
 
     prefs = bpy.context.preferences.addons["node_atlas"].preferences
-    layout = node_atlas._estimate(bpy.context, prefs)
+    layout = node_atlas.preview.estimate(bpy.context, prefs)
     if layout is None:
         fail("the panel estimate is unavailable")
     return (layout.final_w, layout.final_h)

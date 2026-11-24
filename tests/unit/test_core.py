@@ -95,6 +95,13 @@ def test_density():
     check(abs(upp - bounds.UPP_MIN) < 1e-9, "clamp max density")
     check(used < 10000, "clamped dpi")
 
+    plan = bounds.plan_density(96, 1.25, 1.25, 6.0)
+    check(abs(plan.effective - 1.25) < 1e-9, "plan effective scale")
+    check(abs(plan.view_scale - 1.25) < 1e-9, "plan keeps the view scale")
+    check(abs(plan.upp - 1.25) < 1e-9, "plan upp")
+    check(abs(plan.used_dpi - 96) < 1e-9, "plan dpi")
+    check(abs(plan.max_dpi - (6.0 / bounds.UPP_MIN) * 96.0) < 1e-6, "plan max dpi")
+
 
 def test_stitch_single_tile():
     region_w, region_h, pad, padding = 200, 100, 16, 10
@@ -682,7 +689,7 @@ def test_link_neighbour_names():
 def test_select_outside_tiles():
     from types import SimpleNamespace
 
-    from node_atlas import capture
+    from node_atlas import bounds, capture
 
     class Dim:
         def __init__(self, x, y):
@@ -707,15 +714,16 @@ def test_select_outside_tiles():
     low = Node("low", 0, -900)
     tree.nodes = [inside, near, far, low]
     layout = SimpleNamespace(margin=20, step_x=800, step_y=600)
+    frame = bounds.ContentFrame(left=0.0, top=0.0, s=1.0, k=1.0, margin_px=20.0)
 
-    capture.select_outside_view(tree, 0.0, 0.0, 1.0, 1.0, layout, (0, 0), 1000, 800, 20)
+    capture.select_outside_view(tree, frame, layout, (0, 0), 1000, 800)
     check(not inside.select, "node inside the first tile stays unselected")
     check(not near.select, "node within the margin stays unselected")
     check(far.select, "node beyond the margin is selected")
     check(low.select, "node below the first tile is selected")
 
     tree.nodes = [Node("inside", 0, 0), Node("visible", 900, -900)]
-    capture.select_outside_view(tree, 0.0, 0.0, 1.0, 1.0, layout, (1, 1), 1000, 800, 20)
+    capture.select_outside_view(tree, frame, layout, (1, 1), 1000, 800)
     check(tree.nodes[0].select, "top node is outside the lower-right tile")
     check(not tree.nodes[1].select, "lower-right node is inside its tile")
 
@@ -723,7 +731,8 @@ def test_select_outside_tiles():
     # node sits 120 px into the second tile with s = 2, while k = 1 would put
     # its right edge at -230 px and select it inside the captured tile.
     tree.nodes = [Node("scaled", 450, 0)]
-    capture.select_outside_view(tree, 0.0, 0.0, 2.0, 1.0, layout, (1, 0), 1000, 800, 20)
+    scaled = bounds.ContentFrame(left=0.0, top=0.0, s=2.0, k=1.0, margin_px=20.0)
+    capture.select_outside_view(tree, scaled, layout, (1, 0), 1000, 800)
     check(not tree.nodes[0].select, "positions use s, not k")
 
 

@@ -49,7 +49,7 @@ matches a heading prefix (`M7`). Use `--max-lines N` when a section is still too
 | Timer job, progress, cancel | `job.py` (`ExportJob`, `_job_tick`, `start_job`) | report §6.2, §11.13 | `test_cancel.py`, `test_fail.py` |
 | Clipboard and Open Last Export | `job.py` (`_copy_result`), `operators.py` (`NODE_ATLAS_OT_open_last_export`) | - | `test_clipboard.py` |
 | Filename pattern and tokens | `naming.py` (`render_filename`, `_filename_fields`, `quick_filepath`) | - | `test_naming.py`, `test_path.py` |
-| Preferences, panel, preview, estimate, menus, keymap | `preferences.py`, `preview.py`, `node_atlas/__init__.py` (`preview.estimate`) | report §5 item 39 | `test_core.py`, `test_estimate.py`, `test_preview.py`, `test_artifact.py`, manual GUI |
+| Preferences, panel, preview, estimate, menus, keymap | `preferences.py`, `preview.py`, `keymap.py`, `node_atlas/__init__.py` (`preview.estimate`) | report §5 item 39 | `test_core.py`, `test_estimate.py`, `test_preview.py`, `test_artifact.py`, manual GUI |
 | Capture-area preview (outline, label) | `preview.py` (`estimate`, `live_union`, `screen_rect`, `dash_quads`, `suppress`) | report §5 item 39 | `test_preview.py`, `test_core.py` |
 | Transparent background | `stitch.py` (`matte_from_pair`, `matte_step`, `stitch_tiles`), `job.py` (`_capture_transparent`, `_start_second_pass`), `capture.py` (`set_theme_backdrop`) | report §11.14 | `test_transparent.py`, `test_core.py` |
 | Undo neutrality | every pipeline module | report §11.16 | unit + `test_export.py`, `test_fail.py` |

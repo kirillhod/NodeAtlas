@@ -81,6 +81,7 @@
         'node_atlas/stitch.py' = @('core', 'density', 'repeat', 'io')
         'node_atlas/preferences.py' = @('panel', 'density', 'io')
         'node_atlas/recovery.py' = @('state', 'panel')
+        'node_atlas/keymap.py' = @('state', 'panel')
         'node_atlas/__init__.py' = @('panel', 'state', 'io')
         'node_atlas/log.py' = @()
         'node_atlas/blender_manifest.toml' = @()

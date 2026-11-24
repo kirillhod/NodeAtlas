@@ -13,13 +13,24 @@ from dataclasses import dataclass
 import bpy
 import numpy as np
 
-from . import bounds, capture, preview, recovery, stitch
+from . import bounds, capture, keymap, preview, recovery, stitch
 from .log import get_logger
 from .preferences import get_prefs
 
 log = get_logger()
 _current_job = None
 last_result = None
+
+# Stage name -> method on ExportJob. A class-level table avoids rebuilding the
+# dispatch dict on every timer tick.
+_STAGE_METHODS = {
+    "prepare": "_prepare",
+    "measure": "_measure",
+    "capture": "_capture_one",
+    "stitch": "_stitch",
+    "save": "_save",
+    "restore": "_restore",
+}
 
 
 @dataclass
@@ -45,7 +56,7 @@ def settings_from_prefs(prefs, filepath, copy_only: bool = False) -> ExportSetti
         hide_ui=bool(prefs.hide_ui),
         copy_only=copy_only,
         keep_links=bool(prefs.keep_links),
-        transparent=bool(getattr(prefs, "transparent", False)),
+        transparent=bool(prefs.transparent),
     )
 
 
@@ -99,11 +110,7 @@ class ExportJob:
         self.bottom_ui = 0
         self.region_width = 0
         self.region_height = 0
-        self.selection_margin_px = 0.0
-        self.content_left = 0.0
-        self.content_top = 0.0
-        self.content_s = 1.0
-        self.content_k = 1.0
+        self.content = None
         self.link_selection_fix = False
         self.layout = None
         self.tiles = {}
@@ -143,7 +150,7 @@ class ExportJob:
             area = capture.find_node_area(self.window)
             if area is not None:
                 space = area.spaces.active
-                region = next((item for item in area.regions if item.type == "WINDOW"), None)
+                region = capture.window_region(area)
                 if space is not None and region is not None:
                     return self.window, area, space, region
         return capture.get_node_context(self.context)
@@ -155,28 +162,23 @@ class ExportJob:
         preview.suppress = True
         self._status("NodeAtlas: preparing…")
         parts = None
-        if self.initial:
+        if self.initial is not None:
             initial = self.initial
-            window = initial["window"]
-            area = capture.find_node_area(window) or initial["area"]
-            space = area.spaces.active if area is not None else initial["space"]
-            region = next(
-                (item for item in area.regions if item.type == "WINDOW"), None
-            ) if area is not None else initial["region"]
-            if space is not None and region is not None:
+            area = capture.find_node_area(initial.window) or initial.area
+            if area is not None:
+                initial.area = area
+                initial.space = area.spaces.active
+                initial.region = capture.window_region(area)
+            if initial.space is not None and initial.region is not None:
                 try:
-                    capture.apply_tree_path(
-                        space,
-                        initial["root_tree"],
-                        initial["path_trees"],
-                        initial["pin"],
-                        initial["tree"],
-                        initial["tree_type"],
-                        window=window,
-                        area=area,
-                        region=region,
-                    )
-                    parts = (window, area, space, region)
+                    capture.apply_tree_path(initial)
+                    if initial.region is not None:
+                        parts = (
+                            initial.window,
+                            initial.area,
+                            initial.space,
+                            initial.region,
+                        )
                 except Exception:
                     log.warning("Could not restore the captured node path", exc_info=True)
         parts = parts or capture.get_node_context(self.context)
@@ -233,14 +235,14 @@ class ExportJob:
         capture.clear_selection(self.tree)
         self.link_selection_fix = capture.mute_link_highlight()
         bpy.context.preferences.view.smooth_view = 0
-        if self.settings.hide_ui:
-            capture.hide_ui(space)
 
         was_maximized = len(window.screen.areas) == 1
         window, area, space, region = capture.maximize(window, area, region)
         self.snapshot.maximized = not was_maximized
         self.window, self.area, self.space, self.region = window, area, space, region
         if self.settings.hide_ui:
+            # Only after maximizing: screen_full_area rebuilds the regions, so a
+            # flag set on the old space would not survive.
             capture.hide_ui(space)
         capture.redraw(window, area, region)
         self.stage = "measure"
@@ -320,10 +322,14 @@ class ExportJob:
         # The per-tile selection box must use the same origin and factors as
         # node_rect: drawable nodes only, positions by s (UI scale), sizes by k
         # (report §4.3). "anchor_first_tile" aligns this union.
-        self.content_left, self.content_top = bounds.content_origin(nodes)
-        self.content_s = anchored.s
-        self.content_k = anchored.k
-        self.selection_margin_px = layout.pad + bounds.visual_margin(view_scale)
+        origin_left, origin_top = bounds.content_origin(nodes)
+        self.content = bounds.ContentFrame(
+            left=origin_left,
+            top=origin_top,
+            s=anchored.s,
+            k=anchored.k,
+            margin_px=layout.pad + bounds.visual_margin(view_scale),
+        )
         self.tiles = {}
         self.index = 0
         self.current_tile = (0, 0)
@@ -348,15 +354,11 @@ class ExportJob:
         if self.link_selection_fix:
             capture.select_outside_view(
                 self.tree,
-                self.content_left,
-                self.content_top,
-                self.content_s,
-                self.content_k,
+                self.content,
                 self.layout,
                 (i, j),
                 self.region_width,
                 self.region_height,
-                self.selection_margin_px,
             )
         if self.settings.transparent:
             self._capture_transparent(i, j, total)
@@ -474,22 +476,14 @@ class ExportJob:
         self.stage = "restore" if self.snapshot is not None else "done"
 
     def step(self) -> bool:
-        handlers = {
-            "prepare": self._prepare,
-            "measure": self._measure,
-            "capture": self._capture_one,
-            "stitch": self._stitch,
-            "save": self._save,
-            "restore": self._restore,
-        }
         if self.stage == "done":
             return True
         try:
-            handler = handlers.get(self.stage)
-            if handler is None:
+            method = _STAGE_METHODS.get(self.stage)
+            if method is None:
                 raise RuntimeError(f"Unknown export stage {self.stage!r}")
             log.debug("stage %s", self.stage)
-            handler()
+            getattr(self, method)()
             log.debug("stage %s done", self.stage)
         except Exception:
             self.error = traceback.format_exc()
@@ -578,29 +572,12 @@ def cancel_current() -> bool:
 
 # -- timer-driven job runner ------------------------------------------------
 
-_cancel_keymaps: list[tuple[object, object]] = []
-
-
 def _register_cancel_keymap() -> None:
-    if _cancel_keymaps:
-        return
-    keyconfig = bpy.context.window_manager.keyconfigs.addon
-    if keyconfig is None:
-        return
-    keymap = keyconfig.keymaps.get("Node Editor")
-    if keymap is None:
-        keymap = keyconfig.keymaps.new(name="Node Editor", space_type="NODE_EDITOR")
-    item = keymap.keymap_items.new("node_atlas.cancel_export", "ESC", "PRESS")
-    _cancel_keymaps.append((keymap, item))
+    keymap.add("cancel", "node_atlas.cancel_export", "ESC")
 
 
 def _unregister_cancel_keymap() -> None:
-    for keymap, item in _cancel_keymaps:
-        try:
-            keymap.keymap_items.remove(item)
-        except Exception:
-            pass
-    _cancel_keymaps.clear()
+    keymap.clear("cancel")
 
 
 def _job_tick():
@@ -664,29 +641,14 @@ def start_job(context, filepath, operator=None, copy_only: bool = False) -> bool
                 operator.report({"ERROR"}, f"NodeAtlas: {exc}")
             return False
 
-    parts = capture.get_node_context(context)
-    if parts is None:
+    editor = capture.EditorRef.capture(context)
+    if editor is None:
         if operator is not None:
             operator.report({"ERROR"}, "Open a Node Editor with an active node tree")
         return False
-    window, area, space, region = parts
-    initial = {
-        "window": window,
-        "area": area,
-        "space": space,
-        "region": region,
-        "tree": capture.current_tree(space),
-        "tree_type": space.tree_type,
-        "root_tree": space.node_tree,
-        "path_trees": tuple(
-            item.node_tree for item in getattr(space, "path", ())
-            if item.node_tree is not None
-        ),
-        "pin": space.pin,
-    }
 
     job = ExportJob(
-        context, settings_from_prefs(prefs, filepath, copy_only=copy_only), initial
+        context, settings_from_prefs(prefs, filepath, copy_only=copy_only), editor
     )
     _current_job = job
     last_result = None

@@ -7,7 +7,7 @@ import sys
 
 import bpy
 
-from . import bounds, capture, job, operators, preferences, preview
+from . import capture, job, keymap, operators, preferences, preview
 from .log import get_logger
 
 log = get_logger()
@@ -26,12 +26,6 @@ bl_info = {
 }
 
 _get_prefs = preferences.get_prefs
-_keymaps: list[tuple[object, object]] = []
-
-
-def _estimate(context, prefs):
-    """Return the shared panel/overlay estimate (see ``preview.estimate``)."""
-    return preview.estimate(context, prefs)
 
 
 class NODE_PT_node_atlas(bpy.types.Panel):
@@ -96,25 +90,22 @@ class NODE_PT_node_atlas(bpy.types.Panel):
                     text=f"Selected nodes: {selected}",
                     icon="INFO" if selected else "ERROR",
                 )
-            estimated = _estimate(context, prefs)
+            estimated = preview.estimate(
+                context, prefs, area=parts[1], space=parts[2], region=parts[3]
+            )
             if estimated is not None:
                 box.label(
                     text=f"Estimated: {estimated.final_w} × {estimated.final_h} px "
                          f"({estimated.megapixels:.1f} MP)"
                 )
-            system = context.preferences.system.ui_scale
-            view = context.preferences.view.ui_scale
-            ui_prop = context.preferences.view.bl_rna.properties["ui_scale"]
-            max_view = float(getattr(ui_prop, "hard_max", 6.0))
-            _effective, _planned_view, max_effective = bounds.planned_scale(
-                prefs.output_dpi, system, view, max_view
-            )
-            dpi_max = max_effective / bounds.UPP_MIN * 96.0
-            if prefs.output_dpi > dpi_max:
-                box.label(
-                    text=f"Max DPI even with Resolution Scale: {dpi_max:.0f}",
-                    icon="ERROR",
-                )
+                # One number from one density plan: the estimate already knows
+                # the highest DPI that Resolution Scale can reach.
+                if prefs.output_dpi > estimated.max_dpi:
+                    box.label(
+                        text="Max DPI even with Resolution Scale: "
+                             f"{estimated.max_dpi:.0f}",
+                        icon="ERROR",
+                    )
 
         box.separator()
         box.prop(
@@ -157,21 +148,15 @@ def _register_keymap():
     prefs = _get_prefs(bpy.context)
     if prefs is None or not prefs.enable_shortcut:
         return
-    keyconfig = bpy.context.window_manager.keyconfigs.addon
-    if keyconfig is None:
-        return
-    keymap = keyconfig.keymaps.get("Node Editor")
-    if keymap is None:
-        keymap = keyconfig.keymaps.new(name="Node Editor", space_type="NODE_EDITOR")
     key = (prefs.shortcut_key or "E").strip().upper()
     # Blender maps Cmd to oskey on macOS; ctrl would give Control there.
     cmd = sys.platform == "darwin"
     ctrl = bool(prefs.shortcut_ctrl)
     try:
-        item = keymap.keymap_items.new(
+        keymap.add(
+            "export",
             "node_atlas.export_png",
             key,
-            "PRESS",
             ctrl=ctrl and not cmd,
             shift=bool(prefs.shortcut_shift),
             alt=bool(prefs.shortcut_alt),
@@ -180,26 +165,20 @@ def _register_keymap():
     except Exception:
         log.warning("Invalid shortcut key %r; falling back to E", key, exc_info=True)
         try:
-            item = keymap.keymap_items.new(
+            keymap.add(
+                "export",
                 "node_atlas.export_png",
                 "E",
-                "PRESS",
                 ctrl=not cmd,
                 shift=True,
                 oskey=cmd,
             )
         except Exception:
             return
-    _keymaps.append((keymap, item))
 
 
 def _unregister_keymap():
-    for keymap, item in _keymaps:
-        try:
-            keymap.keymap_items.remove(item)
-        except Exception:
-            pass
-    _keymaps.clear()
+    keymap.clear("export")
 
 
 def refresh_keymap():

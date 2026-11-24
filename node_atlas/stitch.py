@@ -404,8 +404,9 @@ def save_png(image: np.ndarray, filepath: str, dpi: float | None = None) -> None
             except OSError as exc:
                 if _disk_full(exc):
                     raise OutputError(_output_message(path, exc)) from exc
-            except Exception:
-                # Fall through to the dependency-free writer.
+            except (ImportError, AttributeError, RuntimeError, TypeError):
+                # imbuf is missing or its API differs; use the NumPy writer.
+                # A ValueError here is a shape bug and must not be masked.
                 pass
 
         try:

@@ -62,6 +62,17 @@ class Layout:
         return (self.final_w * self.final_h) / 1_000_000.0
 
 
+@dataclass(frozen=True)
+class ContentFrame:
+    """The anchored graph corner and pixel factors of one capture (report 4.3)."""
+
+    left: float       # node-unit x of the content corner
+    top: float        # node-unit y of the content corner
+    s: float          # px per node unit for positions
+    k: float          # px per node unit for sizes
+    margin_px: float  # PAD and the outline drawn outside Node.dimensions
+
+
 def measure_upp(v2d) -> float:
     """Return units per pixel at the current zoom (report §4.3)."""
     delta = v2d.region_to_view(100, 0)[0] - v2d.region_to_view(0, 0)[0]
@@ -202,6 +213,38 @@ def planned_scale(
     effective = min(max(system_scale, required), max_effective)
     new_view = view_scale * effective / system_scale
     return effective, new_view, max_effective
+
+
+@dataclass(frozen=True)
+class DensityPlan:
+    """Scale and density one export would use (report section 4.3)."""
+
+    effective: float   # effective UI scale after a Resolution Scale raise
+    view_scale: float  # view.ui_scale to apply (may be raised)
+    upp: float         # export units per pixel
+    used_dpi: float    # density after the UPP clamp
+    max_dpi: float     # highest density reachable by raising Resolution Scale
+
+
+def plan_density(
+    output_dpi: float, system_scale: float, view_scale: float, max_view: float,
+) -> DensityPlan:
+    """Return the projected scale and density for *output_dpi*.
+
+    The panel, the preview and the export read one object instead of unpacking
+    the scale tuples at every call site.
+    """
+    effective, new_view, max_effective = planned_scale(
+        output_dpi, system_scale, view_scale, max_view
+    )
+    upp, used_dpi, _current_max = target_upp(output_dpi, effective)
+    return DensityPlan(
+        effective=effective,
+        view_scale=new_view,
+        upp=upp,
+        used_dpi=used_dpi,
+        max_dpi=max_effective / UPP_MIN * 96.0,
+    )
 
 
 def compute_layout(

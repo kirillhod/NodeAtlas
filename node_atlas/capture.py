@@ -11,6 +11,7 @@ import bpy
 import numpy as np
 
 from .bounds import (
+    ContentFrame,
     Layout,
     ViewMetrics,
     absolute_location,
@@ -60,11 +61,56 @@ class EditorSnapshot:
     warnings: list[str] = field(default_factory=list)
 
 
+@dataclass
+class EditorRef:
+    """The Node Editor an export starts from.
+
+    ``start_job`` captures it before the Export As dialog; the job returns to
+    this area, tree and nested group path when the dialog closes.
+    """
+
+    window: object
+    area: object
+    space: object
+    region: object
+    tree: object | None
+    tree_type: str
+    root_tree: object | None
+    path_trees: tuple
+    pin: bool
+
+    @classmethod
+    def capture(cls, context) -> "EditorRef | None":
+        parts = get_node_context(context)
+        if parts is None:
+            return None
+        window, area, space, region = parts
+        return cls(
+            window=window,
+            area=area,
+            space=space,
+            region=region,
+            tree=current_tree(space),
+            tree_type=space.tree_type,
+            root_tree=space.node_tree,
+            path_trees=tuple(
+                item.node_tree for item in getattr(space, "path", ())
+                if item.node_tree is not None
+            ),
+            pin=space.pin,
+        )
+
+
 def find_node_area(window):
     candidates = [area for area in window.screen.areas if area.type == "NODE_EDITOR"]
     if not candidates:
         return None
     return max(candidates, key=lambda area: area.width * area.height)
+
+
+def window_region(area):
+    """Return the WINDOW region of *area*, or ``None``."""
+    return next((item for item in area.regions if item.type == "WINDOW"), None)
 
 
 def find_area_by_bbox(window, snapshot: EditorSnapshot | None):
@@ -85,7 +131,7 @@ def fresh_node_area(window):
     if area is None:
         return None, None, None
     space = area.spaces.active
-    region = next((item for item in area.regions if item.type == "WINDOW"), None)
+    region = window_region(area)
     return area, space, region
 
 
@@ -106,7 +152,7 @@ def get_node_context(context):
     space = area.spaces.active
     if space is None or space.type != "NODE_EDITOR" or space.edit_tree is None:
         return None
-    region = next((item for item in area.regions if item.type == "WINDOW"), None)
+    region = window_region(area)
     if region is None:
         return None
     return window, area, space, region
@@ -143,18 +189,6 @@ def mute_link_highlight() -> bool:
     return True
 
 
-def restore_link_highlight(alpha: float | None) -> None:
-    if alpha is None:
-        return
-    color = link_highlight_color()
-    if color is None:
-        return
-    try:
-        color[3] = float(alpha)
-    except Exception:
-        log.warning("Could not restore the link highlight alpha", exc_info=True)
-
-
 def current_theme_backdrop():
     """Return the node editor background colour of the active theme."""
     theme = getattr(bpy.context.preferences.themes[0], "node_editor", None)
@@ -189,18 +223,31 @@ def set_theme_grid_levels(levels: int) -> None:
     theme.grid_levels = int(levels)
 
 
-def restore_theme(backdrop, grid_levels) -> None:
-    """Best-effort restore of the theme values transparent capture changes."""
+def apply_appearance(backdrop, grid_levels, link_alpha) -> list[str]:
+    """Best-effort apply of the appearance values a capture changes.
+
+    Returns one message per failed value instead of raising: the normal restore
+    logs them as warnings, the recovery operator reports them as errors.
+    """
+    errors: list[str] = []
     if backdrop is not None:
         try:
             set_theme_backdrop(backdrop)
         except Exception as exc:
-            log.warning("Could not restore the node editor background: %s", exc)
+            errors.append(f"background restore failed: {exc}")
     if grid_levels is not None:
         try:
             set_theme_grid_levels(grid_levels)
         except Exception as exc:
-            log.warning("Could not restore the node editor grid: %s", exc)
+            errors.append(f"grid restore failed: {exc}")
+    if link_alpha is not None:
+        try:
+            color = link_highlight_color()
+            if color is not None:
+                color[3] = float(link_alpha)
+        except Exception as exc:
+            errors.append(f"link tint restore failed: {exc}")
+    return errors
 
 
 def take_snapshot(window, area, space, region, tree) -> EditorSnapshot:
@@ -284,8 +331,8 @@ def clear_selection(tree) -> None:
 
 
 def select_outside_view(
-    tree, content_left: float, content_top: float, s: float, k: float, layout,
-    tile: tuple[int, int], width: int, height: int, margin_px: float,
+    tree, frame: ContentFrame, layout, tile: tuple[int, int],
+    width: int, height: int,
 ) -> None:
     """Select every node that cannot contribute pixels to the current tile.
 
@@ -304,23 +351,24 @@ def select_outside_view(
     ``layout.margin`` pixels inside the region, and :func:`pan` moves it by exact
     integer steps, so this geometry is stable.
 
-    Positions use *s* and sizes *k* (report §4.3): the two factors differ when
-    the effective UI scale is not 1. Using *k* for both drew the selection
-    outline and the frame tint of nodes that were still inside the tile at
-    UI scale 1.25.
+    Positions use ``frame.s`` and sizes ``frame.k`` (report §4.3): the two
+    factors differ when the effective UI scale is not 1. Using ``k`` for both
+    drew the selection outline and the frame tint of nodes that were still
+    inside the tile at UI scale 1.25.
 
-    *margin_px* covers PAD and the outline drawn outside ``Node.dimensions``,
-    so a node that could leave any pixel in the captured tile stays unselected.
+    ``frame.margin_px`` covers PAD and the outline drawn outside
+    ``Node.dimensions``, so a node that could leave any pixel in the captured
+    tile stays unselected.
     """
-    margin = max(0.0, float(margin_px))
+    margin = max(0.0, float(frame.margin_px))
     step_x = layout.step_x
     step_y = layout.step_y
     for node in tree.nodes:
         x, y = absolute_location(node)
-        left = layout.margin + (x - content_left) * s - tile[0] * step_x
-        top = height - layout.margin - (content_top - y) * s + tile[1] * step_y
-        right = left + node.dimensions.x * k
-        bottom = top - node.dimensions.y * k
+        left = layout.margin + (x - frame.left) * frame.s - tile[0] * step_x
+        top = height - layout.margin - (frame.top - y) * frame.s + tile[1] * step_y
+        right = left + node.dimensions.x * frame.k
+        bottom = top - node.dimensions.y * frame.k
         visible = (
             right >= -margin
             and left <= width + margin
@@ -412,7 +460,7 @@ def maximize(window, area, region):
     if area is None:
         raise RuntimeError("Node Editor area disappeared after maximizing")
     space = area.spaces.active
-    region = next((item for item in area.regions if item.type == "WINDOW"), None)
+    region = window_region(area)
     if region is None:
         raise RuntimeError("Node Editor WINDOW region disappeared after maximizing")
     redraw(window, area, region)
@@ -432,7 +480,7 @@ def leave_maximize(window, snapshot: EditorSnapshot):
             area = max(window.screen.areas, key=lambda item: item.width * item.height)
         if area is None:
             return None
-        region = next((item for item in area.regions if item.type == "WINDOW"), None)
+        region = window_region(area)
         if region is None:
             return None
         try:
@@ -488,6 +536,14 @@ def can_capture_raw(window) -> bool:
     ) != "1"
 
 
+def _crop_tile(tile, width: int, height: int, pad: int):
+    """Drop the PAD band from every tile edge (report section 5 item 5)."""
+    cropped = tile[pad:height - pad, pad:width - pad, :].copy()
+    if cropped.shape[0] <= 0 or cropped.shape[1] <= 0:
+        raise RuntimeError("PAD is larger than the captured tile")
+    return cropped
+
+
 def capture_tile(window, area, region, width: int, height: int, bottom_ui: int, pad: int):
     redraw(window, area, region)
     if not can_capture_raw(window):
@@ -507,10 +563,7 @@ def capture_tile(window, area, region, width: int, height: int, bottom_ui: int, 
             f"({width}x{height}); is the window visible?"
         )
     tile = array.reshape(height, width, 4)
-    cropped = tile[pad:height - pad, pad:width - pad, :].copy()
-    if cropped.shape[0] <= 0 or cropped.shape[1] <= 0:
-        raise RuntimeError("PAD is larger than the captured tile")
-    return cropped
+    return _crop_tile(tile, width, height, pad)
 
 
 def _capture_tile_legacy(
@@ -562,10 +615,7 @@ def _capture_tile_legacy(
     if end > image_height:
         raise RuntimeError("screenshot_area does not contain the whole WINDOW region")
     tile = array[start:end, 0:width, :]
-    cropped = tile[pad:height - pad, pad:width - pad, :].copy()
-    if cropped.shape[0] <= 0 or cropped.shape[1] <= 0:
-        raise RuntimeError("PAD is larger than the captured tile")
-    return cropped
+    return _crop_tile(tile, width, height, pad)
 
 
 def restore_view(window, snapshot: EditorSnapshot):
@@ -573,7 +623,7 @@ def restore_view(window, snapshot: EditorSnapshot):
     if area is None:
         return
     space = area.spaces.active
-    region = next((item for item in area.regions if item.type == "WINDOW"), None)
+    region = window_region(area)
     if region is None:
         return
 
@@ -605,25 +655,25 @@ def _restore_attr(obj, attr: str, value) -> None:
             log.warning("Could not restore %s: %s", attr, exc)
 
 
-def apply_tree_path(
-    space, root_tree, path_trees, pin, tree, tree_type,
-    window, area, region,
-) -> None:
+def apply_tree_path(ref: EditorRef) -> None:
     """Set the root tree, pin flag and nested group edit path."""
-    pin = effective_pin(tree_type, pin)
+    window, area, region = ref.window, ref.area, ref.region
+    space = ref.space
+    pin = effective_pin(ref.tree_type, ref.pin)
     space.pin = False
-    space.tree_type = tree_type
-    root = root_tree or tree
+    space.tree_type = ref.tree_type
+    root = ref.root_tree or ref.tree
     if root is not None:
         space.node_tree = root
-    groups = [group for group in path_trees if group is not root]
+    groups = [group for group in ref.path_trees if group is not root]
     if groups:
         # Let the editor switch to the root context before entering groups.
         redraw(window, area, region)
         area = find_node_area(window) or area
         space = area.spaces.active
-        region = next((item for item in area.regions if item.type == "WINDOW"), None)
+        region = window_region(area)
         if region is None:
+            ref.area, ref.space, ref.region = area, space, None
             return
         # Enter groups through the operator so Blender records the full edit
         # path; a bare space.path.append() is dropped on the next redraw.
@@ -653,8 +703,10 @@ def apply_tree_path(
         space.pin = pin
     else:
         space.pin = pin
-    if pin and space.edit_tree is not tree:
-        space.node_tree = tree
+    if pin and space.edit_tree is not ref.tree:
+        space.node_tree = ref.tree
+    # The caller may have been given a rebuilt area by the redraw above.
+    ref.area, ref.space, ref.region = area, space, region
 
 
 def _restore_tree_path(
@@ -673,15 +725,17 @@ def _restore_tree_path(
         space.pin = effective_pin(snapshot.tree_type, snapshot.pin)
         return
     apply_tree_path(
-        space,
-        snapshot.root_tree,
-        snapshot.path_trees,
-        snapshot.pin,
-        snapshot.tree,
-        snapshot.tree_type,
-        window=window,
-        area=area,
-        region=region,
+        EditorRef(
+            window=window,
+            area=area,
+            space=space,
+            region=region,
+            tree=snapshot.tree,
+            tree_type=snapshot.tree_type,
+            root_tree=snapshot.root_tree,
+            path_trees=snapshot.path_trees,
+            pin=snapshot.pin,
+        )
     )
 
 
@@ -710,32 +764,50 @@ def _restore_selection(snapshot: EditorSnapshot, errors: list[str]) -> None:
         errors.append(f"selection restore failed: {exc}")
 
 
+def _node_parts(window, snapshot: EditorSnapshot):
+    """Return the saved Node Editor ``(area, space, region)``, or ``None``.
+
+    The area the export started in wins over the largest node area; the bbox
+    match keeps multi-area layouts on the right editor.
+    """
+    area = find_area_by_bbox(window, snapshot) or find_node_area(window)
+    if area is None:
+        return None
+    space = area.spaces.active
+    region = window_region(area)
+    if space is None or region is None:
+        return None
+    return area, space, region
+
+
 def _apply_tree_state(
     snapshot: EditorSnapshot,
-    window,
-    area,
-    space,
-    region,
     label: str,
     errors: list[str],
     *,
     flags: bool,
     selection: bool,
-) -> None:
+) -> bool:
     """Reapply the tree path, then the flags and selection requested by the stage.
 
     ``screen_full_area`` and region visibility changes rebuild ``area`` and its
-    regions, so each stage passes freshly acquired references and records its own
-    label when the tree path fails.
+    regions, so this re-acquires them instead of trusting a caller's copy.
+    Returns whether the Node Editor was still available.
     """
+    parts = _node_parts(snapshot.window, snapshot)
+    if parts is None:
+        errors.append(f"{label}: Node Editor area is no longer available")
+        return False
+    area, space, region = parts
     try:
-        _restore_tree_path(space, snapshot, window, area, region)
+        _restore_tree_path(space, snapshot, snapshot.window, area, region)
     except Exception as exc:
         errors.append(f"{label} failed: {exc}")
     if flags:
         _restore_flags(space, snapshot)
     if selection:
         _restore_selection(snapshot, errors)
+    return True
 
 
 def _restore_preferences(snapshot: EditorSnapshot, errors: list[str]) -> None:
@@ -762,8 +834,12 @@ def _restore_preferences(snapshot: EditorSnapshot, errors: list[str]) -> None:
 def _restore_body(
     snapshot: EditorSnapshot, errors: list[str], warnings: list[str]
 ) -> None:
-    restore_link_highlight(snapshot.link_highlight_alpha)
-    restore_theme(snapshot.theme_backdrop, snapshot.theme_grid_levels)
+    for message in apply_appearance(
+        snapshot.theme_backdrop,
+        snapshot.theme_grid_levels,
+        snapshot.link_highlight_alpha,
+    ):
+        log.warning("%s", message)
     if snapshot.pin and not effective_pin(snapshot.tree_type, snapshot.pin):
         warnings.append(
             "Compositor pin is disabled on Blender 4.2-4.5 to avoid a native crash"
@@ -773,18 +849,17 @@ def _restore_body(
     if area is None:
         errors.append("Node Editor area is no longer available")
         return
-
-    space = area.spaces.active
-    region = next((item for item in area.regions if item.type == "WINDOW"), None)
-    if space is None or region is None:
+    region = window_region(area)
+    if area.spaces.active is None or region is None:
         errors.append("Node Editor space/region is no longer available")
         return
 
     _apply_tree_state(
-        snapshot, window, area, space, region,
-        "tree/pin restore", errors, flags=True, selection=False,
+        snapshot, "tree/pin restore", errors, flags=True, selection=False
     )
 
+    # Restore ui_scale before the redraw below. smooth_view stays 0 for the
+    # remaining redraws; _restore_preferences in the finally block restores it.
     try:
         prefs = bpy.context.preferences
         prefs.view.ui_scale = snapshot.ui_scale
@@ -817,17 +892,14 @@ def _restore_body(
     # screen_full_area may reset per-space flags and the node path; apply both
     # on the final space, then re-apply the path once more because UI flag
     # updates can rebuild the area.
-    if space is not None:
+    if _apply_tree_state(
+        snapshot, "tree/pin restore after maximize", errors,
+        flags=True, selection=False,
+    ):
         _apply_tree_state(
-            snapshot, window, area, space, region,
-            "tree/pin restore after maximize", errors, flags=True, selection=False,
+            snapshot, "tree/pin restore after UI flags", errors,
+            flags=False, selection=True,
         )
-        area, space, region = fresh_node_area(window)
-        if space is not None:
-            _apply_tree_state(
-                snapshot, window, area, space, region,
-                "tree/pin restore after UI flags", errors, flags=False, selection=True,
-            )
 
     if region is not None:
         try:
@@ -835,35 +907,24 @@ def _restore_body(
         except Exception as exc:
             errors.append(f"view restore failed: {exc}")
 
-    # View operators can reset the node path; leave the user in the same tree.
-    # Each redraw can rebuild the area, so the path and selection are re-applied
-    # after every one of them.
-    area = find_node_area(window)
-    if area is not None:
-        space = area.spaces.active
-        region = next((item for item in area.regions if item.type == "WINDOW"), None)
-        if space is not None and region is not None:
+    # View operators can reset the node path; each redraw can rebuild the area,
+    # so the path and selection are re-applied after every one of them.
+    if _apply_tree_state(
+        snapshot, "final tree/pin restore", errors, flags=False, selection=True
+    ):
+        for _ in range(2):
+            area, space, region = fresh_node_area(window)
+            if area is None or region is None:
+                break
+            try:
+                redraw(window, area, region)
+            except Exception as exc:
+                warnings.append(f"final restore redraw failed: {exc}")
+                break
             _apply_tree_state(
-                snapshot, window, area, space, region,
-                "final tree/pin restore", errors, flags=False, selection=True,
+                snapshot, "tree/pin restore after redraw", errors,
+                flags=False, selection=True,
             )
-            for _ in range(2):
-                try:
-                    redraw(window, area, region)
-                except Exception as exc:
-                    warnings.append(f"final restore redraw failed: {exc}")
-                    break
-                area = find_node_area(window)
-                if area is None:
-                    break
-                space = area.spaces.active
-                region = next((item for item in area.regions if item.type == "WINDOW"), None)
-                if space is None or region is None:
-                    break
-                _apply_tree_state(
-                    snapshot, window, area, space, region,
-                    "tree/pin restore after redraw", errors, flags=False, selection=True,
-                )
 
     signature = tuple(
         sorted((item.type, item.x, item.y, item.width, item.height)

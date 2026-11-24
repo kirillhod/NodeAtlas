@@ -221,7 +221,7 @@ def check_overlay(pixels):
         fail("overlay suppression was not cleared after the export")
 
     prefs = bpy.context.preferences.addons["node_atlas"].preferences
-    est = node_atlas._estimate(bpy.context, prefs)
+    est = node_atlas.preview.estimate(bpy.context, prefs)
     if est is None:
         fail("the panel estimate is unavailable after the export")
     if tuple(pixels.shape[1::-1]) != (est.final_w, est.final_h):
@@ -319,7 +319,7 @@ try:
     import node_atlas
 
     prefs = bpy.context.preferences.addons["node_atlas"].preferences
-    est = node_atlas._estimate(bpy.context, prefs)
+    est = node_atlas.preview.estimate(bpy.context, prefs)
     if est is None:
         fail("the panel estimate is unavailable")
 
