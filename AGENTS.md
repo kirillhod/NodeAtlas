@@ -272,8 +272,8 @@ grid. Full matrix: report §8 and plan §6. The concrete runner and evidence ste
   only makes sense to someone who has seen the repository is a developer sentence, and it
   goes to a developer document.
 - **The README keeps one short `Development` section of links only** — tests, report,
-  roadmap, the `docs/agent/` procedures, this file, and the image-generation command. It
-  carries no counts, matrix results or release state, so the rule above still holds.
+  roadmap, the `docs/agent/` procedures, and this file. It carries no counts, matrix
+  results or release state, so the rule above still holds.
 - **Each fact has one home.** Measurements → `NodeGraph_Export_Report.md`; test counts and
   inventory → `tests/README.md` and `QA_REPORT.md`; workflow → `docs/agent/`; scope and
   next work → [`ROADMAP.md`](ROADMAP.md); repository state (tags, releases, submissions)

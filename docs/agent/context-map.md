@@ -55,7 +55,6 @@ matches a heading prefix (`M7`). Use `--max-lines N` when a section is still too
 | Undo neutrality | every pipeline module | report §11.16 | unit + `test_export.py`, `test_fail.py` |
 | Extension manifest and packaging | `node_atlas/blender_manifest.toml` | report §4.7; `QA_REPORT.md` Packaging | `blender --command extension validate` |
 | New OS or display scaling | `preferences.py` (desktop branches), `capture.py` (`capture_tile`) | report §7 items 3 and 16 | [`live-check.md`](live-check.md) §2 |
-| README images | `docs/make_images.py` | - | GUI run; print dimensions, do not view |
 | Release, version, tag | [`release.md`](release.md) | - | full matrix recorded in `QA_REPORT.md` |
 | Extension platform submission | - | - | owner-only; no agent file, the agent prepares files and stops |
 | Transparent background (not shipped) | `reference/prototypes/matte_*` | report §11.14 | prototype only; do not wire into the pipeline |

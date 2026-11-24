@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/images/featured-small.png" alt="Node Atlas" width="480"></p>
+<p align="center"><img src="docs/images/NodeAtlas_Logo_256.png" alt="Node Atlas" width="96"></p>
 
 Exports any Blender node tree as one high-resolution PNG — Shader, Geometry Nodes,
 Compositor or Texture, the whole graph, on the real editor background or on a transparent
@@ -47,9 +47,9 @@ From source: `blender --command extension build --source-dir node_atlas`.
 ## Limits
 
 - **GUI only.** Exports need a real window; `--background` cannot capture the editor.
-- **One tree per export.** No batch export, SVG/JSON output or scripting API.
-- **Windows is the tested platform.** 4.2.23, 4.5.9, 5.1.2, 5.2.4 and 5.3.0; Linux, macOS
-  and a second physical monitor are untested.
+- **One tree per export.** No batch export or SVG/JSON output.
+- **Windows is the tested platform.** Validated on Blender 4.2.23, 4.5.9, 5.1.2, 5.2.4 and
+  5.3.0; Linux, macOS and a second physical monitor are untested.
 - **Selected Compositor nodes need Blender 5.1+.** Whole-tree compositor export works on
   4.2 and newer.
 - **Copy to Clipboard may fail on very large images.** Save to a file instead.
@@ -71,7 +71,7 @@ From source: `blender --command extension build --source-dir node_atlas`.
 | Show Capture Area | Off |
 | Default Directory | Desktop (home if absent); `~` is expanded |
 | Filename Pattern | `{blend}_{tree}_{date}.png`, plus `{datablock}` and `{type}` |
-| Hide UI, Header Buttons | On |
+| Hide UI During Export, Header Buttons | On |
 | Advanced | Off (folder, filename, UI and shortcut options hidden) |
 
 ## Troubleshooting
@@ -102,9 +102,6 @@ an extension and as a classic add-on. For a live loop, link or junction `node_at
 - Release and tagging procedure: [`docs/agent/release.md`](docs/agent/release.md)
 - Scope and next work: [`ROADMAP.md`](ROADMAP.md)
 - Repository rules and agent workflow: [`AGENTS.md`](AGENTS.md)
-
-Regenerate the panel and demo images with
-`blender --factory-startup --python docs/make_images.py`.
 
 ---
 
