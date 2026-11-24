@@ -1,20 +1,19 @@
 # NodeAtlas QA report
 
-**Version:** 1.7.2<br>
+**Version:** 1.7.3<br>
 **Date:** 24 November 2026<br>
 **Platforms:** Windows, GUI sessions only
 
-> **1.7.2.** Patch release for editor preferences after an interrupted export. The two
-> early returns in `capture.restore_snapshot` skipped `ui_scale` and `smooth_view` when the
-> Node Editor was gone; both are now restored in `finally`, and the temporary selected-only
-> tree is removed on the same path. A quit during the capture never reached restore, so
-> `recovery.py` writes the theme background, grid, `wire_select` alpha, `ui_scale` and
-> `smooth_view` to the Blender config folder before the first change; after a restart the
-> sidebar offers **Restore Editor Settings**.
+> **1.7.3.** Maintenance release for the export plumbing: the start-up editor state is a
+> typed reference, the per-tile content geometry lives in one object, and the density and
+> restore stages are shared. No capture geometry, stitching constant or PNG output changed;
+> the only visible edit is that the sidebar's max-DPI hint now appears only when a size
+> estimate is available.
 >
-> Full source matrix: **38/38 GUI runs and 30/30 unit tests on each of Blender 4.2.23,
-> 4.5.9, 5.1.2, 5.2.4 and 5.3.0** (190/190 GUI total). `test_artifact.py` results and the
-> artifact hash are in [Packaging](#packaging).
+> Source checks for this tree: **38/38 GUI runs on Blender 5.3.0**, **6/6 legacy/state
+> checks on 4.2.23** and **5/5 compositor/group/recovery checks on 5.1.2**, plus the unit
+> suite. The five-version 1.7.2 matrix remains the baseline; the 1.7.3 artifact is in
+> [Packaging](#packaging).
 >
 > The detailed tables below are the 1.3.6 baseline; 1.4.0 changed sizes only by the
 > `VIS` margin and the padding unit, and later versions added cases.
@@ -204,6 +203,12 @@ without a clamp warning.
 
 ## Packaging
 
+- **1.7.3 artifact:** build and `extension validate` PASS; the zip contains only the
+  manifest and the twelve package modules (`keymap.py` included), with no `__pycache__`.
+  The artifact was not reinstalled; the 1.7.2 entry below covers the installer path, and
+  this build adds only `keymap.py` to that module set.
+- `node_atlas-1.7.3.zip` SHA256:
+  `FE3E018353C816273B8ED3858E5C238322B5A7B3601F41D61F713F6068BF0AB3` (42 435 bytes).
 - `blender --command extension validate node_atlas`: PASS.
 - `blender --command extension build --source-dir node_atlas --output-dir dist`:
   produces `node_atlas-1.7.2.zip` with the manifest and the eleven package modules.

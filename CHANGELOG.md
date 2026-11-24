@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.3
+
+- Maintenance release. The exported PNG, the settings and the shortcuts are unchanged.
+- The sidebar's **Max DPI** hint now appears only when a size estimate is available.
+
 ## 1.7.2
 
 - Restore the editor preferences even when the Node Editor disappears during an export.

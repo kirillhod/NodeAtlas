@@ -15,7 +15,7 @@ as one high-resolution PNG. It captures the
 [NumPy](https://numpy.org/doc/stable/), and saves through
 [`imbuf`](https://docs.blender.org/api/current/imbuf.html). No re-rendering.
 
-**Status:** 1.7.2. M0–M8 are complete (Shader/Geometry Nodes/Compositor/Texture),
+**Status:** 1.7.3. M0–M8 are complete (Shader/Geometry Nodes/Compositor/Texture),
 the legacy 4.2–5.1 path is validated on Blender 4.2.23, 4.5.9 and 5.1.2, and hardening
 (limits, fault injection, read-only/full-disk output, scaling) is tested on 4.2–5.3.
 The Compositor works on 4.2–5.3: the compositor tree stays unpinned on 4.2/4.5, where
@@ -33,6 +33,8 @@ any Resolution Scale no longer capture selection outlines, and the view is alway
 with `view_all` (the Deterministic View option is gone).
 Since 1.7.2 a lost Node Editor still returns `ui_scale` and `smooth_view`, and an export
 interrupted by a normal quit offers **Restore Editor Settings** on the next start.
+1.7.3 carries the internal export-context, density and restore cleanup without changing
+capture geometry or PNG output.
 Packaging and docs are complete for Windows; Linux, macOS and a second monitor are
 untested.
 
